@@ -1,0 +1,13 @@
+# Core CPU dependencies — Tier A methods + harness.
+# Everything here installs and runs on CPU with no GPU.
+numpy
+pandas
+scikit-learn
+scipy
+pyyaml
+tqdm
+tabulate
+category_encoders
+xgboost
+lightgbm
+catboost

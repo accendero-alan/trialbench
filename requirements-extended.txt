@@ -1,0 +1,20 @@
+# Optional, heavier dependencies for Tiers B–D.
+# Install only the block you need; several are slow on CPU.
+
+# --- Tier B: deep tabular ---
+# tabpfn            # tabular foundation model (CPU-runnable within size limits)
+# pytorch-tabnet
+# rtdl              # FT-Transformer / ResNet / MLP
+# torch             # CPU wheel is fine
+
+# --- Tier C: clinical NLP embeddings (precompute once, cache) ---
+# transformers
+# sentence-transformers
+
+# --- Tier D: multimodal + LLM ---
+# rdkit             # Morgan/ECFP fingerprints from SMILES
+# autogluon.tabular # AutoML upper bound (CPU)
+# anthropic         # LLM few-shot classification (API; not CPU-bound)
+
+# --- Repo baseline (HINT-style MultiModel) ---
+# Install per TrialBench's own requirements.txt in the cloned repo.

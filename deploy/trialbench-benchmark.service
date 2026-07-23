@@ -1,0 +1,23 @@
+[Unit]
+Description=TrialBench classification benchmark (resumable)
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=__RUN_USER__
+WorkingDirectory=__REPO_DIR__
+ExecStart=__REPO_DIR__/deploy/run_forever.sh
+Restart=on-failure
+RestartSec=30
+# run_forever.sh already retries internally with backoff; this Restart= is the
+# outer safety net for the case systemd itself decided to stop the unit (e.g.
+# OOM-killed hard enough that even the flock/lockfile cleanup didn't happen)
+# or, most importantly, for a full instance reboot: `enable` below makes this
+# unit start on boot, which is what actually resumes the run after a
+# spot-interruption + relaunch or a maintenance reboot.
+StandardOutput=append:__REPO_DIR__/logs/systemd.log
+StandardError=append:__REPO_DIR__/logs/systemd.log
+
+[Install]
+WantedBy=multi-user.target

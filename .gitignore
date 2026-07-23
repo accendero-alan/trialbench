@@ -1,0 +1,14 @@
+__pycache__/
+*.pyc
+.venv/
+venv/
+data/
+results/runs/
+results/*.csv
+results/*.md
+results/cache/
+results/.benchmark_complete
+.pytest_cache/
+.DS_Store
+logs/
+catboost_info/

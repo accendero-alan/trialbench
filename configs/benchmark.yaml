@@ -1,0 +1,59 @@
+# TrialBench classification benchmark configuration.
+# The runner iterates the cross-product of tasks × phases × methods × seeds.
+
+data_root: data          # where TrialBench task folders live (see src/data/download.py)
+results_dir: results
+
+# --- The five classification tasks (see PLAN.md §1) ---
+tasks:
+  - outcome                 # trial approval / outcome           (binary)
+  - mortality_rate_yn       # all-cause mortality event          (binary)
+  - serious_adverse_rate_yn # serious adverse event              (binary)
+  - patient_dropout_rate_yn # patient dropout event              (binary)
+  - failure_reason          # trial failure-reason id            (multiclass)
+
+phases:
+  - Phase1
+  - Phase2
+  - Phase3
+  - Phase4
+  # - All                   # optional pooled phase
+
+# --- Methods to run. Names must be registered in src/methods/registry.py ---
+# Tier A (core, CPU) is enabled by default. Uncomment others as deps are installed.
+methods:
+  # Tier A — classical / linear
+  - majority
+  - logreg_l2
+  - logreg_l1
+  - random_forest
+  - extra_trees
+  - hist_gbm
+  - knn
+  - svm_linear
+  # Tier A — gradient boosting (needs xgboost/lightgbm/catboost)
+  - xgboost
+  - lightgbm
+  - catboost
+  # Tier A — text-only
+  - tfidf_logreg
+  # Tier B — deep tabular (stubs; implement then enable)
+  # - tabpfn
+  # - tabnet
+  # - ft_transformer
+  # Tier C — clinical embeddings (stub)
+  # - clinical_embeddings
+  # Tier D — multimodal / LLM / repo baseline (stubs)
+  # - fingerprint_fusion
+  # - hint_reference
+  # - llm_fewshot
+
+seeds: [42]                 # add more for multi-seed variance, e.g. [42, 7, 123]
+
+bootstrap:
+  n_resamples: 1000         # repo default is 20; raise for stable CIs
+  ci: 0.95
+
+# Cap rows per task for quick dry-runs (null = use all data)
+max_train_rows: null
+max_test_rows: null
