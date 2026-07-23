@@ -18,8 +18,10 @@ pip install -r requirements.txt
 # 1) Verify the harness end-to-end on synthetic data (no download needed):
 python tests/test_smoke.py
 
-# 2) Get the data (official package; Zenodo fallback printed if it fails):
+# 2) Get the data (direct Zenodo download of the 5 classification tasks; no torch needed):
 python -m src.data.download
+#    ...or the official trialbench pip package (needs torch; downloads all 8 tasks):
+python -m src.data.download --via-package
 #    ...or use the toy samples from a local clone to develop against:
 python -m src.data.download --from-clone /path/to/ML2ClinicalTrials
 

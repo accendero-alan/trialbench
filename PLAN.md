@@ -64,9 +64,14 @@ the repo's **bootstrap** for confidence intervals.
 ### Data acquisition
 Three routes, in order of preference for a CPU/offline setup:
 
-1. **`pip install trialbench`** then `trialbench.function.download_all_data('data/')`
-   and `load_data(task, phase, data_format='df')` — returns pandas frames directly.
-2. **Zenodo** record `15455785`: per-task zips or `all_task.zip` (whole benchmark).
+1. **Direct Zenodo download** (default, `src/data/download.py`): fetches just the 5
+   classification-task zips from record `15455785` (stdlib only — `urllib` + `zipfile`,
+   no extra dependencies). Preferred over the official package below for this benchmark.
+2. **`pip install trialbench`** then `trialbench.function.download_all_data('data/')`
+   (`--via-package` flag) — the official route, but `trialbench.function` hard-imports
+   `torch` even just to call the download function, and `download_all_data` pulls all 8
+   TrialBench tasks, including ~250MB of out-of-scope regression/generation data
+   (duration, dose, eligibility-criteria-design) this project doesn't use.
 3. **Toy samples** already in the repo under `Trialbench/data/**` — enough to develop and
    smoke-test the harness before downloading the full data.
 
