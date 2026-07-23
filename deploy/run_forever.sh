@@ -56,6 +56,14 @@ fi
 
 n_runs_dir_files() { ls "$RUNS_DIR" 2>/dev/null | wc -l | tr -d ' '; }
 
+# run_benchmark.py catches FileNotFoundError *per cell* and records it as
+# status "no_data" rather than crashing (see CLAUDE.md's "never let one
+# method break the run") -- so a grid run against an empty/missing data/
+# directory "completes" every cell and exits 0 just like a real run. Gate
+# completion on there being zero no_data cells so a data problem can't get
+# silently recorded as done forever.
+n_no_data_files() { grep -l '"status": "no_data"' "$RUNS_DIR"/*.json 2>/dev/null | wc -l | tr -d ' '; }
+
 consecutive_no_progress=0
 backoff=$BACKOFF_START
 attempt=0
@@ -73,7 +81,17 @@ while true; do
   log "attempt #$attempt: exited with status $status ($before -> $after result files)"
 
   if [ "$status" -eq 0 ]; then
-    log "run_benchmark finished cleanly. Marking complete."
+    no_data=$(n_no_data_files)
+    if [ "$no_data" -gt 0 ]; then
+      log "run_benchmark exited cleanly but $no_data cell(s) have status \"no_data\" --"
+      log "  that means the data dir (data/, or wherever --data-root points) is missing/incomplete,"
+      log "  NOT that the benchmark actually ran. Refusing to mark complete."
+      log "  Populate the data (python -m src.data.download, or deploy/bootstrap_ec2.sh), then clear"
+      log "  the stale no_data results so they get recomputed on the next restart:"
+      log "    grep -l '\"status\": \"no_data\"' $RUNS_DIR/*.json | xargs rm -f"
+      exit 1
+    fi
+    log "run_benchmark finished cleanly with no no_data cells. Marking complete."
     touch "$DONE_MARKER"
     exit 0
   fi
