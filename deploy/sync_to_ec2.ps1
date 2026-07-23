@@ -25,12 +25,25 @@ Write-Host "==> syncing $Here -> ${EC2Host}:${RemoteDir}"
 & ssh @sshArgs $EC2Host "mkdir -p '$RemoteDir'"
 if ($LASTEXITCODE -ne 0) { throw "ssh mkdir failed (exit $LASTEXITCODE)" }
 
-# tar.exe (bsdtar, built into Windows) streamed over ssh -- mirrors the bash
-# fallback path so both entry points behave the same way.
-$excludes = @(".git", ".venv", "__pycache__", ".pytest_cache", "data", "results", "logs", "catboost_info")
+# Directories we only want excluded at the REPO ROOT (produced on the
+# instance, not part of the source tree). These MUST be filtered as an
+# explicit top-level include-list, not passed as bsdtar --exclude patterns:
+# bsdtar (Windows' built-in tar.exe) treats a slash-less exclude pattern as
+# "match this basename at ANY depth", so --exclude=./data also strips
+# src/data/ (the source package) since it shares a basename with the
+# root-level data/ dataset cache. (Verified empirically -- an earlier version
+# of this script had exactly that bug.)
+$topLevelExcludes = @(".git", ".venv", ".pytest_cache", ".claude", "data", "results", "logs", "catboost_info")
+# These, by contrast, we DO want excluded at every depth -- no name collision
+# with anything under src/ or tests/, so a plain --exclude is safe here.
+$anyDepthExcludes = @("__pycache__", "*.pyc", ".DS_Store")
+
+$includeItems = @(Get-ChildItem -Force -Name | Where-Object { $topLevelExcludes -notcontains $_ })
+Write-Host "    ($($includeItems.Count) top-level items: $($includeItems -join ', '))"
+
 $tarArgs = @("czf", "-")
-foreach ($e in $excludes) { $tarArgs += @("--exclude=./$e") }
-$tarArgs += "."
+foreach ($e in $anyDepthExcludes) { $tarArgs += @("--exclude=$e") }
+$tarArgs += $includeItems
 
 $tarCmd = "tar $($tarArgs -join ' ')"
 $sshCmd = "ssh $($sshArgs -join ' ') $EC2Host `"tar xzf - -C '$RemoteDir'`""

@@ -21,23 +21,46 @@ REMOTE_DIR="${REMOTE_DIR:-~/trialbench-classification-benchmark}"
 SSH_OPTS=(-o StrictHostKeyChecking=accept-new)
 [ -n "${EC2_KEY:-}" ] && SSH_OPTS+=(-i "$EC2_KEY")
 
-EXCLUDES=(.git .venv __pycache__ .pytest_cache data results logs catboost_info "*.pyc" ".DS_Store")
+# Directories we only ever want excluded at the REPO ROOT (they're produced on
+# the instance, not part of the source tree). NOTE: these must be passed as an
+# explicit top-level include-list rather than as --exclude patterns — both
+# rsync and (especially) bsdtar treat a slash-less exclude pattern as "match
+# this basename at ANY depth", so `--exclude data` also strips src/data/
+# (the source package) since it shares a basename with the root-level data/
+# dataset cache. Filtering the top-level listing in the shell sidesteps that
+# entirely.
+TOP_LEVEL_EXCLUDES=(.git .venv .pytest_cache .claude data results logs catboost_info)
+# These, by contrast, we DO want excluded at every depth, and there's no name
+# collision with anything under src/ or tests/, so plain --exclude is safe.
+ANY_DEPTH_EXCLUDES=(__pycache__ "*.pyc" ".DS_Store")
+
+shopt -s dotglob nullglob
+INCLUDE_ITEMS=()
+for f in *; do
+  skip=0
+  for e in "${TOP_LEVEL_EXCLUDES[@]}"; do
+    [ "$f" = "$e" ] && skip=1 && break
+  done
+  [ "$skip" = 0 ] && INCLUDE_ITEMS+=("$f")
+done
+shopt -u dotglob nullglob
 
 echo "==> syncing $HERE -> $EC2_HOST:$REMOTE_DIR"
+echo "    (${#INCLUDE_ITEMS[@]} top-level items: ${INCLUDE_ITEMS[*]})"
+
+ssh "${SSH_OPTS[@]}" "$EC2_HOST" "mkdir -p '$REMOTE_DIR'"
 
 if command -v rsync >/dev/null 2>&1; then
   RSYNC_EXCLUDES=()
-  for e in "${EXCLUDES[@]}"; do RSYNC_EXCLUDES+=(--exclude "$e"); done
-  ssh "${SSH_OPTS[@]}" "$EC2_HOST" "mkdir -p '$REMOTE_DIR'"
+  for e in "${ANY_DEPTH_EXCLUDES[@]}"; do RSYNC_EXCLUDES+=(--exclude "$e"); done
   rsync -avz --progress "${RSYNC_EXCLUDES[@]}" \
     -e "ssh ${SSH_OPTS[*]}" \
-    ./ "$EC2_HOST:$REMOTE_DIR/"
+    "${INCLUDE_ITEMS[@]}" "$EC2_HOST:$REMOTE_DIR/"
 else
   echo "    rsync not found locally; falling back to tar+ssh (full copy, no incremental delta)"
   TAR_EXCLUDES=()
-  for e in "${EXCLUDES[@]}"; do TAR_EXCLUDES+=(--exclude="./$e"); done
-  ssh "${SSH_OPTS[@]}" "$EC2_HOST" "mkdir -p '$REMOTE_DIR'"
-  tar czf - "${TAR_EXCLUDES[@]}" . | ssh "${SSH_OPTS[@]}" "$EC2_HOST" "tar xzf - -C '$REMOTE_DIR'"
+  for e in "${ANY_DEPTH_EXCLUDES[@]}"; do TAR_EXCLUDES+=(--exclude="$e"); done
+  tar czf - "${TAR_EXCLUDES[@]}" -- "${INCLUDE_ITEMS[@]}" | ssh "${SSH_OPTS[@]}" "$EC2_HOST" "tar xzf - -C '$REMOTE_DIR'"
 fi
 
 echo
