@@ -64,6 +64,8 @@ python -m pip install -q --upgrade pip
 echo "==> installing requirements.txt"
 pip install -q -r requirements.txt
 if [ "$INSTALL_EXTENDED" = "1" ]; then
+  echo "==> installing torch (CPU-only wheel -- the default PyPI wheel bundles CUDA, ~2GB+ unnecessarily)"
+  pip install -q torch --index-url https://download.pytorch.org/whl/cpu
   echo "==> installing requirements-extended.txt (uncommented lines only)"
   grep -vE '^\s*#|^\s*$' requirements-extended.txt > /tmp/req-extended-active.txt || true
   if [ -s /tmp/req-extended-active.txt ]; then

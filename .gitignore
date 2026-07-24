@@ -12,3 +12,4 @@ results/.benchmark_complete
 .DS_Store
 /logs/
 /catboost_info/
+/.env

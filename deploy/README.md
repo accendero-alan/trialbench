@@ -41,12 +41,28 @@ cd trialbench-classification-benchmark
 
 This detects the package manager (apt or dnf/yum), installs system deps,
 creates `.venv`, installs `requirements.txt`, downloads the TrialBench data
-(`src/data/download.py`, Zenodo fallback printed if the `trialbench` package
-route fails), and runs `tests/test_smoke.py` to self-verify before you commit
-to a long run. Flags:
+(`src/data/download.py` — direct Zenodo download of the 5 classification
+tasks by default, no `trialbench`/torch needed for this step), and runs
+`tests/test_smoke.py` to self-verify before you commit to a long run. Flags:
 
-- `--extended` — also installs whatever you've uncommented in
-  `requirements-extended.txt` (Tier B/C/D deps).
+- `--extended` — installs the CPU-only `torch` wheel plus whatever you've
+  uncommented in `requirements-extended.txt` (Tier B/C/D deps). Tier B
+  (`tabnet`, `ft_transformer`) is enabled by default in
+  `configs/benchmark.yaml` and works right away once this flag is used.
+  `tabpfn` additionally needs a one-time **free** license token: visit
+  https://ux.priorlabs.ai, accept the license, and copy your API key from
+  the Account page. Then, depending on how you're running it:
+  - **Manual/tmux run:** `export TABPFN_TOKEN="<key>"` in the same shell
+    before `./deploy/run_forever.sh`.
+  - **systemd:** create `.env` in the repo root (gitignored — never
+    committed) with a line `TABPFN_TOKEN=<key>`, then
+    `sudo systemctl restart trialbench-benchmark`. The unit reads it via
+    `EnvironmentFile` — plain shell `export`/`~/.bashrc` won't reach a
+    systemd-managed process, since it doesn't inherit your SSH session's
+    environment.
+
+  Without the token, `tabpfn` cells are recorded as "skipped," not an
+  error — `tabnet`/`ft_transformer` and everything else still runs.
 - `--skip-data` — if you're populating `data/` manually (e.g. scp'd over
   separately, or already present from a prior run).
 - `--skip-smoke` — skip the self-verification step.

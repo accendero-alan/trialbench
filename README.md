@@ -48,10 +48,19 @@ auto-restart on both process crashes and instance reboots.
 `extra_trees`, `hist_gbm`, `knn`, `svm_linear`, `xgboost`, `lightgbm`,
 `catboost`, `tfidf_logreg`.
 
+**Ready to run (Tier B, needs `torch`):** `tabnet` (pytorch-tabnet) and
+`ft_transformer` (a compact FT-Transformer hand-rolled in plain PyTorch — see
+`src/methods/deep_tabular.py`) work out of the box once torch + the extended
+requirements are installed (`deploy/bootstrap_ec2.sh --extended`, or
+`pip install torch --index-url https://download.pytorch.org/whl/cpu` then
+`pip install -r requirements-extended.txt`). `tabpfn` also needs a one-time
+free license token (see `deploy/README.md`) — without one it's recorded as
+"skipped", not an error, and every other method still runs.
+
 **Stubs with implementation notes (enable in `configs/benchmark.yaml` once
-filled in):** `tabpfn`, `tabnet`, `ft_transformer` (Tier B); `clinical_embeddings`
-(Tier C); `fingerprint_fusion`, `hint_reference` (Tier D multimodal);
-`llm_fewshot` (Tier D). Each stub's docstring describes exactly what to build.
+filled in):** `clinical_embeddings` (Tier C); `fingerprint_fusion`,
+`hint_reference` (Tier D multimodal); `llm_fewshot` (Tier D). Each stub's
+docstring describes exactly what to build.
 
 ## Layout
 

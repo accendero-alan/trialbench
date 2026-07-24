@@ -37,10 +37,13 @@ methods:
   - catboost
   # Tier A — text-only
   - tfidf_logreg
-  # Tier B — deep tabular (stubs; implement then enable)
-  # - tabpfn
-  # - tabnet
-  # - ft_transformer
+  # Tier B — deep tabular (needs torch; `deploy/bootstrap_ec2.sh --extended`
+  # or `pip install -r requirements-extended.txt` after installing the CPU
+  # torch wheel -- see that file). Without the deps installed these are
+  # recorded as "skipped", not an error, so it's safe to leave enabled.
+  - tabpfn      # also needs a one-time free license token, see deploy/README.md
+  - tabnet
+  - ft_transformer
   # Tier C — clinical embeddings (stub)
   # - clinical_embeddings
   # Tier D — multimodal / LLM / repo baseline (stubs)

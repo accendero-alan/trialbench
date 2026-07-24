@@ -61,10 +61,12 @@ class LogRegL2(SklearnMethod):
 @register("logreg_l1")
 class LogRegL1(SklearnMethod):
     def _build(self):
+        # liblinear doesn't support L1 + multiclass (failure_reason has 3+
+        # classes); saga supports L1 with true multinomial multiclass.
         return make_pipeline(
             StandardScaler(with_mean=True),
-            LogisticRegression(penalty="l1", solver="liblinear", C=1.0,
-                               class_weight="balanced", max_iter=2000, random_state=self.seed),
+            LogisticRegression(penalty="l1", solver="saga", C=1.0,
+                               class_weight="balanced", max_iter=5000, random_state=self.seed),
         )
 
 

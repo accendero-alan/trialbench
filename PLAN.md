@@ -100,13 +100,19 @@ multi-hot + optional text/molecule features from §4).
 - **AutoML ensemble (optional, CPU):** AutoGluon-Tabular as a strong "best-effort" upper
   bound over the tabular view.
 
-### Tier B — Deep tabular (CPU-feasible but slower; implement after Tier A)
-- **TabPFN (v2):** tabular foundation model; near-instant "training," excellent on small
-  samples, CPU-runnable within its size limits (~10k rows / ~500 features). A strong fit
-  for the smaller phase folds.
-- **TabNet** (`pytorch-tabnet`), **FT-Transformer** / **MLP** (via `rtdl`), optionally
-  **SAINT**. Keep networks small; cap epochs; these are the slow ones on CPU.
-- **DANet** — the tabular encoder the repo already uses — as a like-for-like reference.
+### Tier B — Deep tabular (CPU-feasible but slower; implemented)
+- **TabPFN:** tabular foundation model; near-instant "training," excellent on small
+  samples. Implementation enforces the pretrained model's hard limits (≤10k rows, ≤500
+  features, ≤10 classes) via stratified subsampling / `SelectKBest` fit on train only.
+  Also needs a one-time free license token (`TABPFN_TOKEN`, see `deploy/README.md`) —
+  without one the cell is recorded as "skipped," not an error.
+- **TabNet** (`pytorch-tabnet`): small network, early-stopped on validation.
+- **FT-Transformer:** hand-rolled directly in plain PyTorch (`src/methods/deep_tabular.py`)
+  rather than via `rtdl` (unmaintained) or `pytorch_tabular` (pins `pandas<3.0`, which
+  conflicts with this repo's pandas) — a per-column feature tokenizer + CLS token + small
+  Transformer encoder + linear head, kept small and early-stopped for CPU speed.
+- **DANet** — the tabular encoder the repo already uses — as a like-for-like reference
+  (not yet implemented; would need vendoring, like `hint_reference` below).
 
 ### Tier C — Text / clinical NLP (precompute once, then cheap)
 - **Frozen clinical embeddings:** BioBERT / ClinicalBERT / PubMedBERT / BioClinicalBERT.
