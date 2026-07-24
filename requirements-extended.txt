@@ -15,8 +15,11 @@ pytorch-tabnet
 # pytorch_tabular pins pandas<3.0, which conflicts with this repo's pandas).
 
 # --- Tier C: clinical NLP embeddings (precompute once, cache) ---
-# transformers
-# sentence-transformers
+# Needs torch too (see Tier B above) -- Bio_ClinicalBERT is a plain BERT
+# checkpoint, not a sentence-transformers model, so this uses `transformers`
+# directly with manual mean-pooling (src/methods/text_nlp.py) rather than
+# sentence-transformers.
+transformers
 
 # --- Tier D: multimodal + LLM ---
 # rdkit             # Morgan/ECFP fingerprints from SMILES

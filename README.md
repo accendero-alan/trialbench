@@ -57,10 +57,15 @@ requirements are installed (`deploy/bootstrap_ec2.sh --extended`, or
 free license token (see `deploy/README.md`) — without one it's recorded as
 "skipped", not an error, and every other method still runs.
 
+**Ready to run (Tier C, needs `torch` + `transformers`):**
+`clinical_embeddings` — frozen `Bio_ClinicalBERT` embeddings (mean-pooled,
+cached to `results/cache/clinical_embeddings/` by content hash so repeated
+runs don't re-embed) feeding a `LogisticRegression`. No license gate, just
+the extended install.
+
 **Stubs with implementation notes (enable in `configs/benchmark.yaml` once
-filled in):** `clinical_embeddings` (Tier C); `fingerprint_fusion`,
-`hint_reference` (Tier D multimodal); `llm_fewshot` (Tier D). Each stub's
-docstring describes exactly what to build.
+filled in):** `fingerprint_fusion`, `hint_reference` (Tier D multimodal);
+`llm_fewshot` (Tier D). Each stub's docstring describes exactly what to build.
 
 ## Layout
 

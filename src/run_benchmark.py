@@ -115,12 +115,16 @@ def main():
     print(f"{len(grid)} cells: {len(cfg['tasks'])} tasks × {len(cfg['phases'])} phases "
           f"× {len(cfg['methods'])} methods × {len(cfg['seeds'])} seeds", flush=True)
 
-    # Rebuilding the leaderboard in `finally` (and every REBUILD_EVERY cells) means a
-    # crash/kill mid-grid — expected on preemptible EC2 capacity — still leaves an
-    # up-to-date results/leaderboard.md, and a restarted process finds all prior cells'
-    # JSON on disk and skips them (see the os.path.exists check below).
-    REBUILD_EVERY = 10
-    n_done_this_run = 0
+    # Rebuilding the leaderboard after every completed cell (plus once more in
+    # `finally`) means results/leaderboard.md is never more than one cell stale
+    # while the run is in progress -- important now that a single Tier C cell
+    # (clinical_embeddings) can take several minutes, so waiting for a batch
+    # of cells to finish before refreshing would leave it looking stalled. The
+    # rebuild itself is cheap (~0.3s measured at the full 320-cell grid size),
+    # negligible next to actual cell compute time. A crash/kill mid-grid --
+    # expected on preemptible EC2 capacity -- still leaves an up-to-date
+    # leaderboard, and a restarted process finds all prior cells' JSON on
+    # disk and skips them (see the os.path.exists check below).
     try:
         for i, (task, phase, method_name, seed) in enumerate(grid, 1):
             stem = f"{task}__{phase}__{method_name}__seed{seed}"
@@ -155,9 +159,7 @@ def main():
                 json.dump(rec, f, indent=2)
             os.replace(tmp_path, out_path)
 
-            n_done_this_run += 1
-            if n_done_this_run % REBUILD_EVERY == 0:
-                lb.build(cfg["results_dir"])
+            lb.build(cfg["results_dir"])
     finally:
         lb.build(cfg["results_dir"])
         print(f"\nLeaderboard written to {os.path.join(cfg['results_dir'], 'leaderboard.md')}",

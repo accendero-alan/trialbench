@@ -44,8 +44,11 @@ methods:
   - tabpfn      # also needs a one-time free license token, see deploy/README.md
   - tabnet
   - ft_transformer
-  # Tier C — clinical embeddings (stub)
-  # - clinical_embeddings
+  # Tier C — clinical embeddings (needs torch + transformers; downloads
+  # emilyalsentzer/Bio_ClinicalBERT on first use, ~410MB, cached by HF after
+  # that). No license gate, unlike tabpfn. Same graceful-skip-if-missing-deps
+  # behavior as Tier B.
+  - clinical_embeddings
   # Tier D — multimodal / LLM / repo baseline (stubs)
   # - fingerprint_fusion
   # - hint_reference

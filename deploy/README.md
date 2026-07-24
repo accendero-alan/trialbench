@@ -10,6 +10,16 @@ set the instance up, and run the benchmark with automatic restart.
 vCPU) or bigger is a reasonable default for Tier A across all 20 task×phase
 cells. More RAM helps if you enable TF-IDF/embedding-heavy methods.
 
+**Expect `clinical_embeddings` (Tier C) to be the slowest method by far** —
+CPU BERT inference over a full phase's train+test rows measured at ~4–8
+minutes *per task×phase cell* in testing (varies with row count). That's
+paid once per unique dataset: results are cached to
+`results/cache/clinical_embeddings/` by content hash, so a restart or a
+different seed on the same data skips straight to the fast
+`LogisticRegression` step. The first full pass across all 20 cells for just
+this one method can still take an hour or more — don't be surprised if it's
+the long pole in an otherwise-fast Tier A/B run.
+
 ## 1. Push the code up
 
 From your local machine:

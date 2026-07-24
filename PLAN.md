@@ -114,12 +114,14 @@ multi-hot + optional text/molecule features from §4).
 - **DANet** — the tabular encoder the repo already uses — as a like-for-like reference
   (not yet implemented; would need vendoring, like `hint_reference` below).
 
-### Tier C — Text / clinical NLP (precompute once, then cheap)
-- **Frozen clinical embeddings:** BioBERT / ClinicalBERT / PubMedBERT / BioClinicalBERT.
-  Encode eligibility + protocol text **once** to fixed vectors (CPU inference is slow but a
-  one-time cost; cache to disk), then train a light classifier on top.
-- **Sentence-transformers** (e.g., a MiniLM or PubMedBERT-based model) as a lighter
-  embedding alternative.
+### Tier C — Text / clinical NLP (precompute once, then cheap; implemented)
+- **Frozen clinical embeddings** (`clinical_embeddings`): `emilyalsentzer/Bio_ClinicalBERT`
+  via plain `transformers` (not sentence-transformers — it's a raw BERT checkpoint, not a
+  sentence-embedding model), mean-pooled over the attention-masked token vectors. Encoded
+  **once** per unique set of rows and cached to `results/cache/clinical_embeddings/<hash>.npy`
+  (hash of model name + row NCT ids, so re-runs and overlapping task/phase datasets reuse the
+  cache); a `LogisticRegression` trains on the cached vectors. The encoder itself is loaded
+  once per process (module-level cache) to avoid reloading across cells.
 - Fine-tuning these transformers end-to-end is **Tier D** (GPU-preferred; flagged optional).
 
 ### Tier D — Multimodal / domain-specific and LLM (heaviest; optional on CPU)
