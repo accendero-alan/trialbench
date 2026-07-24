@@ -43,11 +43,18 @@ fi
 
 log() { echo "[$(date -u +'%Y-%m-%dT%H:%M:%SZ')] $*" | tee -a "$SUPERVISOR_LOG"; }
 
-if [ -f "$DONE_MARKER" ]; then
-  log "found $DONE_MARKER — benchmark already completed. Delete it (or pass --force to a manual run) to redo."
-  exit 0
-fi
-
+# Deliberately NOT short-circuiting on $DONE_MARKER's mere presence: this
+# project's whole workflow is "implement one more stub, enable it in
+# configs/benchmark.yaml, re-run" (see CLAUDE.md), so a config that grows
+# over time is the norm, not the exception. A marker that means "never
+# invoke run_benchmark again" would silently ignore every method added
+# after the first time the grid finished -- which is exactly what happened
+# when Tier B and, separately, Tier C were added. run_benchmark.py's own
+# skip-if-exists resume logic already makes a "nothing new to do" attempt
+# cheap (~1-2s even at the full ~320-cell grid size), so there's no real
+# cost to always giving it a chance to notice new work. We still touch
+# DONE_MARKER below purely as an informational "has finished at least once"
+# signal -- nothing here reads it back.
 if [ -x .venv/bin/python ]; then
   PY=.venv/bin/python
 else
@@ -91,8 +98,8 @@ while true; do
       log "    grep -l '\"status\": \"no_data\"' $RUNS_DIR/*.json | xargs rm -f"
       exit 1
     fi
-    log "run_benchmark finished cleanly with no no_data cells. Marking complete."
-    touch "$DONE_MARKER"
+    log "run_benchmark finished cleanly with no no_data cells."
+    touch "$DONE_MARKER"  # informational only -- see comment above; nothing gates on this file
     exit 0
   fi
 

@@ -121,9 +121,9 @@ Two layers, matching the two ways a long CPU run actually fails:
    cells whose JSON already exists are skipped. So simply re-running
    `python -m src.run_benchmark` after *any* interruption — a killed process,
    a reboot, a manual Ctrl-C — picks up exactly where it left off. The
-   leaderboard is rebuilt from whatever's on disk every 10 completed cells
-   and again whenever the process exits (even via an exception), so
-   `results/leaderboard.md` is never more than a few cells stale.
+   leaderboard is rebuilt from whatever's on disk after *every* completed
+   cell and again whenever the process exits (even via an exception), so
+   `results/leaderboard.md` is essentially never stale while a run is going.
 
 2. **Process-level auto-restart** (`deploy/run_forever.sh` +
    `deploy/trialbench-benchmark.service`): protects against the whole
@@ -139,9 +139,17 @@ Two layers, matching the two ways a long CPU run actually fails:
    and `run_forever.sh` resumes from disk exactly as above.
 
    A `results/.benchmark_complete` marker is written once the full grid
-   finishes cleanly; `run_forever.sh` exits immediately if it finds one, so
-   restarting the service post-completion is a no-op until you delete the
-   marker (or pass `--force` to a manual run to recompute specific cells).
+   finishes cleanly, but it's purely informational — restarting the service
+   (or `systemctl restart`) always gives `run_benchmark.py` a chance to
+   check for new work, rather than trusting the marker's mere presence.
+   That matters because this project's normal workflow is "implement one
+   more method, enable it in `configs/benchmark.yaml`, re-run" (see
+   `CLAUDE.md`) — the grid grows over time, and a marker that meant "never
+   run again" would silently ignore every method added after the first
+   completion. A "nothing new to do" restart still costs a second or two to
+   confirm (scanning existing result files), which is worth paying to never
+   silently miss newly-enabled methods. Pass `--force` to a manual run to
+   recompute specific cells instead of only picking up new ones.
 
 ## Monitoring
 
