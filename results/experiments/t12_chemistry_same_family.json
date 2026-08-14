@@ -1,0 +1,529 @@
+{
+  "test_id": "T12",
+  "claim_at_stake": "every contrast that carries a conclusion is within one model family",
+  "inputs": {
+    "seeds": [
+      42,
+      7,
+      123,
+      2024,
+      5
+    ],
+    "blocks": [
+      "presence",
+      "descriptors",
+      "morgan_fp",
+      "drug_id"
+    ],
+    "families": [
+      "lightgbm",
+      "logreg"
+    ]
+  },
+  "n_cells": 16,
+  "per_cell": [
+    {
+      "task": "outcome",
+      "phase": "Phase1",
+      "mean_scores_by_family": {
+        "lightgbm": {
+          "presence": 0.45075771159181777,
+          "descriptors": 0.49051662365742377,
+          "morgan_fp": 0.5182729015415836,
+          "drug_id": 0.4621522161231673
+        },
+        "logreg": {
+          "presence": 0.4493874917792586,
+          "descriptors": 0.46404539221616387,
+          "morgan_fp": 0.49782497277495147,
+          "drug_id": 0.48811355082507857
+        }
+      },
+      "same_family_contrasts_vs_presence": {
+        "lightgbm": {
+          "descriptors": 0.039758912065606,
+          "morgan_fp": 0.0675151899497658,
+          "drug_id": 0.011394504531349547
+        },
+        "logreg": {
+          "descriptors": 0.014657900436905291,
+          "morgan_fp": 0.048437480995692894,
+          "drug_id": 0.038726059045819994
+        }
+      },
+      "sign_flips_between_families": []
+    },
+    {
+      "task": "outcome",
+      "phase": "Phase2",
+      "mean_scores_by_family": {
+        "lightgbm": {
+          "presence": 0.39128677714907256,
+          "descriptors": 0.42721221599041914,
+          "morgan_fp": 0.44353079490310215,
+          "drug_id": 0.411251489888269
+        },
+        "logreg": {
+          "presence": 0.3963713076859385,
+          "descriptors": 0.4140302865468578,
+          "morgan_fp": 0.44987631936268696,
+          "drug_id": 0.45975767295190034
+        }
+      },
+      "same_family_contrasts_vs_presence": {
+        "lightgbm": {
+          "descriptors": 0.03592543884134658,
+          "morgan_fp": 0.05224401775402959,
+          "drug_id": 0.019964712739196422
+        },
+        "logreg": {
+          "descriptors": 0.017658978860919328,
+          "morgan_fp": 0.05350501167674848,
+          "drug_id": 0.06338636526596186
+        }
+      },
+      "sign_flips_between_families": []
+    },
+    {
+      "task": "outcome",
+      "phase": "Phase3",
+      "mean_scores_by_family": {
+        "lightgbm": {
+          "presence": 0.5841227055008931,
+          "descriptors": 0.6535816408114423,
+          "morgan_fp": 0.6693184305441188,
+          "drug_id": 0.6409483928791675
+        },
+        "logreg": {
+          "presence": 0.5710968008483999,
+          "descriptors": 0.6169837204452957,
+          "morgan_fp": 0.6687210083991545,
+          "drug_id": 0.6793714331685217
+        }
+      },
+      "same_family_contrasts_vs_presence": {
+        "lightgbm": {
+          "descriptors": 0.06945893531054925,
+          "morgan_fp": 0.0851957250432257,
+          "drug_id": 0.056825687378274425
+        },
+        "logreg": {
+          "descriptors": 0.04588691959689584,
+          "morgan_fp": 0.09762420755075463,
+          "drug_id": 0.1082746323201218
+        }
+      },
+      "sign_flips_between_families": []
+    },
+    {
+      "task": "outcome",
+      "phase": "Phase4",
+      "mean_scores_by_family": {
+        "lightgbm": {
+          "presence": 0.38685678520537914,
+          "descriptors": 0.45952332045091315,
+          "morgan_fp": 0.4688407314369146,
+          "drug_id": 0.4180275239874436
+        },
+        "logreg": {
+          "presence": 0.39410355426320093,
+          "descriptors": 0.41644864878743515,
+          "morgan_fp": 0.4676004114176825,
+          "drug_id": 0.4727826493530481
+        }
+      },
+      "same_family_contrasts_vs_presence": {
+        "lightgbm": {
+          "descriptors": 0.07266653524553401,
+          "morgan_fp": 0.08198394623153549,
+          "drug_id": 0.031170738782064444
+        },
+        "logreg": {
+          "descriptors": 0.02234509452423422,
+          "morgan_fp": 0.07349685715448157,
+          "drug_id": 0.07867909508984716
+        }
+      },
+      "sign_flips_between_families": []
+    },
+    {
+      "task": "mortality_rate_yn",
+      "phase": "Phase1",
+      "mean_scores_by_family": {
+        "lightgbm": {
+          "presence": 0.293323673080339,
+          "descriptors": 0.48523728315534215,
+          "morgan_fp": 0.5051329594487111,
+          "drug_id": 0.3343439466863328
+        },
+        "logreg": {
+          "presence": 0.3011146803792652,
+          "descriptors": 0.39945809335720617,
+          "morgan_fp": 0.5127480730530727,
+          "drug_id": 0.48424999181253414
+        }
+      },
+      "same_family_contrasts_vs_presence": {
+        "lightgbm": {
+          "descriptors": 0.19191361007500313,
+          "morgan_fp": 0.21180928636837204,
+          "drug_id": 0.04102027360599381
+        },
+        "logreg": {
+          "descriptors": 0.09834341297794097,
+          "morgan_fp": 0.21163339267380749,
+          "drug_id": 0.18313531143326894
+        }
+      },
+      "sign_flips_between_families": []
+    },
+    {
+      "task": "mortality_rate_yn",
+      "phase": "Phase2",
+      "mean_scores_by_family": {
+        "lightgbm": {
+          "presence": 0.5252011702250783,
+          "descriptors": 0.6411058645456629,
+          "morgan_fp": 0.63826395220026,
+          "drug_id": 0.5809338143657748
+        },
+        "logreg": {
+          "presence": 0.5274072105399107,
+          "descriptors": 0.5962764895074693,
+          "morgan_fp": 0.659714104632504,
+          "drug_id": 0.6598222025528393
+        }
+      },
+      "same_family_contrasts_vs_presence": {
+        "lightgbm": {
+          "descriptors": 0.11590469432058459,
+          "morgan_fp": 0.11306278197518171,
+          "drug_id": 0.05573264414069656
+        },
+        "logreg": {
+          "descriptors": 0.06886927896755857,
+          "morgan_fp": 0.13230689409259333,
+          "drug_id": 0.1324149920129286
+        }
+      },
+      "sign_flips_between_families": []
+    },
+    {
+      "task": "mortality_rate_yn",
+      "phase": "Phase3",
+      "mean_scores_by_family": {
+        "lightgbm": {
+          "presence": 0.5410774761085204,
+          "descriptors": 0.668244284083729,
+          "morgan_fp": 0.6875908816356824,
+          "drug_id": 0.5796199932090212
+        },
+        "logreg": {
+          "presence": 0.5423756709039621,
+          "descriptors": 0.6275153045267223,
+          "morgan_fp": 0.686099521376175,
+          "drug_id": 0.6901038159994777
+        }
+      },
+      "same_family_contrasts_vs_presence": {
+        "lightgbm": {
+          "descriptors": 0.12716680797520863,
+          "morgan_fp": 0.14651340552716197,
+          "drug_id": 0.03854251710050083
+        },
+        "logreg": {
+          "descriptors": 0.08513963362276022,
+          "morgan_fp": 0.14372385047221292,
+          "drug_id": 0.14772814509551557
+        }
+      },
+      "sign_flips_between_families": []
+    },
+    {
+      "task": "mortality_rate_yn",
+      "phase": "Phase4",
+      "mean_scores_by_family": {
+        "lightgbm": {
+          "presence": 0.17290184691577548,
+          "descriptors": 0.2762435434350801,
+          "morgan_fp": 0.26926243975030345,
+          "drug_id": 0.18079739839681833
+        },
+        "logreg": {
+          "presence": 0.16934117911452634,
+          "descriptors": 0.2598243146177356,
+          "morgan_fp": 0.2670387400524296,
+          "drug_id": 0.24345590491791627
+        }
+      },
+      "same_family_contrasts_vs_presence": {
+        "lightgbm": {
+          "descriptors": 0.10334169651930464,
+          "morgan_fp": 0.09636059283452797,
+          "drug_id": 0.007895551481042845
+        },
+        "logreg": {
+          "descriptors": 0.09048313550320924,
+          "morgan_fp": 0.09769756093790327,
+          "drug_id": 0.07411472580338993
+        }
+      },
+      "sign_flips_between_families": []
+    },
+    {
+      "task": "serious_adverse_rate_yn",
+      "phase": "Phase1",
+      "mean_scores_by_family": {
+        "lightgbm": {
+          "presence": 0.46129236253379613,
+          "descriptors": 0.6298917040388191,
+          "morgan_fp": 0.6429126297226603,
+          "drug_id": 0.49356541026813117
+        },
+        "logreg": {
+          "presence": 0.46160849737395376,
+          "descriptors": 0.5393772829552932,
+          "morgan_fp": 0.6483359943304488,
+          "drug_id": 0.655173933975363
+        }
+      },
+      "same_family_contrasts_vs_presence": {
+        "lightgbm": {
+          "descriptors": 0.16859934150502298,
+          "morgan_fp": 0.18162026718886415,
+          "drug_id": 0.032273047734335036
+        },
+        "logreg": {
+          "descriptors": 0.07776878558133943,
+          "morgan_fp": 0.186727496956495,
+          "drug_id": 0.1935654366014093
+        }
+      },
+      "sign_flips_between_families": []
+    },
+    {
+      "task": "serious_adverse_rate_yn",
+      "phase": "Phase2",
+      "mean_scores_by_family": {
+        "lightgbm": {
+          "presence": 0.7740867297148141,
+          "descriptors": 0.832563175051181,
+          "morgan_fp": 0.8349128693014052,
+          "drug_id": 0.7983763912992001
+        },
+        "logreg": {
+          "presence": 0.7767876423365195,
+          "descriptors": 0.8174502263582498,
+          "morgan_fp": 0.8392662151132614,
+          "drug_id": 0.8306686811109735
+        }
+      },
+      "same_family_contrasts_vs_presence": {
+        "lightgbm": {
+          "descriptors": 0.05847644533636698,
+          "morgan_fp": 0.06082613958659111,
+          "drug_id": 0.024289661584386057
+        },
+        "logreg": {
+          "descriptors": 0.040662584021730286,
+          "morgan_fp": 0.06247857277674185,
+          "drug_id": 0.05388103877445394
+        }
+      },
+      "sign_flips_between_families": []
+    },
+    {
+      "task": "serious_adverse_rate_yn",
+      "phase": "Phase3",
+      "mean_scores_by_family": {
+        "lightgbm": {
+          "presence": 0.8703794012195066,
+          "descriptors": 0.9140301203612072,
+          "morgan_fp": 0.9035592102329162,
+          "drug_id": 0.8813223085754253
+        },
+        "logreg": {
+          "presence": 0.8714089058581536,
+          "descriptors": 0.9056037547438407,
+          "morgan_fp": 0.9130464827545088,
+          "drug_id": 0.9059208626337881
+        }
+      },
+      "same_family_contrasts_vs_presence": {
+        "lightgbm": {
+          "descriptors": 0.0436507191417006,
+          "morgan_fp": 0.033179809013409556,
+          "drug_id": 0.01094290735591863
+        },
+        "logreg": {
+          "descriptors": 0.034194848885687135,
+          "morgan_fp": 0.04163757689635528,
+          "drug_id": 0.03451195677563457
+        }
+      },
+      "sign_flips_between_families": []
+    },
+    {
+      "task": "serious_adverse_rate_yn",
+      "phase": "Phase4",
+      "mean_scores_by_family": {
+        "lightgbm": {
+          "presence": 0.4016372668647155,
+          "descriptors": 0.5269842549838589,
+          "morgan_fp": 0.504230961853799,
+          "drug_id": 0.41489718421074073
+        },
+        "logreg": {
+          "presence": 0.39927314052716173,
+          "descriptors": 0.4576176912291686,
+          "morgan_fp": 0.504163387517993,
+          "drug_id": 0.4988752483605561
+        }
+      },
+      "same_family_contrasts_vs_presence": {
+        "lightgbm": {
+          "descriptors": 0.1253469881191434,
+          "morgan_fp": 0.1025936949890835,
+          "drug_id": 0.013259917346025218
+        },
+        "logreg": {
+          "descriptors": 0.05834455070200689,
+          "morgan_fp": 0.10489024699083122,
+          "drug_id": 0.09960210783339435
+        }
+      },
+      "sign_flips_between_families": []
+    },
+    {
+      "task": "patient_dropout_rate_yn",
+      "phase": "Phase1",
+      "mean_scores_by_family": {
+        "lightgbm": {
+          "presence": 0.6007434415075747,
+          "descriptors": 0.6399278476367987,
+          "morgan_fp": 0.6390338468284036,
+          "drug_id": 0.6162251748443379
+        },
+        "logreg": {
+          "presence": 0.6052063895948259,
+          "descriptors": 0.6185822100459857,
+          "morgan_fp": 0.6449609095237555,
+          "drug_id": 0.6439530340652376
+        }
+      },
+      "same_family_contrasts_vs_presence": {
+        "lightgbm": {
+          "descriptors": 0.039184406129223914,
+          "morgan_fp": 0.038290405320828835,
+          "drug_id": 0.01548173333676317
+        },
+        "logreg": {
+          "descriptors": 0.013375820451159814,
+          "morgan_fp": 0.039754519928929644,
+          "drug_id": 0.03874664447041176
+        }
+      },
+      "sign_flips_between_families": []
+    },
+    {
+      "task": "patient_dropout_rate_yn",
+      "phase": "Phase2",
+      "mean_scores_by_family": {
+        "lightgbm": {
+          "presence": 0.776269807710025,
+          "descriptors": 0.7875598135048814,
+          "morgan_fp": 0.789656534861179,
+          "drug_id": 0.7822693282664203
+        },
+        "logreg": {
+          "presence": 0.7769267240445447,
+          "descriptors": 0.7807573202013104,
+          "morgan_fp": 0.7966443011029647,
+          "drug_id": 0.7969619437133268
+        }
+      },
+      "same_family_contrasts_vs_presence": {
+        "lightgbm": {
+          "descriptors": 0.011290005794856395,
+          "morgan_fp": 0.013386727151154076,
+          "drug_id": 0.005999520556395299
+        },
+        "logreg": {
+          "descriptors": 0.003830596156765731,
+          "morgan_fp": 0.019717577058420033,
+          "drug_id": 0.02003521966878219
+        }
+      },
+      "sign_flips_between_families": []
+    },
+    {
+      "task": "patient_dropout_rate_yn",
+      "phase": "Phase3",
+      "mean_scores_by_family": {
+        "lightgbm": {
+          "presence": 0.9206834885737646,
+          "descriptors": 0.9343275488079901,
+          "morgan_fp": 0.9342237715384168,
+          "drug_id": 0.927223258920234
+        },
+        "logreg": {
+          "presence": 0.9217866697454881,
+          "descriptors": 0.935454953406896,
+          "morgan_fp": 0.936376001872888,
+          "drug_id": 0.9390871169847088
+        }
+      },
+      "same_family_contrasts_vs_presence": {
+        "lightgbm": {
+          "descriptors": 0.013644060234225486,
+          "morgan_fp": 0.013540282964652262,
+          "drug_id": 0.0065397703464694645
+        },
+        "logreg": {
+          "descriptors": 0.013668283661407932,
+          "morgan_fp": 0.01458933212739999,
+          "drug_id": 0.01730044723922075
+        }
+      },
+      "sign_flips_between_families": []
+    },
+    {
+      "task": "patient_dropout_rate_yn",
+      "phase": "Phase4",
+      "mean_scores_by_family": {
+        "lightgbm": {
+          "presence": 0.7109002912087207,
+          "descriptors": 0.7398247305985782,
+          "morgan_fp": 0.749248418402693,
+          "drug_id": 0.7316549054382826
+        },
+        "logreg": {
+          "presence": 0.6909807732262091,
+          "descriptors": 0.7179818745245604,
+          "morgan_fp": 0.7547312919920133,
+          "drug_id": 0.7553864712153275
+        }
+      },
+      "same_family_contrasts_vs_presence": {
+        "lightgbm": {
+          "descriptors": 0.02892443938985756,
+          "morgan_fp": 0.03834812719397229,
+          "drug_id": 0.02075461422956193
+        },
+        "logreg": {
+          "descriptors": 0.027001101298351315,
+          "morgan_fp": 0.06375051876580418,
+          "drug_id": 0.06440569798911844
+        }
+      },
+      "sign_flips_between_families": []
+    }
+  ],
+  "mean_fp_minus_presence_lightgbm": 0.08352939994327224,
+  "mean_fp_minus_presence_logreg": 0.08699819356594823,
+  "n_cells_with_sign_flip": 0,
+  "decision_rule": "Quote only same-family contrasts. Headline becomes the same-family figure. If any contrast flips sign between families, that contrast is CUT. Report the measured family-artifact magnitude.",
+  "verdict": "Same-family headline (morgan_fp - presence): LightGBM +0.0835, logreg +0.0870 (previously estimated same-family ~+0.074, cross-family headline was +0.086). No sign flips between families on any contrast.",
+  "git_sha": "5679ebf7595019775860792a11bf9d5cfa3b4208",
+  "wall_clock_secs": 919.7
+}

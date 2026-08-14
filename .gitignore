@@ -8,6 +8,10 @@ results/*.csv
 results/*.md
 results/cache/
 results/.benchmark_complete
+results/extracted/
+results/predictions/
+results/results.tar.gz
+results/experiments/_snapshots/
 .pytest_cache/
 .DS_Store
 /logs/

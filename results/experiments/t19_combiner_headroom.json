@@ -1,0 +1,183 @@
+{
+  "test_id": "T19",
+  "claim_at_stake": "fixed 50/50 captures 59%/115% of lift; perfect selection worth <=+0.0067",
+  "inputs": {
+    "seeds": [
+      42,
+      7,
+      123,
+      2024,
+      5
+    ],
+    "band_tolerance": 0.001,
+    "oracle_note": "2-input monotonic HistGradientBoostingClassifier fit on test labels, substituting for a true 1-D isotonic stacker which can't combine two inputs and would trivially preserve rank order (see module docstring)."
+  },
+  "n_cells": 16,
+  "per_cell": [
+    {
+      "task": "outcome",
+      "phase": "Phase1",
+      "fixed_5050_lift": 0.014865995690020894,
+      "validation_tuned_lift": 0.019030296251627377,
+      "test_argmax_oracle_lift": 0.020988356542375897,
+      "pct_of_tuned_lift_captured_by_fixed": 78.11752110138394,
+      "mean_weight_band_width_within_0.001_of_valid_peak": 0.08800000000000002,
+      "stacker_oracle_headroom": 0.039888476361382666
+    },
+    {
+      "task": "outcome",
+      "phase": "Phase2",
+      "fixed_5050_lift": 0.04662712044247495,
+      "validation_tuned_lift": 0.0470151659550921,
+      "test_argmax_oracle_lift": 0.04757806730729035,
+      "pct_of_tuned_lift_captured_by_fixed": 99.17463757761101,
+      "mean_weight_band_width_within_0.001_of_valid_peak": 0.11199999999999999,
+      "stacker_oracle_headroom": 0.06430935742956659
+    },
+    {
+      "task": "outcome",
+      "phase": "Phase3",
+      "fixed_5050_lift": 0.014070403572846368,
+      "validation_tuned_lift": 0.01472403970950098,
+      "test_argmax_oracle_lift": 0.015662716956316092,
+      "pct_of_tuned_lift_captured_by_fixed": 95.5607554071398,
+      "mean_weight_band_width_within_0.001_of_valid_peak": 0.16200000000000003,
+      "stacker_oracle_headroom": 0.025089433231821667
+    },
+    {
+      "task": "outcome",
+      "phase": "Phase4",
+      "fixed_5050_lift": 0.03007261631933882,
+      "validation_tuned_lift": 0.03257702229709236,
+      "test_argmax_oracle_lift": 0.034434891006862166,
+      "pct_of_tuned_lift_captured_by_fixed": 92.31235453346798,
+      "mean_weight_band_width_within_0.001_of_valid_peak": 0.136,
+      "stacker_oracle_headroom": 0.055329578965446415
+    },
+    {
+      "task": "mortality_rate_yn",
+      "phase": "Phase1",
+      "fixed_5050_lift": 0.012628489135554255,
+      "validation_tuned_lift": 0.012301057934639426,
+      "test_argmax_oracle_lift": 0.01610035030582897,
+      "pct_of_tuned_lift_captured_by_fixed": 102.66181333877627,
+      "mean_weight_band_width_within_0.001_of_valid_peak": 0.10200000000000001,
+      "stacker_oracle_headroom": 0.03263500293053316
+    },
+    {
+      "task": "mortality_rate_yn",
+      "phase": "Phase2",
+      "fixed_5050_lift": -0.0038059211799245764,
+      "validation_tuned_lift": 0.009049473845217126,
+      "test_argmax_oracle_lift": 0.00991342316351751,
+      "pct_of_tuned_lift_captured_by_fixed": -42.05682280562755,
+      "mean_weight_band_width_within_0.001_of_valid_peak": 0.142,
+      "stacker_oracle_headroom": 0.017425805286134487
+    },
+    {
+      "task": "mortality_rate_yn",
+      "phase": "Phase3",
+      "fixed_5050_lift": 0.020005563875896425,
+      "validation_tuned_lift": 0.02243167045776111,
+      "test_argmax_oracle_lift": 0.02289258354247048,
+      "pct_of_tuned_lift_captured_by_fixed": 89.18445870345211,
+      "mean_weight_band_width_within_0.001_of_valid_peak": 0.136,
+      "stacker_oracle_headroom": 0.033703991695755796
+    },
+    {
+      "task": "mortality_rate_yn",
+      "phase": "Phase4",
+      "fixed_5050_lift": 0.09083352884050203,
+      "validation_tuned_lift": 0.061761205361726614,
+      "test_argmax_oracle_lift": 0.09361175564497203,
+      "pct_of_tuned_lift_captured_by_fixed": 147.07214392676266,
+      "mean_weight_band_width_within_0.001_of_valid_peak": 0.06200000000000001,
+      "stacker_oracle_headroom": 0.14054072623754288
+    },
+    {
+      "task": "serious_adverse_rate_yn",
+      "phase": "Phase1",
+      "fixed_5050_lift": 0.0032594444354964837,
+      "validation_tuned_lift": 0.00616450960344248,
+      "test_argmax_oracle_lift": 0.00698354960362475,
+      "pct_of_tuned_lift_captured_by_fixed": 52.87435084335491,
+      "mean_weight_band_width_within_0.001_of_valid_peak": 0.16799999999999998,
+      "stacker_oracle_headroom": 0.014152944556762703
+    },
+    {
+      "task": "serious_adverse_rate_yn",
+      "phase": "Phase2",
+      "fixed_5050_lift": 0.009894512342015816,
+      "validation_tuned_lift": 0.009240200385441866,
+      "test_argmax_oracle_lift": 0.010389839240733756,
+      "pct_of_tuned_lift_captured_by_fixed": 107.08114466440395,
+      "mean_weight_band_width_within_0.001_of_valid_peak": 0.164,
+      "stacker_oracle_headroom": 0.016502032232678387
+    },
+    {
+      "task": "serious_adverse_rate_yn",
+      "phase": "Phase3",
+      "fixed_5050_lift": 0.0065442257719738,
+      "validation_tuned_lift": 0.0059983934975311294,
+      "test_argmax_oracle_lift": 0.006677760002293009,
+      "pct_of_tuned_lift_captured_by_fixed": 109.09964100666836,
+      "mean_weight_band_width_within_0.001_of_valid_peak": 0.30000000000000004,
+      "stacker_oracle_headroom": 0.011160522286969444
+    },
+    {
+      "task": "serious_adverse_rate_yn",
+      "phase": "Phase4",
+      "fixed_5050_lift": 0.030055486657522,
+      "validation_tuned_lift": 0.02812075826568359,
+      "test_argmax_oracle_lift": 0.03166342874258952,
+      "pct_of_tuned_lift_captured_by_fixed": 106.88007191541277,
+      "mean_weight_band_width_within_0.001_of_valid_peak": 0.11800000000000004,
+      "stacker_oracle_headroom": 0.06037194181752683
+    },
+    {
+      "task": "patient_dropout_rate_yn",
+      "phase": "Phase1",
+      "fixed_5050_lift": 0.015689481000613383,
+      "validation_tuned_lift": 0.014296278763520954,
+      "test_argmax_oracle_lift": 0.016392747122504114,
+      "pct_of_tuned_lift_captured_by_fixed": 109.74520894659237,
+      "mean_weight_band_width_within_0.001_of_valid_peak": 0.13999999999999999,
+      "stacker_oracle_headroom": 0.032768116739875806
+    },
+    {
+      "task": "patient_dropout_rate_yn",
+      "phase": "Phase2",
+      "fixed_5050_lift": 0.011654050054582577,
+      "validation_tuned_lift": 0.012030065467207595,
+      "test_argmax_oracle_lift": 0.01305203704803568,
+      "pct_of_tuned_lift_captured_by_fixed": 96.87436935692504,
+      "mean_weight_band_width_within_0.001_of_valid_peak": 0.202,
+      "stacker_oracle_headroom": 0.01754474998492197
+    },
+    {
+      "task": "patient_dropout_rate_yn",
+      "phase": "Phase3",
+      "fixed_5050_lift": 0.005768115751707659,
+      "validation_tuned_lift": 0.00617566382524859,
+      "test_argmax_oracle_lift": 0.006398646159885435,
+      "pct_of_tuned_lift_captured_by_fixed": 93.4007406317243,
+      "mean_weight_band_width_within_0.001_of_valid_peak": 0.388,
+      "stacker_oracle_headroom": 0.00968462877376719
+    },
+    {
+      "task": "patient_dropout_rate_yn",
+      "phase": "Phase4",
+      "fixed_5050_lift": 0.01566149080377961,
+      "validation_tuned_lift": 0.016244362079622876,
+      "test_argmax_oracle_lift": 0.016396785729938034,
+      "pct_of_tuned_lift_captured_by_fixed": 96.41185493781606,
+      "mean_weight_band_width_within_0.001_of_valid_peak": 0.17,
+      "stacker_oracle_headroom": 0.026876500535098158
+    }
+  ],
+  "mean_pct_of_tuned_lift_captured_by_fixed": 89.6496402553665,
+  "decision_rule": "If fixed 50/50 captures >=80% of tuned lift on average, tuning is close to worthless; recommend the fixed blend. Oracle headroom figure becomes what Part 3 is built around.",
+  "verdict": "Tuning the combiner is close to worthless: fixed 50/50 captures a mean 90% of tuned lift across cells -- recommend the fixed blend. Oracle headroom figures are what Part 3 is built around.",
+  "git_sha": "5679ebf7595019775860792a11bf9d5cfa3b4208",
+  "wall_clock_secs": 7.4
+}

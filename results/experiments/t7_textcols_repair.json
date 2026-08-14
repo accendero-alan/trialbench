@@ -1,0 +1,2661 @@
+{
+  "test_id": "T7",
+  "claim_at_stake": "the bag of words won while a typo kept it from reading the trial summaries",
+  "inputs": {
+    "seeds": [
+      42,
+      7,
+      123,
+      2024,
+      5
+    ],
+    "configs": {
+      "as_shipped": [
+        "brief_title",
+        "brief_summary",
+        "detailed_description",
+        "eligibility/study_pop/textblock",
+        "eligibility/criteria/textblock",
+        "intervention/description",
+        "keyword",
+        "study_design_info/intervention_model_description",
+        "study_design_info/masking_description",
+        "condition"
+      ],
+      "repaired": [
+        "brief_title",
+        "brief_summary/textblock",
+        "detailed_description/textblock",
+        "eligibility/study_pop/textblock",
+        "eligibility/criteria/textblock",
+        "intervention/description",
+        "keyword",
+        "study_design_info/intervention_model_description",
+        "study_design_info/masking_description",
+        "condition"
+      ],
+      "repaired_minus_summaries": [
+        "brief_title",
+        "eligibility/study_pop/textblock",
+        "eligibility/criteria/textblock",
+        "intervention/description",
+        "keyword",
+        "study_design_info/intervention_model_description",
+        "study_design_info/masking_description",
+        "condition"
+      ]
+    },
+    "data_root": "data",
+    "note": "TEXT_COLS_AS_SHIPPED's 'detailed_description' and 'eligibility/study_pop/textblock' entries don't match any column in any task folder even after the /textblock suffix fix -- confirmed by reading the raw CSVs -- so they contribute nothing in any of the 3 configs; the only column the repair actually activates is 'brief_summary/textblock' everywhere and 'detailed_description/textblock' on trial-failure-reason-identification only."
+  },
+  "n_cells": 20,
+  "per_cell": [
+    {
+      "task": "outcome",
+      "phase": "Phase1",
+      "configs": {
+        "as_shipped": {
+          "mean_point_prauc": 0.6601263825176256,
+          "seed_scores": [
+            {
+              "seed": 42,
+              "point_prauc": 0.6581965135466263,
+              "boot_mean": 0.6613740243243005,
+              "boot_lo": 0.6084772986713602,
+              "boot_hi": 0.7161572710877814
+            },
+            {
+              "seed": 7,
+              "point_prauc": 0.6597367690799829,
+              "boot_mean": 0.6624072291143377,
+              "boot_lo": 0.6107846668690563,
+              "boot_hi": 0.7129787085653417
+            },
+            {
+              "seed": 123,
+              "point_prauc": 0.660178478237188,
+              "boot_mean": 0.6619771653039557,
+              "boot_lo": 0.6097864183823067,
+              "boot_hi": 0.7111319317200042
+            },
+            {
+              "seed": 2024,
+              "point_prauc": 0.6628581516452846,
+              "boot_mean": 0.6653338609310641,
+              "boot_lo": 0.6156645252224742,
+              "boot_hi": 0.7120246342619078
+            },
+            {
+              "seed": 5,
+              "point_prauc": 0.6596620000790462,
+              "boot_mean": 0.6602318847716727,
+              "boot_lo": 0.6057035187275936,
+              "boot_hi": 0.7102292157931462
+            }
+          ]
+        },
+        "repaired": {
+          "mean_point_prauc": 0.6706221867043212,
+          "seed_scores": [
+            {
+              "seed": 42,
+              "point_prauc": 0.6699408501363786,
+              "boot_mean": 0.6718484277791288,
+              "boot_lo": 0.6223416225759035,
+              "boot_hi": 0.7241601701191612
+            },
+            {
+              "seed": 7,
+              "point_prauc": 0.670336189463358,
+              "boot_mean": 0.6724704552455594,
+              "boot_lo": 0.6229262899724545,
+              "boot_hi": 0.7215855921287466
+            },
+            {
+              "seed": 123,
+              "point_prauc": 0.6718034678676946,
+              "boot_mean": 0.6735899222298051,
+              "boot_lo": 0.6225927582414297,
+              "boot_hi": 0.7212321363456617
+            },
+            {
+              "seed": 2024,
+              "point_prauc": 0.6737495132359181,
+              "boot_mean": 0.6759270900332548,
+              "boot_lo": 0.6281539963018816,
+              "boot_hi": 0.7222426325145427
+            },
+            {
+              "seed": 5,
+              "point_prauc": 0.6672809128182565,
+              "boot_mean": 0.6674096653908625,
+              "boot_lo": 0.611816610725115,
+              "boot_hi": 0.7172157697549036
+            }
+          ]
+        },
+        "repaired_minus_summaries": {
+          "mean_point_prauc": 0.6601263825176256,
+          "seed_scores": [
+            {
+              "seed": 42,
+              "point_prauc": 0.6581965135466263,
+              "boot_mean": 0.6613740243243005,
+              "boot_lo": 0.6084772986713602,
+              "boot_hi": 0.7161572710877814
+            },
+            {
+              "seed": 7,
+              "point_prauc": 0.6597367690799829,
+              "boot_mean": 0.6624072291143377,
+              "boot_lo": 0.6107846668690563,
+              "boot_hi": 0.7129787085653417
+            },
+            {
+              "seed": 123,
+              "point_prauc": 0.660178478237188,
+              "boot_mean": 0.6619771653039557,
+              "boot_lo": 0.6097864183823067,
+              "boot_hi": 0.7111319317200042
+            },
+            {
+              "seed": 2024,
+              "point_prauc": 0.6628581516452846,
+              "boot_mean": 0.6653338609310641,
+              "boot_lo": 0.6156645252224742,
+              "boot_hi": 0.7120246342619078
+            },
+            {
+              "seed": 5,
+              "point_prauc": 0.6596620000790462,
+              "boot_mean": 0.6602318847716727,
+              "boot_lo": 0.6057035187275936,
+              "boot_hi": 0.7102292157931462
+            }
+          ]
+        }
+      },
+      "repair_gain": 0.010495804186695601,
+      "delta_cell": 0.09634921563637254,
+      "gain_exceeds_delta_cell": false,
+      "mean_rank_shift_vs_t1_baseline_tabular": 0.8
+    },
+    {
+      "task": "outcome",
+      "phase": "Phase2",
+      "configs": {
+        "as_shipped": {
+          "mean_point_prauc": 0.5976814018856796,
+          "seed_scores": [
+            {
+              "seed": 42,
+              "point_prauc": 0.5971003526236405,
+              "boot_mean": 0.5973327422627212,
+              "boot_lo": 0.5652542838863998,
+              "boot_hi": 0.6297703122194236
+            },
+            {
+              "seed": 7,
+              "point_prauc": 0.6023602720539515,
+              "boot_mean": 0.6033428427843961,
+              "boot_lo": 0.5706401640402201,
+              "boot_hi": 0.6368297808197687
+            },
+            {
+              "seed": 123,
+              "point_prauc": 0.599599706441103,
+              "boot_mean": 0.5996148345749143,
+              "boot_lo": 0.5657149361344961,
+              "boot_hi": 0.6317857096965188
+            },
+            {
+              "seed": 2024,
+              "point_prauc": 0.5965937515097044,
+              "boot_mean": 0.597165977429144,
+              "boot_lo": 0.5638652605385613,
+              "boot_hi": 0.6325650066963041
+            },
+            {
+              "seed": 5,
+              "point_prauc": 0.5927529267999986,
+              "boot_mean": 0.5931696716967635,
+              "boot_lo": 0.5602208519268479,
+              "boot_hi": 0.626909894628382
+            }
+          ]
+        },
+        "repaired": {
+          "mean_point_prauc": 0.614600281973609,
+          "seed_scores": [
+            {
+              "seed": 42,
+              "point_prauc": 0.6175065850226058,
+              "boot_mean": 0.6176053065647464,
+              "boot_lo": 0.5849519512214513,
+              "boot_hi": 0.6509146871494851
+            },
+            {
+              "seed": 7,
+              "point_prauc": 0.6168804152034894,
+              "boot_mean": 0.6179324723630503,
+              "boot_lo": 0.5864613919856589,
+              "boot_hi": 0.6493458075916739
+            },
+            {
+              "seed": 123,
+              "point_prauc": 0.6145673711237645,
+              "boot_mean": 0.6145997816638985,
+              "boot_lo": 0.5819465547538235,
+              "boot_hi": 0.6465057632062435
+            },
+            {
+              "seed": 2024,
+              "point_prauc": 0.6126458012022467,
+              "boot_mean": 0.6128808623457246,
+              "boot_lo": 0.5786525592132626,
+              "boot_hi": 0.6477355613391612
+            },
+            {
+              "seed": 5,
+              "point_prauc": 0.6114012373159392,
+              "boot_mean": 0.6117722405930779,
+              "boot_lo": 0.5780855301621788,
+              "boot_hi": 0.6450507910342126
+            }
+          ]
+        },
+        "repaired_minus_summaries": {
+          "mean_point_prauc": 0.5976814018856796,
+          "seed_scores": [
+            {
+              "seed": 42,
+              "point_prauc": 0.5971003526236405,
+              "boot_mean": 0.5973327422627212,
+              "boot_lo": 0.5652542838863998,
+              "boot_hi": 0.6297703122194236
+            },
+            {
+              "seed": 7,
+              "point_prauc": 0.6023602720539515,
+              "boot_mean": 0.6033428427843961,
+              "boot_lo": 0.5706401640402201,
+              "boot_hi": 0.6368297808197687
+            },
+            {
+              "seed": 123,
+              "point_prauc": 0.599599706441103,
+              "boot_mean": 0.5996148345749143,
+              "boot_lo": 0.5657149361344961,
+              "boot_hi": 0.6317857096965188
+            },
+            {
+              "seed": 2024,
+              "point_prauc": 0.5965937515097044,
+              "boot_mean": 0.597165977429144,
+              "boot_lo": 0.5638652605385613,
+              "boot_hi": 0.6325650066963041
+            },
+            {
+              "seed": 5,
+              "point_prauc": 0.5927529267999986,
+              "boot_mean": 0.5931696716967635,
+              "boot_lo": 0.5602208519268479,
+              "boot_hi": 0.626909894628382
+            }
+          ]
+        }
+      },
+      "repair_gain": 0.01691888008792941,
+      "delta_cell": 0.06093495558423234,
+      "gain_exceeds_delta_cell": false,
+      "mean_rank_shift_vs_t1_baseline_tabular": 0.4
+    },
+    {
+      "task": "outcome",
+      "phase": "Phase3",
+      "configs": {
+        "as_shipped": {
+          "mean_point_prauc": 0.8268594209931377,
+          "seed_scores": [
+            {
+              "seed": 42,
+              "point_prauc": 0.8236475097524936,
+              "boot_mean": 0.8243902389004791,
+              "boot_lo": 0.8000211316219072,
+              "boot_hi": 0.8467836730029413
+            },
+            {
+              "seed": 7,
+              "point_prauc": 0.8251825338430325,
+              "boot_mean": 0.8253266507794824,
+              "boot_lo": 0.8007383945778571,
+              "boot_hi": 0.8484186156676938
+            },
+            {
+              "seed": 123,
+              "point_prauc": 0.8295980087990276,
+              "boot_mean": 0.8296942808568891,
+              "boot_lo": 0.806978380167902,
+              "boot_hi": 0.851451426006669
+            },
+            {
+              "seed": 2024,
+              "point_prauc": 0.8279347378491719,
+              "boot_mean": 0.8279618820759838,
+              "boot_lo": 0.8045647807710303,
+              "boot_hi": 0.849182055308089
+            },
+            {
+              "seed": 5,
+              "point_prauc": 0.8279343147219634,
+              "boot_mean": 0.8272886415799594,
+              "boot_lo": 0.8040248949580044,
+              "boot_hi": 0.8495551810856666
+            }
+          ]
+        },
+        "repaired": {
+          "mean_point_prauc": 0.8375487765837935,
+          "seed_scores": [
+            {
+              "seed": 42,
+              "point_prauc": 0.8348581087435435,
+              "boot_mean": 0.8354605327359783,
+              "boot_lo": 0.8121111211711338,
+              "boot_hi": 0.8571483188297753
+            },
+            {
+              "seed": 7,
+              "point_prauc": 0.8362725288970791,
+              "boot_mean": 0.8362607559287584,
+              "boot_lo": 0.8120113431265678,
+              "boot_hi": 0.8594939596096475
+            },
+            {
+              "seed": 123,
+              "point_prauc": 0.8400475473478031,
+              "boot_mean": 0.8401738203095254,
+              "boot_lo": 0.8188196698117163,
+              "boot_hi": 0.8620497959897276
+            },
+            {
+              "seed": 2024,
+              "point_prauc": 0.8385843416443983,
+              "boot_mean": 0.8387000611029075,
+              "boot_lo": 0.8159071563077624,
+              "boot_hi": 0.8586071555315065
+            },
+            {
+              "seed": 5,
+              "point_prauc": 0.837981356286144,
+              "boot_mean": 0.8373353947803096,
+              "boot_lo": 0.8152983035926864,
+              "boot_hi": 0.8597308732067274
+            }
+          ]
+        },
+        "repaired_minus_summaries": {
+          "mean_point_prauc": 0.8268594209931377,
+          "seed_scores": [
+            {
+              "seed": 42,
+              "point_prauc": 0.8236475097524936,
+              "boot_mean": 0.8243902389004791,
+              "boot_lo": 0.8000211316219072,
+              "boot_hi": 0.8467836730029413
+            },
+            {
+              "seed": 7,
+              "point_prauc": 0.8251825338430325,
+              "boot_mean": 0.8253266507794824,
+              "boot_lo": 0.8007383945778571,
+              "boot_hi": 0.8484186156676938
+            },
+            {
+              "seed": 123,
+              "point_prauc": 0.8295980087990276,
+              "boot_mean": 0.8296942808568891,
+              "boot_lo": 0.806978380167902,
+              "boot_hi": 0.851451426006669
+            },
+            {
+              "seed": 2024,
+              "point_prauc": 0.8279347378491719,
+              "boot_mean": 0.8279618820759838,
+              "boot_lo": 0.8045647807710303,
+              "boot_hi": 0.849182055308089
+            },
+            {
+              "seed": 5,
+              "point_prauc": 0.8279343147219634,
+              "boot_mean": 0.8272886415799594,
+              "boot_lo": 0.8040248949580044,
+              "boot_hi": 0.8495551810856666
+            }
+          ]
+        }
+      },
+      "repair_gain": 0.010689355590655758,
+      "delta_cell": 0.045375460623549774,
+      "gain_exceeds_delta_cell": false,
+      "mean_rank_shift_vs_t1_baseline_tabular": 0.0
+    },
+    {
+      "task": "outcome",
+      "phase": "Phase4",
+      "configs": {
+        "as_shipped": {
+          "mean_point_prauc": 0.6188183722474105,
+          "seed_scores": [
+            {
+              "seed": 42,
+              "point_prauc": 0.6194553145702908,
+              "boot_mean": 0.6212792096918461,
+              "boot_lo": 0.5679426563787965,
+              "boot_hi": 0.6724913981283976
+            },
+            {
+              "seed": 7,
+              "point_prauc": 0.616656266021177,
+              "boot_mean": 0.6177235161407063,
+              "boot_lo": 0.5652084427979576,
+              "boot_hi": 0.6716041641298703
+            },
+            {
+              "seed": 123,
+              "point_prauc": 0.6253679802485801,
+              "boot_mean": 0.6272901482773372,
+              "boot_lo": 0.5759269504853336,
+              "boot_hi": 0.6799589437139969
+            },
+            {
+              "seed": 2024,
+              "point_prauc": 0.6125377287134565,
+              "boot_mean": 0.6133888900069985,
+              "boot_lo": 0.5579465303169628,
+              "boot_hi": 0.6643974262303076
+            },
+            {
+              "seed": 5,
+              "point_prauc": 0.6200745716835488,
+              "boot_mean": 0.6224154789555328,
+              "boot_lo": 0.5665259923039335,
+              "boot_hi": 0.6739950004975068
+            }
+          ]
+        },
+        "repaired": {
+          "mean_point_prauc": 0.6550276263090118,
+          "seed_scores": [
+            {
+              "seed": 42,
+              "point_prauc": 0.6536952642183385,
+              "boot_mean": 0.6556041805186503,
+              "boot_lo": 0.600886610575873,
+              "boot_hi": 0.7058388356197148
+            },
+            {
+              "seed": 7,
+              "point_prauc": 0.6540766014024556,
+              "boot_mean": 0.6545129982762314,
+              "boot_lo": 0.6036466376178417,
+              "boot_hi": 0.7089210158148331
+            },
+            {
+              "seed": 123,
+              "point_prauc": 0.6586370221775181,
+              "boot_mean": 0.660775241879151,
+              "boot_lo": 0.6077577180128905,
+              "boot_hi": 0.7112856097766711
+            },
+            {
+              "seed": 2024,
+              "point_prauc": 0.6527429045945111,
+              "boot_mean": 0.6537109212798508,
+              "boot_lo": 0.5952582960351488,
+              "boot_hi": 0.7059924502799008
+            },
+            {
+              "seed": 5,
+              "point_prauc": 0.6559863391522355,
+              "boot_mean": 0.6575728385629966,
+              "boot_lo": 0.6041292962848415,
+              "boot_hi": 0.7070289512613129
+            }
+          ]
+        },
+        "repaired_minus_summaries": {
+          "mean_point_prauc": 0.6188183722474105,
+          "seed_scores": [
+            {
+              "seed": 42,
+              "point_prauc": 0.6194553145702908,
+              "boot_mean": 0.6212792096918461,
+              "boot_lo": 0.5679426563787965,
+              "boot_hi": 0.6724913981283976
+            },
+            {
+              "seed": 7,
+              "point_prauc": 0.616656266021177,
+              "boot_mean": 0.6177235161407063,
+              "boot_lo": 0.5652084427979576,
+              "boot_hi": 0.6716041641298703
+            },
+            {
+              "seed": 123,
+              "point_prauc": 0.6253679802485801,
+              "boot_mean": 0.6272901482773372,
+              "boot_lo": 0.5759269504853336,
+              "boot_hi": 0.6799589437139969
+            },
+            {
+              "seed": 2024,
+              "point_prauc": 0.6125377287134565,
+              "boot_mean": 0.6133888900069985,
+              "boot_lo": 0.5579465303169628,
+              "boot_hi": 0.6643974262303076
+            },
+            {
+              "seed": 5,
+              "point_prauc": 0.6200745716835488,
+              "boot_mean": 0.6224154789555328,
+              "boot_lo": 0.5665259923039335,
+              "boot_hi": 0.6739950004975068
+            }
+          ]
+        }
+      },
+      "repair_gain": 0.03620925406160125,
+      "delta_cell": 0.11103835629101706,
+      "gain_exceeds_delta_cell": false,
+      "mean_rank_shift_vs_t1_baseline_tabular": 1.6
+    },
+    {
+      "task": "mortality_rate_yn",
+      "phase": "Phase1",
+      "configs": {
+        "as_shipped": {
+          "mean_point_prauc": 0.8567392222083539,
+          "seed_scores": [
+            {
+              "seed": 42,
+              "point_prauc": 0.8550632647131733,
+              "boot_mean": 0.8560068387901222,
+              "boot_lo": 0.7854898667299207,
+              "boot_hi": 0.9115632712047114
+            },
+            {
+              "seed": 7,
+              "point_prauc": 0.8558745174679169,
+              "boot_mean": 0.856627451564473,
+              "boot_lo": 0.7931225297098649,
+              "boot_hi": 0.9125625322061841
+            },
+            {
+              "seed": 123,
+              "point_prauc": 0.8586145740278129,
+              "boot_mean": 0.8596518183471545,
+              "boot_lo": 0.7875007192746761,
+              "boot_hi": 0.9177608542007645
+            },
+            {
+              "seed": 2024,
+              "point_prauc": 0.8591552579750353,
+              "boot_mean": 0.8585067123463291,
+              "boot_lo": 0.799311112058815,
+              "boot_hi": 0.911603086899338
+            },
+            {
+              "seed": 5,
+              "point_prauc": 0.8549884968578311,
+              "boot_mean": 0.8540564596645451,
+              "boot_lo": 0.788424103081725,
+              "boot_hi": 0.9108242704080481
+            }
+          ]
+        },
+        "repaired": {
+          "mean_point_prauc": 0.8593147121095989,
+          "seed_scores": [
+            {
+              "seed": 42,
+              "point_prauc": 0.8586386227234741,
+              "boot_mean": 0.8597996030977908,
+              "boot_lo": 0.788116341264756,
+              "boot_hi": 0.9174431708598578
+            },
+            {
+              "seed": 7,
+              "point_prauc": 0.8557700986320783,
+              "boot_mean": 0.8570145231700605,
+              "boot_lo": 0.7895722982872768,
+              "boot_hi": 0.912302436001126
+            },
+            {
+              "seed": 123,
+              "point_prauc": 0.8602132199404418,
+              "boot_mean": 0.861222475652367,
+              "boot_lo": 0.7899776850162008,
+              "boot_hi": 0.9175856445845376
+            },
+            {
+              "seed": 2024,
+              "point_prauc": 0.8620845020306855,
+              "boot_mean": 0.8612259354365541,
+              "boot_lo": 0.8031015029665795,
+              "boot_hi": 0.9135508555203085
+            },
+            {
+              "seed": 5,
+              "point_prauc": 0.8598671172213145,
+              "boot_mean": 0.8591918200590748,
+              "boot_lo": 0.7953611973994227,
+              "boot_hi": 0.9142189032890199
+            }
+          ]
+        },
+        "repaired_minus_summaries": {
+          "mean_point_prauc": 0.8567392222083539,
+          "seed_scores": [
+            {
+              "seed": 42,
+              "point_prauc": 0.8550632647131733,
+              "boot_mean": 0.8560068387901222,
+              "boot_lo": 0.7854898667299207,
+              "boot_hi": 0.9115632712047114
+            },
+            {
+              "seed": 7,
+              "point_prauc": 0.8558745174679169,
+              "boot_mean": 0.856627451564473,
+              "boot_lo": 0.7931225297098649,
+              "boot_hi": 0.9125625322061841
+            },
+            {
+              "seed": 123,
+              "point_prauc": 0.8586145740278129,
+              "boot_mean": 0.8596518183471545,
+              "boot_lo": 0.7875007192746761,
+              "boot_hi": 0.9177608542007645
+            },
+            {
+              "seed": 2024,
+              "point_prauc": 0.8591552579750353,
+              "boot_mean": 0.8585067123463291,
+              "boot_lo": 0.799311112058815,
+              "boot_hi": 0.911603086899338
+            },
+            {
+              "seed": 5,
+              "point_prauc": 0.8549884968578311,
+              "boot_mean": 0.8540564596645451,
+              "boot_lo": 0.788424103081725,
+              "boot_hi": 0.9108242704080481
+            }
+          ]
+        }
+      },
+      "repair_gain": 0.0025754899012450094,
+      "delta_cell": 0.17719041082190973,
+      "gain_exceeds_delta_cell": false,
+      "mean_rank_shift_vs_t1_baseline_tabular": 0.0
+    },
+    {
+      "task": "mortality_rate_yn",
+      "phase": "Phase2",
+      "configs": {
+        "as_shipped": {
+          "mean_point_prauc": 0.8539527807057106,
+          "seed_scores": [
+            {
+              "seed": 42,
+              "point_prauc": 0.8532514026098512,
+              "boot_mean": 0.8531492094573743,
+              "boot_lo": 0.8256888554443881,
+              "boot_hi": 0.8772623103007657
+            },
+            {
+              "seed": 7,
+              "point_prauc": 0.8544240356655478,
+              "boot_mean": 0.8550563317474869,
+              "boot_lo": 0.8301910800951983,
+              "boot_hi": 0.8775918944609041
+            },
+            {
+              "seed": 123,
+              "point_prauc": 0.8526977668314186,
+              "boot_mean": 0.8526527071485518,
+              "boot_lo": 0.8279134990759714,
+              "boot_hi": 0.8765868584005729
+            },
+            {
+              "seed": 2024,
+              "point_prauc": 0.8549362944590354,
+              "boot_mean": 0.8550439568388765,
+              "boot_lo": 0.8276347951040188,
+              "boot_hi": 0.8798560483171253
+            },
+            {
+              "seed": 5,
+              "point_prauc": 0.8544544039626989,
+              "boot_mean": 0.8545281798881449,
+              "boot_lo": 0.8282230785849987,
+              "boot_hi": 0.8779354540922216
+            }
+          ]
+        },
+        "repaired": {
+          "mean_point_prauc": 0.8572891434737834,
+          "seed_scores": [
+            {
+              "seed": 42,
+              "point_prauc": 0.8535800127741856,
+              "boot_mean": 0.853415660530939,
+              "boot_lo": 0.8260513208796085,
+              "boot_hi": 0.8785055580122383
+            },
+            {
+              "seed": 7,
+              "point_prauc": 0.8578448398320655,
+              "boot_mean": 0.858546742443587,
+              "boot_lo": 0.8316028819533687,
+              "boot_hi": 0.8812554941584695
+            },
+            {
+              "seed": 123,
+              "point_prauc": 0.8574963080331477,
+              "boot_mean": 0.8574295024036053,
+              "boot_lo": 0.8324595379841504,
+              "boot_hi": 0.8806899253060655
+            },
+            {
+              "seed": 2024,
+              "point_prauc": 0.857800776905637,
+              "boot_mean": 0.8579423933257974,
+              "boot_lo": 0.8283702308759984,
+              "boot_hi": 0.8827562186304934
+            },
+            {
+              "seed": 5,
+              "point_prauc": 0.8597237798238805,
+              "boot_mean": 0.859786336920975,
+              "boot_lo": 0.8335811910569163,
+              "boot_hi": 0.88383344885626
+            }
+          ]
+        },
+        "repaired_minus_summaries": {
+          "mean_point_prauc": 0.8539527807057106,
+          "seed_scores": [
+            {
+              "seed": 42,
+              "point_prauc": 0.8532514026098512,
+              "boot_mean": 0.8531492094573743,
+              "boot_lo": 0.8256888554443881,
+              "boot_hi": 0.8772623103007657
+            },
+            {
+              "seed": 7,
+              "point_prauc": 0.8544240356655478,
+              "boot_mean": 0.8550563317474869,
+              "boot_lo": 0.8301910800951983,
+              "boot_hi": 0.8775918944609041
+            },
+            {
+              "seed": 123,
+              "point_prauc": 0.8526977668314186,
+              "boot_mean": 0.8526527071485518,
+              "boot_lo": 0.8279134990759714,
+              "boot_hi": 0.8765868584005729
+            },
+            {
+              "seed": 2024,
+              "point_prauc": 0.8549362944590354,
+              "boot_mean": 0.8550439568388765,
+              "boot_lo": 0.8276347951040188,
+              "boot_hi": 0.8798560483171253
+            },
+            {
+              "seed": 5,
+              "point_prauc": 0.8544544039626989,
+              "boot_mean": 0.8545281798881449,
+              "boot_lo": 0.8282230785849987,
+              "boot_hi": 0.8779354540922216
+            }
+          ]
+        }
+      },
+      "repair_gain": 0.003336362768072809,
+      "delta_cell": 0.0576272922851343,
+      "gain_exceeds_delta_cell": false,
+      "mean_rank_shift_vs_t1_baseline_tabular": 0.0
+    },
+    {
+      "task": "mortality_rate_yn",
+      "phase": "Phase3",
+      "configs": {
+        "as_shipped": {
+          "mean_point_prauc": 0.8557361310087149,
+          "seed_scores": [
+            {
+              "seed": 42,
+              "point_prauc": 0.8523867743212339,
+              "boot_mean": 0.8521222789993103,
+              "boot_lo": 0.8222751458828366,
+              "boot_hi": 0.879075259318004
+            },
+            {
+              "seed": 7,
+              "point_prauc": 0.8571228657703883,
+              "boot_mean": 0.8570584554588347,
+              "boot_lo": 0.8277919743459196,
+              "boot_hi": 0.8824716519041254
+            },
+            {
+              "seed": 123,
+              "point_prauc": 0.8556731772856603,
+              "boot_mean": 0.855076018481566,
+              "boot_lo": 0.8239832929537403,
+              "boot_hi": 0.8830670320568568
+            },
+            {
+              "seed": 2024,
+              "point_prauc": 0.8566056993486906,
+              "boot_mean": 0.8558517525207614,
+              "boot_lo": 0.8265178875276908,
+              "boot_hi": 0.8817666097859059
+            },
+            {
+              "seed": 5,
+              "point_prauc": 0.8568921383176014,
+              "boot_mean": 0.8576203879018203,
+              "boot_lo": 0.8291297750447236,
+              "boot_hi": 0.8845223595905181
+            }
+          ]
+        },
+        "repaired": {
+          "mean_point_prauc": 0.8605746654041815,
+          "seed_scores": [
+            {
+              "seed": 42,
+              "point_prauc": 0.8578379987777733,
+              "boot_mean": 0.857571272168085,
+              "boot_lo": 0.8276173124843885,
+              "boot_hi": 0.8837087410316783
+            },
+            {
+              "seed": 7,
+              "point_prauc": 0.8618390417351534,
+              "boot_mean": 0.8618571827911558,
+              "boot_lo": 0.8328390580981465,
+              "boot_hi": 0.8860050812715113
+            },
+            {
+              "seed": 123,
+              "point_prauc": 0.8614530235239606,
+              "boot_mean": 0.8609012219063699,
+              "boot_lo": 0.831677104734043,
+              "boot_hi": 0.8865219364111923
+            },
+            {
+              "seed": 2024,
+              "point_prauc": 0.8610128908393717,
+              "boot_mean": 0.8603686838045365,
+              "boot_lo": 0.8314254936968308,
+              "boot_hi": 0.8856663717470351
+            },
+            {
+              "seed": 5,
+              "point_prauc": 0.8607303721446481,
+              "boot_mean": 0.8614427274946792,
+              "boot_lo": 0.8332779328102794,
+              "boot_hi": 0.8878622283931786
+            }
+          ]
+        },
+        "repaired_minus_summaries": {
+          "mean_point_prauc": 0.8557361310087149,
+          "seed_scores": [
+            {
+              "seed": 42,
+              "point_prauc": 0.8523867743212339,
+              "boot_mean": 0.8521222789993103,
+              "boot_lo": 0.8222751458828366,
+              "boot_hi": 0.879075259318004
+            },
+            {
+              "seed": 7,
+              "point_prauc": 0.8571228657703883,
+              "boot_mean": 0.8570584554588347,
+              "boot_lo": 0.8277919743459196,
+              "boot_hi": 0.8824716519041254
+            },
+            {
+              "seed": 123,
+              "point_prauc": 0.8556731772856603,
+              "boot_mean": 0.855076018481566,
+              "boot_lo": 0.8239832929537403,
+              "boot_hi": 0.8830670320568568
+            },
+            {
+              "seed": 2024,
+              "point_prauc": 0.8566056993486906,
+              "boot_mean": 0.8558517525207614,
+              "boot_lo": 0.8265178875276908,
+              "boot_hi": 0.8817666097859059
+            },
+            {
+              "seed": 5,
+              "point_prauc": 0.8568921383176014,
+              "boot_mean": 0.8576203879018203,
+              "boot_lo": 0.8291297750447236,
+              "boot_hi": 0.8845223595905181
+            }
+          ]
+        }
+      },
+      "repair_gain": 0.004838534395466554,
+      "delta_cell": 0.043366813211424715,
+      "gain_exceeds_delta_cell": false,
+      "mean_rank_shift_vs_t1_baseline_tabular": 0.0
+    },
+    {
+      "task": "mortality_rate_yn",
+      "phase": "Phase4",
+      "configs": {
+        "as_shipped": {
+          "mean_point_prauc": 0.5004978148580757,
+          "seed_scores": [
+            {
+              "seed": 42,
+              "point_prauc": 0.5013877305842798,
+              "boot_mean": 0.5056068922532089,
+              "boot_lo": 0.403922565803015,
+              "boot_hi": 0.6030513845178465
+            },
+            {
+              "seed": 7,
+              "point_prauc": 0.5190464547299134,
+              "boot_mean": 0.5239319543393933,
+              "boot_lo": 0.4267958188248496,
+              "boot_hi": 0.6172377093630107
+            },
+            {
+              "seed": 123,
+              "point_prauc": 0.4926770092272448,
+              "boot_mean": 0.4971091822226225,
+              "boot_lo": 0.3890009261713397,
+              "boot_hi": 0.5993842712403613
+            },
+            {
+              "seed": 2024,
+              "point_prauc": 0.48941050162597505,
+              "boot_mean": 0.49737205940831114,
+              "boot_lo": 0.39443427358856586,
+              "boot_hi": 0.5984168599230213
+            },
+            {
+              "seed": 5,
+              "point_prauc": 0.4999673781229655,
+              "boot_mean": 0.5057167966344274,
+              "boot_lo": 0.4066086188922128,
+              "boot_hi": 0.6164856226572907
+            }
+          ]
+        },
+        "repaired": {
+          "mean_point_prauc": 0.5053021504588279,
+          "seed_scores": [
+            {
+              "seed": 42,
+              "point_prauc": 0.4919174859793494,
+              "boot_mean": 0.49922303337336055,
+              "boot_lo": 0.3969195953927297,
+              "boot_hi": 0.600161698785896
+            },
+            {
+              "seed": 7,
+              "point_prauc": 0.5281767662469015,
+              "boot_mean": 0.535111772583912,
+              "boot_lo": 0.4339272094335193,
+              "boot_hi": 0.6307800637120181
+            },
+            {
+              "seed": 123,
+              "point_prauc": 0.501882313169105,
+              "boot_mean": 0.5066621993799232,
+              "boot_lo": 0.39904863121081147,
+              "boot_hi": 0.6087374829519582
+            },
+            {
+              "seed": 2024,
+              "point_prauc": 0.5010746964130864,
+              "boot_mean": 0.5090520233466235,
+              "boot_lo": 0.40557388402209565,
+              "boot_hi": 0.6147403532924595
+            },
+            {
+              "seed": 5,
+              "point_prauc": 0.5034594904856973,
+              "boot_mean": 0.5114736886045812,
+              "boot_lo": 0.41514330721974396,
+              "boot_hi": 0.622331636732456
+            }
+          ]
+        },
+        "repaired_minus_summaries": {
+          "mean_point_prauc": 0.5004978148580757,
+          "seed_scores": [
+            {
+              "seed": 42,
+              "point_prauc": 0.5013877305842798,
+              "boot_mean": 0.5056068922532089,
+              "boot_lo": 0.403922565803015,
+              "boot_hi": 0.6030513845178465
+            },
+            {
+              "seed": 7,
+              "point_prauc": 0.5190464547299134,
+              "boot_mean": 0.5239319543393933,
+              "boot_lo": 0.4267958188248496,
+              "boot_hi": 0.6172377093630107
+            },
+            {
+              "seed": 123,
+              "point_prauc": 0.4926770092272448,
+              "boot_mean": 0.4971091822226225,
+              "boot_lo": 0.3890009261713397,
+              "boot_hi": 0.5993842712403613
+            },
+            {
+              "seed": 2024,
+              "point_prauc": 0.48941050162597505,
+              "boot_mean": 0.49737205940831114,
+              "boot_lo": 0.39443427358856586,
+              "boot_hi": 0.5984168599230213
+            },
+            {
+              "seed": 5,
+              "point_prauc": 0.4999673781229655,
+              "boot_mean": 0.5057167966344274,
+              "boot_lo": 0.4066086188922128,
+              "boot_hi": 0.6164856226572907
+            }
+          ]
+        }
+      },
+      "repair_gain": 0.004804335600752219,
+      "delta_cell": 0.08606255317722626,
+      "gain_exceeds_delta_cell": false,
+      "mean_rank_shift_vs_t1_baseline_tabular": -0.2
+    },
+    {
+      "task": "serious_adverse_rate_yn",
+      "phase": "Phase1",
+      "configs": {
+        "as_shipped": {
+          "mean_point_prauc": 0.9105662323452972,
+          "seed_scores": [
+            {
+              "seed": 42,
+              "point_prauc": 0.9093753326499862,
+              "boot_mean": 0.9091692907142156,
+              "boot_lo": 0.8767844043037772,
+              "boot_hi": 0.9369238365597403
+            },
+            {
+              "seed": 7,
+              "point_prauc": 0.910212962823415,
+              "boot_mean": 0.909954284178531,
+              "boot_lo": 0.8771407650622367,
+              "boot_hi": 0.9367677836099474
+            },
+            {
+              "seed": 123,
+              "point_prauc": 0.9106827559011452,
+              "boot_mean": 0.9103514339524659,
+              "boot_lo": 0.8769848280292634,
+              "boot_hi": 0.9381354126600435
+            },
+            {
+              "seed": 2024,
+              "point_prauc": 0.9121639763728465,
+              "boot_mean": 0.912231331622286,
+              "boot_lo": 0.8801615191975186,
+              "boot_hi": 0.9392480292145545
+            },
+            {
+              "seed": 5,
+              "point_prauc": 0.9103961339790922,
+              "boot_mean": 0.910943624719227,
+              "boot_lo": 0.8790120833521523,
+              "boot_hi": 0.9354160799365643
+            }
+          ]
+        },
+        "repaired": {
+          "mean_point_prauc": 0.9125703733608731,
+          "seed_scores": [
+            {
+              "seed": 42,
+              "point_prauc": 0.9101171687638641,
+              "boot_mean": 0.9099550470360294,
+              "boot_lo": 0.8767796407140452,
+              "boot_hi": 0.9375347282273849
+            },
+            {
+              "seed": 7,
+              "point_prauc": 0.9122387221064052,
+              "boot_mean": 0.9120311323443799,
+              "boot_lo": 0.8794247018132845,
+              "boot_hi": 0.93898491493651
+            },
+            {
+              "seed": 123,
+              "point_prauc": 0.9131725382553827,
+              "boot_mean": 0.9127948446658554,
+              "boot_lo": 0.8798622446279389,
+              "boot_hi": 0.9405094770485736
+            },
+            {
+              "seed": 2024,
+              "point_prauc": 0.9143275974857967,
+              "boot_mean": 0.9143980852419605,
+              "boot_lo": 0.8838773899883082,
+              "boot_hi": 0.9414917278139383
+            },
+            {
+              "seed": 5,
+              "point_prauc": 0.9129958401929161,
+              "boot_mean": 0.9135723087618205,
+              "boot_lo": 0.8824675086318348,
+              "boot_hi": 0.9381286376063915
+            }
+          ]
+        },
+        "repaired_minus_summaries": {
+          "mean_point_prauc": 0.9105662323452972,
+          "seed_scores": [
+            {
+              "seed": 42,
+              "point_prauc": 0.9093753326499862,
+              "boot_mean": 0.9091692907142156,
+              "boot_lo": 0.8767844043037772,
+              "boot_hi": 0.9369238365597403
+            },
+            {
+              "seed": 7,
+              "point_prauc": 0.910212962823415,
+              "boot_mean": 0.909954284178531,
+              "boot_lo": 0.8771407650622367,
+              "boot_hi": 0.9367677836099474
+            },
+            {
+              "seed": 123,
+              "point_prauc": 0.9106827559011452,
+              "boot_mean": 0.9103514339524659,
+              "boot_lo": 0.8769848280292634,
+              "boot_hi": 0.9381354126600435
+            },
+            {
+              "seed": 2024,
+              "point_prauc": 0.9121639763728465,
+              "boot_mean": 0.912231331622286,
+              "boot_lo": 0.8801615191975186,
+              "boot_hi": 0.9392480292145545
+            },
+            {
+              "seed": 5,
+              "point_prauc": 0.9103961339790922,
+              "boot_mean": 0.910943624719227,
+              "boot_lo": 0.8790120833521523,
+              "boot_hi": 0.9354160799365643
+            }
+          ]
+        }
+      },
+      "repair_gain": 0.0020041410155758888,
+      "delta_cell": 0.10055074331885575,
+      "gain_exceeds_delta_cell": false,
+      "mean_rank_shift_vs_t1_baseline_tabular": 0.0
+    },
+    {
+      "task": "serious_adverse_rate_yn",
+      "phase": "Phase2",
+      "configs": {
+        "as_shipped": {
+          "mean_point_prauc": 0.9247027297529563,
+          "seed_scores": [
+            {
+              "seed": 42,
+              "point_prauc": 0.9228305671823664,
+              "boot_mean": 0.9226949982441096,
+              "boot_lo": 0.9077276539657547,
+              "boot_hi": 0.9374631067061285
+            },
+            {
+              "seed": 7,
+              "point_prauc": 0.9253782115450836,
+              "boot_mean": 0.9257815057044256,
+              "boot_lo": 0.9117195034606064,
+              "boot_hi": 0.9398840973240232
+            },
+            {
+              "seed": 123,
+              "point_prauc": 0.9257449191518008,
+              "boot_mean": 0.9257705544266344,
+              "boot_lo": 0.9090301479297832,
+              "boot_hi": 0.9395500348931559
+            },
+            {
+              "seed": 2024,
+              "point_prauc": 0.9239072592315226,
+              "boot_mean": 0.9241329030218229,
+              "boot_lo": 0.907806731685758,
+              "boot_hi": 0.9386416687177707
+            },
+            {
+              "seed": 5,
+              "point_prauc": 0.9256526916540078,
+              "boot_mean": 0.9258437106849667,
+              "boot_lo": 0.9108340802594482,
+              "boot_hi": 0.9389950394538777
+            }
+          ]
+        },
+        "repaired": {
+          "mean_point_prauc": 0.9283195013338063,
+          "seed_scores": [
+            {
+              "seed": 42,
+              "point_prauc": 0.926399627441498,
+              "boot_mean": 0.9262417251461357,
+              "boot_lo": 0.9118853976485884,
+              "boot_hi": 0.9405513381456977
+            },
+            {
+              "seed": 7,
+              "point_prauc": 0.9280314147425179,
+              "boot_mean": 0.9284282279802395,
+              "boot_lo": 0.9138250056801868,
+              "boot_hi": 0.9422978556498465
+            },
+            {
+              "seed": 123,
+              "point_prauc": 0.9291014415965768,
+              "boot_mean": 0.9290949971204576,
+              "boot_lo": 0.9137191750914162,
+              "boot_hi": 0.9420097728356822
+            },
+            {
+              "seed": 2024,
+              "point_prauc": 0.9278783165751947,
+              "boot_mean": 0.9280306650638351,
+              "boot_lo": 0.9120974248503442,
+              "boot_hi": 0.9417526157143291
+            },
+            {
+              "seed": 5,
+              "point_prauc": 0.9301867063132436,
+              "boot_mean": 0.9302614605804499,
+              "boot_lo": 0.9166823382287316,
+              "boot_hi": 0.9423676406639091
+            }
+          ]
+        },
+        "repaired_minus_summaries": {
+          "mean_point_prauc": 0.9247027297529563,
+          "seed_scores": [
+            {
+              "seed": 42,
+              "point_prauc": 0.9228305671823664,
+              "boot_mean": 0.9226949982441096,
+              "boot_lo": 0.9077276539657547,
+              "boot_hi": 0.9374631067061285
+            },
+            {
+              "seed": 7,
+              "point_prauc": 0.9253782115450836,
+              "boot_mean": 0.9257815057044256,
+              "boot_lo": 0.9117195034606064,
+              "boot_hi": 0.9398840973240232
+            },
+            {
+              "seed": 123,
+              "point_prauc": 0.9257449191518008,
+              "boot_mean": 0.9257705544266344,
+              "boot_lo": 0.9090301479297832,
+              "boot_hi": 0.9395500348931559
+            },
+            {
+              "seed": 2024,
+              "point_prauc": 0.9239072592315226,
+              "boot_mean": 0.9241329030218229,
+              "boot_lo": 0.907806731685758,
+              "boot_hi": 0.9386416687177707
+            },
+            {
+              "seed": 5,
+              "point_prauc": 0.9256526916540078,
+              "boot_mean": 0.9258437106849667,
+              "boot_lo": 0.9108340802594482,
+              "boot_hi": 0.9389950394538777
+            }
+          ]
+        }
+      },
+      "repair_gain": 0.0036167715808499423,
+      "delta_cell": 0.02281481430412657,
+      "gain_exceeds_delta_cell": false,
+      "mean_rank_shift_vs_t1_baseline_tabular": 0.0
+    },
+    {
+      "task": "serious_adverse_rate_yn",
+      "phase": "Phase3",
+      "configs": {
+        "as_shipped": {
+          "mean_point_prauc": 0.9694841319393281,
+          "seed_scores": [
+            {
+              "seed": 42,
+              "point_prauc": 0.9701902269247724,
+              "boot_mean": 0.970263828774883,
+              "boot_lo": 0.9600484613385257,
+              "boot_hi": 0.9794455854181725
+            },
+            {
+              "seed": 7,
+              "point_prauc": 0.9694313041776123,
+              "boot_mean": 0.969302565234299,
+              "boot_lo": 0.9583817851977778,
+              "boot_hi": 0.97828559967764
+            },
+            {
+              "seed": 123,
+              "point_prauc": 0.9700576247810175,
+              "boot_mean": 0.9700309959229069,
+              "boot_lo": 0.9593492972936717,
+              "boot_hi": 0.9786150380642552
+            },
+            {
+              "seed": 2024,
+              "point_prauc": 0.9695291759567507,
+              "boot_mean": 0.969608161410831,
+              "boot_lo": 0.9586078583306761,
+              "boot_hi": 0.9786879064361443
+            },
+            {
+              "seed": 5,
+              "point_prauc": 0.9682123278564887,
+              "boot_mean": 0.9681457203660958,
+              "boot_lo": 0.9562440450095386,
+              "boot_hi": 0.9785412803663562
+            }
+          ]
+        },
+        "repaired": {
+          "mean_point_prauc": 0.9708136922737118,
+          "seed_scores": [
+            {
+              "seed": 42,
+              "point_prauc": 0.970762708051784,
+              "boot_mean": 0.9708846288872617,
+              "boot_lo": 0.9599182847117327,
+              "boot_hi": 0.9806973357285229
+            },
+            {
+              "seed": 7,
+              "point_prauc": 0.9715814033725587,
+              "boot_mean": 0.9714936927449894,
+              "boot_lo": 0.96078167364082,
+              "boot_hi": 0.9801574342405854
+            },
+            {
+              "seed": 123,
+              "point_prauc": 0.9713616098275625,
+              "boot_mean": 0.9713534693477586,
+              "boot_lo": 0.9610843527877345,
+              "boot_hi": 0.9802073842909609
+            },
+            {
+              "seed": 2024,
+              "point_prauc": 0.9706042018774617,
+              "boot_mean": 0.9707273161225403,
+              "boot_lo": 0.95869569734565,
+              "boot_hi": 0.9799725604708396
+            },
+            {
+              "seed": 5,
+              "point_prauc": 0.9697585382391921,
+              "boot_mean": 0.9696922845923075,
+              "boot_lo": 0.9576819829010432,
+              "boot_hi": 0.979889731428616
+            }
+          ]
+        },
+        "repaired_minus_summaries": {
+          "mean_point_prauc": 0.9694841319393281,
+          "seed_scores": [
+            {
+              "seed": 42,
+              "point_prauc": 0.9701902269247724,
+              "boot_mean": 0.970263828774883,
+              "boot_lo": 0.9600484613385257,
+              "boot_hi": 0.9794455854181725
+            },
+            {
+              "seed": 7,
+              "point_prauc": 0.9694313041776123,
+              "boot_mean": 0.969302565234299,
+              "boot_lo": 0.9583817851977778,
+              "boot_hi": 0.97828559967764
+            },
+            {
+              "seed": 123,
+              "point_prauc": 0.9700576247810175,
+              "boot_mean": 0.9700309959229069,
+              "boot_lo": 0.9593492972936717,
+              "boot_hi": 0.9786150380642552
+            },
+            {
+              "seed": 2024,
+              "point_prauc": 0.9695291759567507,
+              "boot_mean": 0.969608161410831,
+              "boot_lo": 0.9586078583306761,
+              "boot_hi": 0.9786879064361443
+            },
+            {
+              "seed": 5,
+              "point_prauc": 0.9682123278564887,
+              "boot_mean": 0.9681457203660958,
+              "boot_lo": 0.9562440450095386,
+              "boot_hi": 0.9785412803663562
+            }
+          ]
+        }
+      },
+      "repair_gain": 0.0013295603343836948,
+      "delta_cell": 0.029823696659839364,
+      "gain_exceeds_delta_cell": false,
+      "mean_rank_shift_vs_t1_baseline_tabular": 0.2
+    },
+    {
+      "task": "serious_adverse_rate_yn",
+      "phase": "Phase4",
+      "configs": {
+        "as_shipped": {
+          "mean_point_prauc": 0.7021534016138125,
+          "seed_scores": [
+            {
+              "seed": 42,
+              "point_prauc": 0.6946232164699175,
+              "boot_mean": 0.6978021633322937,
+              "boot_lo": 0.631293334873125,
+              "boot_hi": 0.766331450208916
+            },
+            {
+              "seed": 7,
+              "point_prauc": 0.6983301711487188,
+              "boot_mean": 0.7007906628434907,
+              "boot_lo": 0.6391621009197973,
+              "boot_hi": 0.760397748818771
+            },
+            {
+              "seed": 123,
+              "point_prauc": 0.7042557589045174,
+              "boot_mean": 0.7063622827959912,
+              "boot_lo": 0.6442606708228314,
+              "boot_hi": 0.7678171048252823
+            },
+            {
+              "seed": 2024,
+              "point_prauc": 0.7068174753890506,
+              "boot_mean": 0.7069195434365515,
+              "boot_lo": 0.6425539611349251,
+              "boot_hi": 0.7643188706772962
+            },
+            {
+              "seed": 5,
+              "point_prauc": 0.7067403861568586,
+              "boot_mean": 0.7074354754965061,
+              "boot_lo": 0.6455988326512377,
+              "boot_hi": 0.7659776572875485
+            }
+          ]
+        },
+        "repaired": {
+          "mean_point_prauc": 0.7207499667581148,
+          "seed_scores": [
+            {
+              "seed": 42,
+              "point_prauc": 0.7174419549026454,
+              "boot_mean": 0.7198883262270371,
+              "boot_lo": 0.65522600103314,
+              "boot_hi": 0.7835275408820311
+            },
+            {
+              "seed": 7,
+              "point_prauc": 0.7173307440368488,
+              "boot_mean": 0.7199016940007094,
+              "boot_lo": 0.6600592063902138,
+              "boot_hi": 0.777310042737583
+            },
+            {
+              "seed": 123,
+              "point_prauc": 0.7176804531065176,
+              "boot_mean": 0.72120180961107,
+              "boot_lo": 0.6561534420849413,
+              "boot_hi": 0.7817441581711169
+            },
+            {
+              "seed": 2024,
+              "point_prauc": 0.7242500954956133,
+              "boot_mean": 0.7247010898510746,
+              "boot_lo": 0.6595279864097354,
+              "boot_hi": 0.784361933494233
+            },
+            {
+              "seed": 5,
+              "point_prauc": 0.7270465862489486,
+              "boot_mean": 0.7280191171014715,
+              "boot_lo": 0.6705529277134022,
+              "boot_hi": 0.7838583813757902
+            }
+          ]
+        },
+        "repaired_minus_summaries": {
+          "mean_point_prauc": 0.7021534016138125,
+          "seed_scores": [
+            {
+              "seed": 42,
+              "point_prauc": 0.6946232164699175,
+              "boot_mean": 0.6978021633322937,
+              "boot_lo": 0.631293334873125,
+              "boot_hi": 0.766331450208916
+            },
+            {
+              "seed": 7,
+              "point_prauc": 0.6983301711487188,
+              "boot_mean": 0.7007906628434907,
+              "boot_lo": 0.6391621009197973,
+              "boot_hi": 0.760397748818771
+            },
+            {
+              "seed": 123,
+              "point_prauc": 0.7042557589045174,
+              "boot_mean": 0.7063622827959912,
+              "boot_lo": 0.6442606708228314,
+              "boot_hi": 0.7678171048252823
+            },
+            {
+              "seed": 2024,
+              "point_prauc": 0.7068174753890506,
+              "boot_mean": 0.7069195434365515,
+              "boot_lo": 0.6425539611349251,
+              "boot_hi": 0.7643188706772962
+            },
+            {
+              "seed": 5,
+              "point_prauc": 0.7067403861568586,
+              "boot_mean": 0.7074354754965061,
+              "boot_lo": 0.6455988326512377,
+              "boot_hi": 0.7659776572875485
+            }
+          ]
+        }
+      },
+      "repair_gain": 0.0185965651443023,
+      "delta_cell": 0.09469132414933688,
+      "gain_exceeds_delta_cell": false,
+      "mean_rank_shift_vs_t1_baseline_tabular": 0.0
+    },
+    {
+      "task": "patient_dropout_rate_yn",
+      "phase": "Phase1",
+      "configs": {
+        "as_shipped": {
+          "mean_point_prauc": 0.7959188715214516,
+          "seed_scores": [
+            {
+              "seed": 42,
+              "point_prauc": 0.798114669495688,
+              "boot_mean": 0.7985595596182923,
+              "boot_lo": 0.7602030908252702,
+              "boot_hi": 0.8327594744930032
+            },
+            {
+              "seed": 7,
+              "point_prauc": 0.7956425768260025,
+              "boot_mean": 0.7955008057383265,
+              "boot_lo": 0.7582147621696508,
+              "boot_hi": 0.8325141528745758
+            },
+            {
+              "seed": 123,
+              "point_prauc": 0.7997053290394186,
+              "boot_mean": 0.8008243344317337,
+              "boot_lo": 0.7646252200320499,
+              "boot_hi": 0.8339390575546363
+            },
+            {
+              "seed": 2024,
+              "point_prauc": 0.7912540226145635,
+              "boot_mean": 0.7915569286756615,
+              "boot_lo": 0.7551944737474638,
+              "boot_hi": 0.8275049090576074
+            },
+            {
+              "seed": 5,
+              "point_prauc": 0.7948777596315851,
+              "boot_mean": 0.7957316656425621,
+              "boot_lo": 0.7558045123427072,
+              "boot_hi": 0.8297780620210202
+            }
+          ]
+        },
+        "repaired": {
+          "mean_point_prauc": 0.8004156334668678,
+          "seed_scores": [
+            {
+              "seed": 42,
+              "point_prauc": 0.8008007254040203,
+              "boot_mean": 0.8011151086753749,
+              "boot_lo": 0.7612886441123088,
+              "boot_hi": 0.8346758751134631
+            },
+            {
+              "seed": 7,
+              "point_prauc": 0.8015376626530729,
+              "boot_mean": 0.8014506918393448,
+              "boot_lo": 0.7640295739551382,
+              "boot_hi": 0.8376716839423677
+            },
+            {
+              "seed": 123,
+              "point_prauc": 0.804698768858849,
+              "boot_mean": 0.8058108915174053,
+              "boot_lo": 0.7699707688898716,
+              "boot_hi": 0.8394222844109919
+            },
+            {
+              "seed": 2024,
+              "point_prauc": 0.7983480187111149,
+              "boot_mean": 0.7984777008151229,
+              "boot_lo": 0.7618444240551353,
+              "boot_hi": 0.8323892138045271
+            },
+            {
+              "seed": 5,
+              "point_prauc": 0.7966929917072819,
+              "boot_mean": 0.797772542662352,
+              "boot_lo": 0.7571899239196824,
+              "boot_hi": 0.8319267486088218
+            }
+          ]
+        },
+        "repaired_minus_summaries": {
+          "mean_point_prauc": 0.7959188715214516,
+          "seed_scores": [
+            {
+              "seed": 42,
+              "point_prauc": 0.798114669495688,
+              "boot_mean": 0.7985595596182923,
+              "boot_lo": 0.7602030908252702,
+              "boot_hi": 0.8327594744930032
+            },
+            {
+              "seed": 7,
+              "point_prauc": 0.7956425768260025,
+              "boot_mean": 0.7955008057383265,
+              "boot_lo": 0.7582147621696508,
+              "boot_hi": 0.8325141528745758
+            },
+            {
+              "seed": 123,
+              "point_prauc": 0.7997053290394186,
+              "boot_mean": 0.8008243344317337,
+              "boot_lo": 0.7646252200320499,
+              "boot_hi": 0.8339390575546363
+            },
+            {
+              "seed": 2024,
+              "point_prauc": 0.7912540226145635,
+              "boot_mean": 0.7915569286756615,
+              "boot_lo": 0.7551944737474638,
+              "boot_hi": 0.8275049090576074
+            },
+            {
+              "seed": 5,
+              "point_prauc": 0.7948777596315851,
+              "boot_mean": 0.7957316656425621,
+              "boot_lo": 0.7558045123427072,
+              "boot_hi": 0.8297780620210202
+            }
+          ]
+        }
+      },
+      "repair_gain": 0.004496761945416261,
+      "delta_cell": 0.07616331385646859,
+      "gain_exceeds_delta_cell": false,
+      "mean_rank_shift_vs_t1_baseline_tabular": 0.0
+    },
+    {
+      "task": "patient_dropout_rate_yn",
+      "phase": "Phase2",
+      "configs": {
+        "as_shipped": {
+          "mean_point_prauc": 0.8784714458918834,
+          "seed_scores": [
+            {
+              "seed": 42,
+              "point_prauc": 0.876513640328922,
+              "boot_mean": 0.8766657208218203,
+              "boot_lo": 0.8621265214600173,
+              "boot_hi": 0.8910917704296479
+            },
+            {
+              "seed": 7,
+              "point_prauc": 0.8797444756379664,
+              "boot_mean": 0.8802242458756981,
+              "boot_lo": 0.8647760782554214,
+              "boot_hi": 0.8935130017472108
+            },
+            {
+              "seed": 123,
+              "point_prauc": 0.8787275930318234,
+              "boot_mean": 0.8787710101938537,
+              "boot_lo": 0.8642789142281033,
+              "boot_hi": 0.8928538382337154
+            },
+            {
+              "seed": 2024,
+              "point_prauc": 0.8784396470475356,
+              "boot_mean": 0.8790274363457865,
+              "boot_lo": 0.8641064778858022,
+              "boot_hi": 0.8927817850130786
+            },
+            {
+              "seed": 5,
+              "point_prauc": 0.8789318734131695,
+              "boot_mean": 0.8789243644668427,
+              "boot_lo": 0.8654071087541118,
+              "boot_hi": 0.89198463464212
+            }
+          ]
+        },
+        "repaired": {
+          "mean_point_prauc": 0.8840689300434835,
+          "seed_scores": [
+            {
+              "seed": 42,
+              "point_prauc": 0.8819074437863629,
+              "boot_mean": 0.8820388733242615,
+              "boot_lo": 0.867657719072005,
+              "boot_hi": 0.8956674144800648
+            },
+            {
+              "seed": 7,
+              "point_prauc": 0.8850130290498301,
+              "boot_mean": 0.8854625864642448,
+              "boot_lo": 0.8715137789983154,
+              "boot_hi": 0.8980113629981775
+            },
+            {
+              "seed": 123,
+              "point_prauc": 0.8845625214519637,
+              "boot_mean": 0.8846033130601061,
+              "boot_lo": 0.8711469032223225,
+              "boot_hi": 0.8975096090294554
+            },
+            {
+              "seed": 2024,
+              "point_prauc": 0.88384367728428,
+              "boot_mean": 0.8843358540563229,
+              "boot_lo": 0.8699683813376652,
+              "boot_hi": 0.8977521519355288
+            },
+            {
+              "seed": 5,
+              "point_prauc": 0.8850179786449812,
+              "boot_mean": 0.8850546973691632,
+              "boot_lo": 0.8718315923347686,
+              "boot_hi": 0.8971398416940242
+            }
+          ]
+        },
+        "repaired_minus_summaries": {
+          "mean_point_prauc": 0.8784714458918834,
+          "seed_scores": [
+            {
+              "seed": 42,
+              "point_prauc": 0.876513640328922,
+              "boot_mean": 0.8766657208218203,
+              "boot_lo": 0.8621265214600173,
+              "boot_hi": 0.8910917704296479
+            },
+            {
+              "seed": 7,
+              "point_prauc": 0.8797444756379664,
+              "boot_mean": 0.8802242458756981,
+              "boot_lo": 0.8647760782554214,
+              "boot_hi": 0.8935130017472108
+            },
+            {
+              "seed": 123,
+              "point_prauc": 0.8787275930318234,
+              "boot_mean": 0.8787710101938537,
+              "boot_lo": 0.8642789142281033,
+              "boot_hi": 0.8928538382337154
+            },
+            {
+              "seed": 2024,
+              "point_prauc": 0.8784396470475356,
+              "boot_mean": 0.8790274363457865,
+              "boot_lo": 0.8641064778858022,
+              "boot_hi": 0.8927817850130786
+            },
+            {
+              "seed": 5,
+              "point_prauc": 0.8789318734131695,
+              "boot_mean": 0.8789243644668427,
+              "boot_lo": 0.8654071087541118,
+              "boot_hi": 0.89198463464212
+            }
+          ]
+        }
+      },
+      "repair_gain": 0.005597484151600107,
+      "delta_cell": 0.025199951714714335,
+      "gain_exceeds_delta_cell": false,
+      "mean_rank_shift_vs_t1_baseline_tabular": 0.0
+    },
+    {
+      "task": "patient_dropout_rate_yn",
+      "phase": "Phase3",
+      "configs": {
+        "as_shipped": {
+          "mean_point_prauc": 0.9658781306409073,
+          "seed_scores": [
+            {
+              "seed": 42,
+              "point_prauc": 0.964782196494702,
+              "boot_mean": 0.9649482534585496,
+              "boot_lo": 0.9558843981769001,
+              "boot_hi": 0.9734049275485572
+            },
+            {
+              "seed": 7,
+              "point_prauc": 0.9657552303252016,
+              "boot_mean": 0.9656857344141743,
+              "boot_lo": 0.9572306987009926,
+              "boot_hi": 0.9738739725718087
+            },
+            {
+              "seed": 123,
+              "point_prauc": 0.9676178512699025,
+              "boot_mean": 0.9676504300977404,
+              "boot_lo": 0.959531118233291,
+              "boot_hi": 0.974753795560294
+            },
+            {
+              "seed": 2024,
+              "point_prauc": 0.9668581758841892,
+              "boot_mean": 0.9667281310371998,
+              "boot_lo": 0.9587104151479655,
+              "boot_hi": 0.9738243612284379
+            },
+            {
+              "seed": 5,
+              "point_prauc": 0.9643771992305409,
+              "boot_mean": 0.9645177246597919,
+              "boot_lo": 0.9550702602204947,
+              "boot_hi": 0.9732180725581607
+            }
+          ]
+        },
+        "repaired": {
+          "mean_point_prauc": 0.9696786351524349,
+          "seed_scores": [
+            {
+              "seed": 42,
+              "point_prauc": 0.9680444188563975,
+              "boot_mean": 0.9682118557236461,
+              "boot_lo": 0.9596571585470777,
+              "boot_hi": 0.9759671915659411
+            },
+            {
+              "seed": 7,
+              "point_prauc": 0.969437477686324,
+              "boot_mean": 0.9693820810629936,
+              "boot_lo": 0.961653180037521,
+              "boot_hi": 0.9768117207753837
+            },
+            {
+              "seed": 123,
+              "point_prauc": 0.9714000146664798,
+              "boot_mean": 0.9713842688694592,
+              "boot_lo": 0.9641107682393495,
+              "boot_hi": 0.9775973759003503
+            },
+            {
+              "seed": 2024,
+              "point_prauc": 0.9711443154861347,
+              "boot_mean": 0.970989909677952,
+              "boot_lo": 0.964097569573562,
+              "boot_hi": 0.9773090971491535
+            },
+            {
+              "seed": 5,
+              "point_prauc": 0.9683669490668377,
+              "boot_mean": 0.968511354402451,
+              "boot_lo": 0.959936172869787,
+              "boot_hi": 0.976020009778753
+            }
+          ]
+        },
+        "repaired_minus_summaries": {
+          "mean_point_prauc": 0.9658781306409073,
+          "seed_scores": [
+            {
+              "seed": 42,
+              "point_prauc": 0.964782196494702,
+              "boot_mean": 0.9649482534585496,
+              "boot_lo": 0.9558843981769001,
+              "boot_hi": 0.9734049275485572
+            },
+            {
+              "seed": 7,
+              "point_prauc": 0.9657552303252016,
+              "boot_mean": 0.9656857344141743,
+              "boot_lo": 0.9572306987009926,
+              "boot_hi": 0.9738739725718087
+            },
+            {
+              "seed": 123,
+              "point_prauc": 0.9676178512699025,
+              "boot_mean": 0.9676504300977404,
+              "boot_lo": 0.959531118233291,
+              "boot_hi": 0.974753795560294
+            },
+            {
+              "seed": 2024,
+              "point_prauc": 0.9668581758841892,
+              "boot_mean": 0.9667281310371998,
+              "boot_lo": 0.9587104151479655,
+              "boot_hi": 0.9738243612284379
+            },
+            {
+              "seed": 5,
+              "point_prauc": 0.9643771992305409,
+              "boot_mean": 0.9645177246597919,
+              "boot_lo": 0.9550702602204947,
+              "boot_hi": 0.9732180725581607
+            }
+          ]
+        }
+      },
+      "repair_gain": 0.0038005045115275804,
+      "delta_cell": 0.015573950953207013,
+      "gain_exceeds_delta_cell": false,
+      "mean_rank_shift_vs_t1_baseline_tabular": 0.2
+    },
+    {
+      "task": "patient_dropout_rate_yn",
+      "phase": "Phase4",
+      "configs": {
+        "as_shipped": {
+          "mean_point_prauc": 0.8537940256972606,
+          "seed_scores": [
+            {
+              "seed": 42,
+              "point_prauc": 0.8542500702531266,
+              "boot_mean": 0.8547319834433181,
+              "boot_lo": 0.8302349099630563,
+              "boot_hi": 0.8785309478363107
+            },
+            {
+              "seed": 7,
+              "point_prauc": 0.8528656778020658,
+              "boot_mean": 0.8527929089595586,
+              "boot_lo": 0.827575244779348,
+              "boot_hi": 0.8780495652406982
+            },
+            {
+              "seed": 123,
+              "point_prauc": 0.8550137033694106,
+              "boot_mean": 0.855149493987871,
+              "boot_lo": 0.829263055692086,
+              "boot_hi": 0.8800206040532407
+            },
+            {
+              "seed": 2024,
+              "point_prauc": 0.8542078715660404,
+              "boot_mean": 0.8553849851210948,
+              "boot_lo": 0.8309968539398883,
+              "boot_hi": 0.8800806584090156
+            },
+            {
+              "seed": 5,
+              "point_prauc": 0.8526328054956597,
+              "boot_mean": 0.8521723109835666,
+              "boot_lo": 0.8247523490475028,
+              "boot_hi": 0.8773845736216886
+            }
+          ]
+        },
+        "repaired": {
+          "mean_point_prauc": 0.8601181712097501,
+          "seed_scores": [
+            {
+              "seed": 42,
+              "point_prauc": 0.8616830695341524,
+              "boot_mean": 0.8620472743646178,
+              "boot_lo": 0.8383804984779224,
+              "boot_hi": 0.8842946464520621
+            },
+            {
+              "seed": 7,
+              "point_prauc": 0.8594142490010583,
+              "boot_mean": 0.859499853621236,
+              "boot_lo": 0.8363725642767603,
+              "boot_hi": 0.883357442617078
+            },
+            {
+              "seed": 123,
+              "point_prauc": 0.8596650543285087,
+              "boot_mean": 0.8595931454549177,
+              "boot_lo": 0.8348122508319683,
+              "boot_hi": 0.8835269025382146
+            },
+            {
+              "seed": 2024,
+              "point_prauc": 0.8602876021669226,
+              "boot_mean": 0.8614037460879558,
+              "boot_lo": 0.8376311003942569,
+              "boot_hi": 0.8852380050147025
+            },
+            {
+              "seed": 5,
+              "point_prauc": 0.8595408810181087,
+              "boot_mean": 0.8588398795325776,
+              "boot_lo": 0.8326546128911315,
+              "boot_hi": 0.8828502422635434
+            }
+          ]
+        },
+        "repaired_minus_summaries": {
+          "mean_point_prauc": 0.8537940256972606,
+          "seed_scores": [
+            {
+              "seed": 42,
+              "point_prauc": 0.8542500702531266,
+              "boot_mean": 0.8547319834433181,
+              "boot_lo": 0.8302349099630563,
+              "boot_hi": 0.8785309478363107
+            },
+            {
+              "seed": 7,
+              "point_prauc": 0.8528656778020658,
+              "boot_mean": 0.8527929089595586,
+              "boot_lo": 0.827575244779348,
+              "boot_hi": 0.8780495652406982
+            },
+            {
+              "seed": 123,
+              "point_prauc": 0.8550137033694106,
+              "boot_mean": 0.855149493987871,
+              "boot_lo": 0.829263055692086,
+              "boot_hi": 0.8800206040532407
+            },
+            {
+              "seed": 2024,
+              "point_prauc": 0.8542078715660404,
+              "boot_mean": 0.8553849851210948,
+              "boot_lo": 0.8309968539398883,
+              "boot_hi": 0.8800806584090156
+            },
+            {
+              "seed": 5,
+              "point_prauc": 0.8526328054956597,
+              "boot_mean": 0.8521723109835666,
+              "boot_lo": 0.8247523490475028,
+              "boot_hi": 0.8773845736216886
+            }
+          ]
+        }
+      },
+      "repair_gain": 0.0063241455124894985,
+      "delta_cell": 0.044719813800419644,
+      "gain_exceeds_delta_cell": false,
+      "mean_rank_shift_vs_t1_baseline_tabular": 0.0
+    },
+    {
+      "task": "failure_reason",
+      "phase": "Phase1",
+      "configs": {
+        "as_shipped": {
+          "mean_point_prauc": 0.3437192877973379,
+          "seed_scores": [
+            {
+              "seed": 42,
+              "point_prauc": 0.35137340828244135,
+              "boot_mean": 0.3573829307364905,
+              "boot_lo": 0.3236253799136053,
+              "boot_hi": 0.3928942937456171
+            },
+            {
+              "seed": 7,
+              "point_prauc": 0.337916333224506,
+              "boot_mean": 0.3447583331987179,
+              "boot_lo": 0.31513462644985746,
+              "boot_hi": 0.37916953389414654
+            },
+            {
+              "seed": 123,
+              "point_prauc": 0.34430297835515933,
+              "boot_mean": 0.3508922396050965,
+              "boot_lo": 0.3209637190757909,
+              "boot_hi": 0.3812964887647227
+            },
+            {
+              "seed": 2024,
+              "point_prauc": 0.3435090767116844,
+              "boot_mean": 0.3512888986796733,
+              "boot_lo": 0.32032601776748026,
+              "boot_hi": 0.38809287209522514
+            },
+            {
+              "seed": 5,
+              "point_prauc": 0.3414946424128984,
+              "boot_mean": 0.34947480468030834,
+              "boot_lo": 0.3186115237897692,
+              "boot_hi": 0.38516926731108464
+            }
+          ]
+        },
+        "repaired": {
+          "mean_point_prauc": 0.3483861709930473,
+          "seed_scores": [
+            {
+              "seed": 42,
+              "point_prauc": 0.3512943980223404,
+              "boot_mean": 0.357543263500031,
+              "boot_lo": 0.32485150907337457,
+              "boot_hi": 0.39038188567951415
+            },
+            {
+              "seed": 7,
+              "point_prauc": 0.34507877030529027,
+              "boot_mean": 0.3523351013770011,
+              "boot_lo": 0.321015806132723,
+              "boot_hi": 0.38654325130239464
+            },
+            {
+              "seed": 123,
+              "point_prauc": 0.3499074214420202,
+              "boot_mean": 0.35668017576846617,
+              "boot_lo": 0.3292192229222158,
+              "boot_hi": 0.38526656233245055
+            },
+            {
+              "seed": 2024,
+              "point_prauc": 0.35404746936890386,
+              "boot_mean": 0.36211237323273815,
+              "boot_lo": 0.3289035656704709,
+              "boot_hi": 0.39965361595862986
+            },
+            {
+              "seed": 5,
+              "point_prauc": 0.34160279582668207,
+              "boot_mean": 0.34896173260575397,
+              "boot_lo": 0.3179463434242719,
+              "boot_hi": 0.37929908009254654
+            }
+          ]
+        },
+        "repaired_minus_summaries": {
+          "mean_point_prauc": 0.3437192877973379,
+          "seed_scores": [
+            {
+              "seed": 42,
+              "point_prauc": 0.35137340828244135,
+              "boot_mean": 0.3573829307364905,
+              "boot_lo": 0.3236253799136053,
+              "boot_hi": 0.3928942937456171
+            },
+            {
+              "seed": 7,
+              "point_prauc": 0.337916333224506,
+              "boot_mean": 0.3447583331987179,
+              "boot_lo": 0.31513462644985746,
+              "boot_hi": 0.37916953389414654
+            },
+            {
+              "seed": 123,
+              "point_prauc": 0.34430297835515933,
+              "boot_mean": 0.3508922396050965,
+              "boot_lo": 0.3209637190757909,
+              "boot_hi": 0.3812964887647227
+            },
+            {
+              "seed": 2024,
+              "point_prauc": 0.3435090767116844,
+              "boot_mean": 0.3512888986796733,
+              "boot_lo": 0.32032601776748026,
+              "boot_hi": 0.38809287209522514
+            },
+            {
+              "seed": 5,
+              "point_prauc": 0.3414946424128984,
+              "boot_mean": 0.34947480468030834,
+              "boot_lo": 0.3186115237897692,
+              "boot_hi": 0.38516926731108464
+            }
+          ]
+        }
+      },
+      "repair_gain": 0.004666883195709404,
+      "delta_cell": 0.024273890678647773,
+      "gain_exceeds_delta_cell": false,
+      "mean_rank_shift_vs_t1_baseline_tabular": 0.0
+    },
+    {
+      "task": "failure_reason",
+      "phase": "Phase2",
+      "configs": {
+        "as_shipped": {
+          "mean_point_prauc": 0.3804581832893754,
+          "seed_scores": [
+            {
+              "seed": 42,
+              "point_prauc": 0.38224809025898543,
+              "boot_mean": 0.3854809331684224,
+              "boot_lo": 0.36277769961329115,
+              "boot_hi": 0.40906341944717234
+            },
+            {
+              "seed": 7,
+              "point_prauc": 0.38052814772102805,
+              "boot_mean": 0.3841087266956851,
+              "boot_lo": 0.36107184891529737,
+              "boot_hi": 0.4100958157803503
+            },
+            {
+              "seed": 123,
+              "point_prauc": 0.3813940263044519,
+              "boot_mean": 0.3836909953487017,
+              "boot_lo": 0.3596499097166071,
+              "boot_hi": 0.4074586830663177
+            },
+            {
+              "seed": 2024,
+              "point_prauc": 0.38041368579113016,
+              "boot_mean": 0.3837045040521117,
+              "boot_lo": 0.35988589403894544,
+              "boot_hi": 0.40807561386992547
+            },
+            {
+              "seed": 5,
+              "point_prauc": 0.37770696637128154,
+              "boot_mean": 0.3803651415578956,
+              "boot_lo": 0.35554344417117195,
+              "boot_hi": 0.40471329482196733
+            }
+          ]
+        },
+        "repaired": {
+          "mean_point_prauc": 0.4089508395861966,
+          "seed_scores": [
+            {
+              "seed": 42,
+              "point_prauc": 0.4145675151777191,
+              "boot_mean": 0.4171976455000363,
+              "boot_lo": 0.39124005901096626,
+              "boot_hi": 0.443193359487525
+            },
+            {
+              "seed": 7,
+              "point_prauc": 0.4103016154522914,
+              "boot_mean": 0.4136044276076882,
+              "boot_lo": 0.386636822146566,
+              "boot_hi": 0.4409549275939661
+            },
+            {
+              "seed": 123,
+              "point_prauc": 0.409781643148008,
+              "boot_mean": 0.4117581529013206,
+              "boot_lo": 0.38452477910488736,
+              "boot_hi": 0.4377991127296768
+            },
+            {
+              "seed": 2024,
+              "point_prauc": 0.40478962292536935,
+              "boot_mean": 0.40768081212191304,
+              "boot_lo": 0.3821048563162961,
+              "boot_hi": 0.43337103142276495
+            },
+            {
+              "seed": 5,
+              "point_prauc": 0.4053138012275951,
+              "boot_mean": 0.40767096740757597,
+              "boot_lo": 0.3810463998731156,
+              "boot_hi": 0.4353920444482096
+            }
+          ]
+        },
+        "repaired_minus_summaries": {
+          "mean_point_prauc": 0.3804581832893754,
+          "seed_scores": [
+            {
+              "seed": 42,
+              "point_prauc": 0.38224809025898543,
+              "boot_mean": 0.3854809331684224,
+              "boot_lo": 0.36277769961329115,
+              "boot_hi": 0.40906341944717234
+            },
+            {
+              "seed": 7,
+              "point_prauc": 0.38052814772102805,
+              "boot_mean": 0.3841087266956851,
+              "boot_lo": 0.36107184891529737,
+              "boot_hi": 0.4100958157803503
+            },
+            {
+              "seed": 123,
+              "point_prauc": 0.3813940263044519,
+              "boot_mean": 0.3836909953487017,
+              "boot_lo": 0.3596499097166071,
+              "boot_hi": 0.4074586830663177
+            },
+            {
+              "seed": 2024,
+              "point_prauc": 0.38041368579113016,
+              "boot_mean": 0.3837045040521117,
+              "boot_lo": 0.35988589403894544,
+              "boot_hi": 0.40807561386992547
+            },
+            {
+              "seed": 5,
+              "point_prauc": 0.37770696637128154,
+              "boot_mean": 0.3803651415578956,
+              "boot_lo": 0.35554344417117195,
+              "boot_hi": 0.40471329482196733
+            }
+          ]
+        }
+      },
+      "repair_gain": 0.028492656296821184,
+      "delta_cell": 0.014212614071561885,
+      "gain_exceeds_delta_cell": true,
+      "mean_rank_shift_vs_t1_baseline_tabular": 0.0
+    },
+    {
+      "task": "failure_reason",
+      "phase": "Phase3",
+      "configs": {
+        "as_shipped": {
+          "mean_point_prauc": 0.4178765401438095,
+          "seed_scores": [
+            {
+              "seed": 42,
+              "point_prauc": 0.4113189597946644,
+              "boot_mean": 0.41557332241887307,
+              "boot_lo": 0.3763144292564957,
+              "boot_hi": 0.45707056063940016
+            },
+            {
+              "seed": 7,
+              "point_prauc": 0.4199546644031539,
+              "boot_mean": 0.42317562912885537,
+              "boot_lo": 0.3852301364757756,
+              "boot_hi": 0.46359954290189354
+            },
+            {
+              "seed": 123,
+              "point_prauc": 0.42859499556946506,
+              "boot_mean": 0.4320395035050611,
+              "boot_lo": 0.39353366203264833,
+              "boot_hi": 0.47457500762755334
+            },
+            {
+              "seed": 2024,
+              "point_prauc": 0.41773199382233245,
+              "boot_mean": 0.42105071319076126,
+              "boot_lo": 0.3830111176104844,
+              "boot_hi": 0.4618883910639681
+            },
+            {
+              "seed": 5,
+              "point_prauc": 0.41178208712943143,
+              "boot_mean": 0.41544906033958295,
+              "boot_lo": 0.3776962587614161,
+              "boot_hi": 0.4550241178769566
+            }
+          ]
+        },
+        "repaired": {
+          "mean_point_prauc": 0.4400483063222026,
+          "seed_scores": [
+            {
+              "seed": 42,
+              "point_prauc": 0.4392945013370923,
+              "boot_mean": 0.44337262534469196,
+              "boot_lo": 0.40467076820824494,
+              "boot_hi": 0.48545383107475565
+            },
+            {
+              "seed": 7,
+              "point_prauc": 0.4351782154412936,
+              "boot_mean": 0.4385728490487992,
+              "boot_lo": 0.3984093008458899,
+              "boot_hi": 0.4801089027822025
+            },
+            {
+              "seed": 123,
+              "point_prauc": 0.4492810233631453,
+              "boot_mean": 0.45271493987923644,
+              "boot_lo": 0.41294219569126556,
+              "boot_hi": 0.4945530172345401
+            },
+            {
+              "seed": 2024,
+              "point_prauc": 0.44017106023950436,
+              "boot_mean": 0.4431540679798909,
+              "boot_lo": 0.40544384809267114,
+              "boot_hi": 0.4845980014878832
+            },
+            {
+              "seed": 5,
+              "point_prauc": 0.43631673122997755,
+              "boot_mean": 0.4400813198524371,
+              "boot_lo": 0.40200976428157154,
+              "boot_hi": 0.48016083262058495
+            }
+          ]
+        },
+        "repaired_minus_summaries": {
+          "mean_point_prauc": 0.4178765401438095,
+          "seed_scores": [
+            {
+              "seed": 42,
+              "point_prauc": 0.4113189597946644,
+              "boot_mean": 0.41557332241887307,
+              "boot_lo": 0.3763144292564957,
+              "boot_hi": 0.45707056063940016
+            },
+            {
+              "seed": 7,
+              "point_prauc": 0.4199546644031539,
+              "boot_mean": 0.42317562912885537,
+              "boot_lo": 0.3852301364757756,
+              "boot_hi": 0.46359954290189354
+            },
+            {
+              "seed": 123,
+              "point_prauc": 0.42859499556946506,
+              "boot_mean": 0.4320395035050611,
+              "boot_lo": 0.39353366203264833,
+              "boot_hi": 0.47457500762755334
+            },
+            {
+              "seed": 2024,
+              "point_prauc": 0.41773199382233245,
+              "boot_mean": 0.42105071319076126,
+              "boot_lo": 0.3830111176104844,
+              "boot_hi": 0.4618883910639681
+            },
+            {
+              "seed": 5,
+              "point_prauc": 0.41178208712943143,
+              "boot_mean": 0.41544906033958295,
+              "boot_lo": 0.3776962587614161,
+              "boot_hi": 0.4550241178769566
+            }
+          ]
+        }
+      },
+      "repair_gain": 0.022171766178393115,
+      "delta_cell": 0.02430646696876986,
+      "gain_exceeds_delta_cell": false,
+      "mean_rank_shift_vs_t1_baseline_tabular": 0.0
+    },
+    {
+      "task": "failure_reason",
+      "phase": "Phase4",
+      "configs": {
+        "as_shipped": {
+          "mean_point_prauc": 0.29903726839896033,
+          "seed_scores": [
+            {
+              "seed": 42,
+              "point_prauc": 0.2958927464017215,
+              "boot_mean": 0.30078422458977916,
+              "boot_lo": 0.2789275225082497,
+              "boot_hi": 0.3247707266543168
+            },
+            {
+              "seed": 7,
+              "point_prauc": 0.30302734939445813,
+              "boot_mean": 0.30842270742389644,
+              "boot_lo": 0.2861993622923754,
+              "boot_hi": 0.33649340682465845
+            },
+            {
+              "seed": 123,
+              "point_prauc": 0.2980172291157266,
+              "boot_mean": 0.3038359413912036,
+              "boot_lo": 0.2818006394692323,
+              "boot_hi": 0.3292064156123202
+            },
+            {
+              "seed": 2024,
+              "point_prauc": 0.30332929247823587,
+              "boot_mean": 0.30897868469015144,
+              "boot_lo": 0.28417628720715987,
+              "boot_hi": 0.33797157473795425
+            },
+            {
+              "seed": 5,
+              "point_prauc": 0.29491972460465987,
+              "boot_mean": 0.29871295641025786,
+              "boot_lo": 0.2779332494013397,
+              "boot_hi": 0.3194479719633081
+            }
+          ]
+        },
+        "repaired": {
+          "mean_point_prauc": 0.3033850206854888,
+          "seed_scores": [
+            {
+              "seed": 42,
+              "point_prauc": 0.29426896795061636,
+              "boot_mean": 0.29931097789136885,
+              "boot_lo": 0.2769205391852877,
+              "boot_hi": 0.3237210800835004
+            },
+            {
+              "seed": 7,
+              "point_prauc": 0.310838372111401,
+              "boot_mean": 0.3169778258870357,
+              "boot_lo": 0.29291012750028483,
+              "boot_hi": 0.3437069480951036
+            },
+            {
+              "seed": 123,
+              "point_prauc": 0.30318678961219797,
+              "boot_mean": 0.30958047206214495,
+              "boot_lo": 0.2865778433677577,
+              "boot_hi": 0.3356141460676298
+            },
+            {
+              "seed": 2024,
+              "point_prauc": 0.30428602788682735,
+              "boot_mean": 0.3109102787097746,
+              "boot_lo": 0.2830647531247047,
+              "boot_hi": 0.3440160866582063
+            },
+            {
+              "seed": 5,
+              "point_prauc": 0.3043449458664013,
+              "boot_mean": 0.3088165031605862,
+              "boot_lo": 0.2857467541525288,
+              "boot_hi": 0.33517473359967237
+            }
+          ]
+        },
+        "repaired_minus_summaries": {
+          "mean_point_prauc": 0.29903726839896033,
+          "seed_scores": [
+            {
+              "seed": 42,
+              "point_prauc": 0.2958927464017215,
+              "boot_mean": 0.30078422458977916,
+              "boot_lo": 0.2789275225082497,
+              "boot_hi": 0.3247707266543168
+            },
+            {
+              "seed": 7,
+              "point_prauc": 0.30302734939445813,
+              "boot_mean": 0.30842270742389644,
+              "boot_lo": 0.2861993622923754,
+              "boot_hi": 0.33649340682465845
+            },
+            {
+              "seed": 123,
+              "point_prauc": 0.2980172291157266,
+              "boot_mean": 0.3038359413912036,
+              "boot_lo": 0.2818006394692323,
+              "boot_hi": 0.3292064156123202
+            },
+            {
+              "seed": 2024,
+              "point_prauc": 0.30332929247823587,
+              "boot_mean": 0.30897868469015144,
+              "boot_lo": 0.28417628720715987,
+              "boot_hi": 0.33797157473795425
+            },
+            {
+              "seed": 5,
+              "point_prauc": 0.29491972460465987,
+              "boot_mean": 0.29871295641025786,
+              "boot_lo": 0.2779332494013397,
+              "boot_hi": 0.3194479719633081
+            }
+          ]
+        }
+      },
+      "repair_gain": 0.00434775228652845,
+      "delta_cell": 0.015852096240719666,
+      "gain_exceeds_delta_cell": false,
+      "mean_rank_shift_vs_t1_baseline_tabular": 0.0
+    }
+  ],
+  "n_cells_gain_above_delta_cell": 1,
+  "n_cells_gain_below_delta_cell": 19,
+  "mean_rank_shift_vs_t1_baseline_tabular_pack": 0.15,
+  "decision_rule": "Report repaired as headline TF-IDF result, as-shipped as history. If repair changes TF-IDF's rank against the tabular pack on the shared cell set, that becomes the lead. If gain < delta_cell on >=16/20 cells, story is 'typo cost nothing measurable'.",
+  "verdict": "SOFTENED: the typo cost nothing measurable -- repair gain is below delta_cell on 19/20 cells.",
+  "git_sha": "5679ebf7595019775860792a11bf9d5cfa3b4208",
+  "wall_clock_secs": 3071.5
+}

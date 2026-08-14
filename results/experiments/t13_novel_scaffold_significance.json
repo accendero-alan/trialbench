@@ -1,0 +1,625 @@
+{
+  "test_id": "T13",
+  "claim_at_stake": "fingerprints beat exact-SMILES lookup by +0.220/+0.123 on novel-scaffold rows",
+  "inputs": {
+    "seeds": [
+      42,
+      7,
+      123,
+      2024,
+      5
+    ],
+    "family": "lightgbm",
+    "n_boot": 10000,
+    "n_perm": 1000,
+    "note": "pools (row, seed) pairs across all 4 phases x 5 seeds within each task; n_pooled_row_seed_pairs and n_unique_physical_rows both reported -- see module docstring."
+  },
+  "per_task": {
+    "outcome": {
+      "n_pooled_row_seed_pairs": 1045,
+      "n_unique_physical_rows": 286,
+      "resolvable": true,
+      "observed_fp_minus_lookup": 0.033328679058786614,
+      "bootstrap_ci_lo": -0.01684131408343732,
+      "bootstrap_ci_hi": 0.08308394296369498,
+      "clears_zero": false,
+      "permutation_p_value": 0.08591408591408592
+    },
+    "mortality_rate_yn": {
+      "n_pooled_row_seed_pairs": 917,
+      "n_unique_physical_rows": 264,
+      "resolvable": true,
+      "observed_fp_minus_lookup": 0.13645770863377077,
+      "bootstrap_ci_lo": 0.08290248002096559,
+      "bootstrap_ci_hi": 0.19421515691111885,
+      "clears_zero": true,
+      "permutation_p_value": 0.000999000999000999
+    },
+    "serious_adverse_rate_yn": {
+      "n_pooled_row_seed_pairs": 903,
+      "n_unique_physical_rows": 268,
+      "resolvable": true,
+      "observed_fp_minus_lookup": 0.2990548971167262,
+      "bootstrap_ci_lo": 0.25506448186336655,
+      "bootstrap_ci_hi": 0.33804215751222466,
+      "clears_zero": true,
+      "permutation_p_value": 0.000999000999000999
+    },
+    "patient_dropout_rate_yn": {
+      "n_pooled_row_seed_pairs": 1039,
+      "n_unique_physical_rows": 286,
+      "resolvable": true,
+      "observed_fp_minus_lookup": 0.06565198964895369,
+      "bootstrap_ci_lo": 0.036594220318922274,
+      "bootstrap_ci_hi": 0.09463634634151823,
+      "clears_zero": true,
+      "permutation_p_value": 0.000999000999000999
+    }
+  },
+  "per_cell_not_evidence": [
+    {
+      "task": "outcome",
+      "phase": "Phase1",
+      "seed": 42,
+      "n_novel_rows": 62,
+      "fp_minus_lookup_prauc": 0.12330342864783467
+    },
+    {
+      "task": "outcome",
+      "phase": "Phase1",
+      "seed": 7,
+      "n_novel_rows": 62,
+      "fp_minus_lookup_prauc": 0.1687157689377623
+    },
+    {
+      "task": "outcome",
+      "phase": "Phase1",
+      "seed": 123,
+      "n_novel_rows": 59,
+      "fp_minus_lookup_prauc": 0.06724642640957651
+    },
+    {
+      "task": "outcome",
+      "phase": "Phase1",
+      "seed": 2024,
+      "n_novel_rows": 60,
+      "fp_minus_lookup_prauc": 0.16768997580981793
+    },
+    {
+      "task": "outcome",
+      "phase": "Phase1",
+      "seed": 5,
+      "n_novel_rows": 62,
+      "fp_minus_lookup_prauc": 0.12977743509725698
+    },
+    {
+      "task": "outcome",
+      "phase": "Phase2",
+      "seed": 42,
+      "n_novel_rows": 82,
+      "fp_minus_lookup_prauc": 0.08465412055080906
+    },
+    {
+      "task": "outcome",
+      "phase": "Phase2",
+      "seed": 7,
+      "n_novel_rows": 79,
+      "fp_minus_lookup_prauc": 0.06994564929025404
+    },
+    {
+      "task": "outcome",
+      "phase": "Phase2",
+      "seed": 123,
+      "n_novel_rows": 85,
+      "fp_minus_lookup_prauc": 0.010903828901200008
+    },
+    {
+      "task": "outcome",
+      "phase": "Phase2",
+      "seed": 2024,
+      "n_novel_rows": 76,
+      "fp_minus_lookup_prauc": 0.11299241346874034
+    },
+    {
+      "task": "outcome",
+      "phase": "Phase2",
+      "seed": 5,
+      "n_novel_rows": 80,
+      "fp_minus_lookup_prauc": 0.12363607834764168
+    },
+    {
+      "task": "outcome",
+      "phase": "Phase3",
+      "seed": 42,
+      "n_novel_rows": 41,
+      "fp_minus_lookup_prauc": 0.02410668277838779
+    },
+    {
+      "task": "outcome",
+      "phase": "Phase3",
+      "seed": 7,
+      "n_novel_rows": 42,
+      "fp_minus_lookup_prauc": 0.06672152409800913
+    },
+    {
+      "task": "outcome",
+      "phase": "Phase3",
+      "seed": 123,
+      "n_novel_rows": 40,
+      "fp_minus_lookup_prauc": -0.11665779744106919
+    },
+    {
+      "task": "outcome",
+      "phase": "Phase3",
+      "seed": 2024,
+      "n_novel_rows": 40,
+      "fp_minus_lookup_prauc": -0.01055142580744961
+    },
+    {
+      "task": "outcome",
+      "phase": "Phase3",
+      "seed": 5,
+      "n_novel_rows": 42,
+      "fp_minus_lookup_prauc": -0.11064018937059855
+    },
+    {
+      "task": "outcome",
+      "phase": "Phase4",
+      "seed": 42,
+      "n_novel_rows": 25,
+      "fp_minus_lookup_prauc": 0.1860951303598362
+    },
+    {
+      "task": "outcome",
+      "phase": "Phase4",
+      "seed": 7,
+      "n_novel_rows": 25,
+      "fp_minus_lookup_prauc": 0.10138278388278388
+    },
+    {
+      "task": "outcome",
+      "phase": "Phase4",
+      "seed": 123,
+      "n_novel_rows": 31,
+      "fp_minus_lookup_prauc": 0.02480786462641299
+    },
+    {
+      "task": "outcome",
+      "phase": "Phase4",
+      "seed": 2024,
+      "n_novel_rows": 27,
+      "fp_minus_lookup_prauc": 0.16203988005458597
+    },
+    {
+      "task": "outcome",
+      "phase": "Phase4",
+      "seed": 5,
+      "n_novel_rows": 25,
+      "fp_minus_lookup_prauc": 0.10741702741702741
+    },
+    {
+      "task": "mortality_rate_yn",
+      "phase": "Phase1",
+      "seed": 42,
+      "n_novel_rows": 35,
+      "fp_minus_lookup_prauc": 0.1739732504121926
+    },
+    {
+      "task": "mortality_rate_yn",
+      "phase": "Phase1",
+      "seed": 7,
+      "n_novel_rows": 41,
+      "fp_minus_lookup_prauc": 0.017741930475072498
+    },
+    {
+      "task": "mortality_rate_yn",
+      "phase": "Phase1",
+      "seed": 123,
+      "n_novel_rows": 36,
+      "fp_minus_lookup_prauc": -0.030809699559699533
+    },
+    {
+      "task": "mortality_rate_yn",
+      "phase": "Phase1",
+      "seed": 2024,
+      "n_novel_rows": 42,
+      "fp_minus_lookup_prauc": 0.08879385087368283
+    },
+    {
+      "task": "mortality_rate_yn",
+      "phase": "Phase1",
+      "seed": 5,
+      "n_novel_rows": 34,
+      "fp_minus_lookup_prauc": 0.07091044394965967
+    },
+    {
+      "task": "mortality_rate_yn",
+      "phase": "Phase2",
+      "seed": 42,
+      "n_novel_rows": 76,
+      "fp_minus_lookup_prauc": 0.18572316026393326
+    },
+    {
+      "task": "mortality_rate_yn",
+      "phase": "Phase2",
+      "seed": 7,
+      "n_novel_rows": 76,
+      "fp_minus_lookup_prauc": 0.10771500376483856
+    },
+    {
+      "task": "mortality_rate_yn",
+      "phase": "Phase2",
+      "seed": 123,
+      "n_novel_rows": 73,
+      "fp_minus_lookup_prauc": 0.14074665074841763
+    },
+    {
+      "task": "mortality_rate_yn",
+      "phase": "Phase2",
+      "seed": 2024,
+      "n_novel_rows": 75,
+      "fp_minus_lookup_prauc": 0.21284231129742887
+    },
+    {
+      "task": "mortality_rate_yn",
+      "phase": "Phase2",
+      "seed": 5,
+      "n_novel_rows": 66,
+      "fp_minus_lookup_prauc": 0.17769921124727778
+    },
+    {
+      "task": "mortality_rate_yn",
+      "phase": "Phase3",
+      "seed": 42,
+      "n_novel_rows": 39,
+      "fp_minus_lookup_prauc": 0.1394081225147401
+    },
+    {
+      "task": "mortality_rate_yn",
+      "phase": "Phase3",
+      "seed": 7,
+      "n_novel_rows": 40,
+      "fp_minus_lookup_prauc": 0.1867041522046401
+    },
+    {
+      "task": "mortality_rate_yn",
+      "phase": "Phase3",
+      "seed": 123,
+      "n_novel_rows": 43,
+      "fp_minus_lookup_prauc": 0.22513009559211378
+    },
+    {
+      "task": "mortality_rate_yn",
+      "phase": "Phase3",
+      "seed": 2024,
+      "n_novel_rows": 39,
+      "fp_minus_lookup_prauc": 0.15474228617232388
+    },
+    {
+      "task": "mortality_rate_yn",
+      "phase": "Phase3",
+      "seed": 5,
+      "n_novel_rows": 38,
+      "fp_minus_lookup_prauc": 0.024038158163794787
+    },
+    {
+      "task": "mortality_rate_yn",
+      "phase": "Phase4",
+      "seed": 42,
+      "n_novel_rows": 36,
+      "fp_minus_lookup_prauc": 0.08794014918149179
+    },
+    {
+      "task": "mortality_rate_yn",
+      "phase": "Phase4",
+      "seed": 7,
+      "n_novel_rows": 29,
+      "fp_minus_lookup_prauc": 0.26647480758816244
+    },
+    {
+      "task": "mortality_rate_yn",
+      "phase": "Phase4",
+      "seed": 123,
+      "n_novel_rows": 34,
+      "fp_minus_lookup_prauc": 0.15362268227112114
+    },
+    {
+      "task": "mortality_rate_yn",
+      "phase": "Phase4",
+      "seed": 2024,
+      "n_novel_rows": 33,
+      "fp_minus_lookup_prauc": 0.14438289707938534
+    },
+    {
+      "task": "mortality_rate_yn",
+      "phase": "Phase4",
+      "seed": 5,
+      "n_novel_rows": 32,
+      "fp_minus_lookup_prauc": 0.27077447357547685
+    },
+    {
+      "task": "serious_adverse_rate_yn",
+      "phase": "Phase1",
+      "seed": 42,
+      "n_novel_rows": 36,
+      "fp_minus_lookup_prauc": 0.10664175090325989
+    },
+    {
+      "task": "serious_adverse_rate_yn",
+      "phase": "Phase1",
+      "seed": 7,
+      "n_novel_rows": 37,
+      "fp_minus_lookup_prauc": 0.10793611188348026
+    },
+    {
+      "task": "serious_adverse_rate_yn",
+      "phase": "Phase1",
+      "seed": 123,
+      "n_novel_rows": 39,
+      "fp_minus_lookup_prauc": 0.16855921855921863
+    },
+    {
+      "task": "serious_adverse_rate_yn",
+      "phase": "Phase1",
+      "seed": 2024,
+      "n_novel_rows": 35,
+      "fp_minus_lookup_prauc": 0.04123969216333745
+    },
+    {
+      "task": "serious_adverse_rate_yn",
+      "phase": "Phase1",
+      "seed": 5,
+      "n_novel_rows": 33,
+      "fp_minus_lookup_prauc": 0.18469448193132404
+    },
+    {
+      "task": "serious_adverse_rate_yn",
+      "phase": "Phase2",
+      "seed": 42,
+      "n_novel_rows": 68,
+      "fp_minus_lookup_prauc": 0.14168655086650406
+    },
+    {
+      "task": "serious_adverse_rate_yn",
+      "phase": "Phase2",
+      "seed": 7,
+      "n_novel_rows": 76,
+      "fp_minus_lookup_prauc": 0.10167864348259814
+    },
+    {
+      "task": "serious_adverse_rate_yn",
+      "phase": "Phase2",
+      "seed": 123,
+      "n_novel_rows": 71,
+      "fp_minus_lookup_prauc": 0.11254180070989916
+    },
+    {
+      "task": "serious_adverse_rate_yn",
+      "phase": "Phase2",
+      "seed": 2024,
+      "n_novel_rows": 75,
+      "fp_minus_lookup_prauc": 0.1508422447179828
+    },
+    {
+      "task": "serious_adverse_rate_yn",
+      "phase": "Phase2",
+      "seed": 5,
+      "n_novel_rows": 73,
+      "fp_minus_lookup_prauc": 0.11311197728075406
+    },
+    {
+      "task": "serious_adverse_rate_yn",
+      "phase": "Phase3",
+      "seed": 42,
+      "n_novel_rows": 44,
+      "fp_minus_lookup_prauc": 0.048014932323177884
+    },
+    {
+      "task": "serious_adverse_rate_yn",
+      "phase": "Phase3",
+      "seed": 7,
+      "n_novel_rows": 43,
+      "fp_minus_lookup_prauc": 0.061732470454439414
+    },
+    {
+      "task": "serious_adverse_rate_yn",
+      "phase": "Phase3",
+      "seed": 123,
+      "n_novel_rows": 42,
+      "fp_minus_lookup_prauc": 0.10617108787974971
+    },
+    {
+      "task": "serious_adverse_rate_yn",
+      "phase": "Phase3",
+      "seed": 2024,
+      "n_novel_rows": 39,
+      "fp_minus_lookup_prauc": 0.10473959563912572
+    },
+    {
+      "task": "serious_adverse_rate_yn",
+      "phase": "Phase3",
+      "seed": 5,
+      "n_novel_rows": 38,
+      "fp_minus_lookup_prauc": 0.057493940429134915
+    },
+    {
+      "task": "serious_adverse_rate_yn",
+      "phase": "Phase4",
+      "seed": 42,
+      "n_novel_rows": 30,
+      "fp_minus_lookup_prauc": 0.22881622627348497
+    },
+    {
+      "task": "serious_adverse_rate_yn",
+      "phase": "Phase4",
+      "seed": 7,
+      "n_novel_rows": 30,
+      "fp_minus_lookup_prauc": 0.2737672868884048
+    },
+    {
+      "task": "serious_adverse_rate_yn",
+      "phase": "Phase4",
+      "seed": 123,
+      "n_novel_rows": 29,
+      "fp_minus_lookup_prauc": 0.061809910377354615
+    },
+    {
+      "task": "serious_adverse_rate_yn",
+      "phase": "Phase4",
+      "seed": 2024,
+      "n_novel_rows": 31,
+      "fp_minus_lookup_prauc": 0.279424185756584
+    },
+    {
+      "task": "serious_adverse_rate_yn",
+      "phase": "Phase4",
+      "seed": 5,
+      "n_novel_rows": 34,
+      "fp_minus_lookup_prauc": 0.09180033552964972
+    },
+    {
+      "task": "patient_dropout_rate_yn",
+      "phase": "Phase1",
+      "seed": 42,
+      "n_novel_rows": 46,
+      "fp_minus_lookup_prauc": 0.07619745414380108
+    },
+    {
+      "task": "patient_dropout_rate_yn",
+      "phase": "Phase1",
+      "seed": 7,
+      "n_novel_rows": 49,
+      "fp_minus_lookup_prauc": -0.0058075274999458415
+    },
+    {
+      "task": "patient_dropout_rate_yn",
+      "phase": "Phase1",
+      "seed": 123,
+      "n_novel_rows": 54,
+      "fp_minus_lookup_prauc": -0.00016206004088936687
+    },
+    {
+      "task": "patient_dropout_rate_yn",
+      "phase": "Phase1",
+      "seed": 2024,
+      "n_novel_rows": 48,
+      "fp_minus_lookup_prauc": 0.06640333547417421
+    },
+    {
+      "task": "patient_dropout_rate_yn",
+      "phase": "Phase1",
+      "seed": 5,
+      "n_novel_rows": 51,
+      "fp_minus_lookup_prauc": -0.04849843674251908
+    },
+    {
+      "task": "patient_dropout_rate_yn",
+      "phase": "Phase2",
+      "seed": 42,
+      "n_novel_rows": 87,
+      "fp_minus_lookup_prauc": -0.040686763886983224
+    },
+    {
+      "task": "patient_dropout_rate_yn",
+      "phase": "Phase2",
+      "seed": 7,
+      "n_novel_rows": 86,
+      "fp_minus_lookup_prauc": -0.07191366281641631
+    },
+    {
+      "task": "patient_dropout_rate_yn",
+      "phase": "Phase2",
+      "seed": 123,
+      "n_novel_rows": 89,
+      "fp_minus_lookup_prauc": -0.006708668657196659
+    },
+    {
+      "task": "patient_dropout_rate_yn",
+      "phase": "Phase2",
+      "seed": 2024,
+      "n_novel_rows": 88,
+      "fp_minus_lookup_prauc": -0.013714646012810361
+    },
+    {
+      "task": "patient_dropout_rate_yn",
+      "phase": "Phase2",
+      "seed": 5,
+      "n_novel_rows": 86,
+      "fp_minus_lookup_prauc": -0.020391929677286202
+    },
+    {
+      "task": "patient_dropout_rate_yn",
+      "phase": "Phase3",
+      "seed": 42,
+      "n_novel_rows": 38,
+      "fp_minus_lookup_prauc": -0.03336027407445652
+    },
+    {
+      "task": "patient_dropout_rate_yn",
+      "phase": "Phase3",
+      "seed": 7,
+      "n_novel_rows": 32,
+      "fp_minus_lookup_prauc": 0.0035966245610409286
+    },
+    {
+      "task": "patient_dropout_rate_yn",
+      "phase": "Phase3",
+      "seed": 123,
+      "n_novel_rows": 37,
+      "fp_minus_lookup_prauc": 0.015673971919916596
+    },
+    {
+      "task": "patient_dropout_rate_yn",
+      "phase": "Phase3",
+      "seed": 2024,
+      "n_novel_rows": 38,
+      "fp_minus_lookup_prauc": -0.002365270059228375
+    },
+    {
+      "task": "patient_dropout_rate_yn",
+      "phase": "Phase3",
+      "seed": 5,
+      "n_novel_rows": 33,
+      "fp_minus_lookup_prauc": 0.0064839863635773876
+    },
+    {
+      "task": "patient_dropout_rate_yn",
+      "phase": "Phase4",
+      "seed": 42,
+      "n_novel_rows": 35,
+      "fp_minus_lookup_prauc": 0.1930143205571454
+    },
+    {
+      "task": "patient_dropout_rate_yn",
+      "phase": "Phase4",
+      "seed": 7,
+      "n_novel_rows": 35,
+      "fp_minus_lookup_prauc": 0.11298428858214271
+    },
+    {
+      "task": "patient_dropout_rate_yn",
+      "phase": "Phase4",
+      "seed": 123,
+      "n_novel_rows": 38,
+      "fp_minus_lookup_prauc": 0.05366267965376026
+    },
+    {
+      "task": "patient_dropout_rate_yn",
+      "phase": "Phase4",
+      "seed": 2024,
+      "n_novel_rows": 32,
+      "fp_minus_lookup_prauc": 0.028454174885777284
+    },
+    {
+      "task": "patient_dropout_rate_yn",
+      "phase": "Phase4",
+      "seed": 5,
+      "n_novel_rows": 37,
+      "fp_minus_lookup_prauc": 0.030385159853673183
+    }
+  ],
+  "decision_rule": "If the pooled per-task CI clears zero, CONFIRMED and becomes the lead of Surprise 3, stated with its n. If it crosses zero, SOFTENED to 'suggestive, 780 rows, would need a targeted study' -- must not be written as a result. Per-cell numbers are never reported as evidence.",
+  "verdict": "CONFIRMED for 3/4 resolvable task(s) -- pooled CI clears zero, becomes the lead of Surprise 3 with its n stated. Per-cell numbers are NOT reported as evidence, per protocol.",
+  "git_sha": "5679ebf7595019775860792a11bf9d5cfa3b4208",
+  "wall_clock_secs": 129.7
+}

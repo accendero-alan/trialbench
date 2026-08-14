@@ -11,3 +11,4 @@ category_encoders
 xgboost
 lightgbm
 catboost
+pyarrow             # parquet persistence for per-fit predictions (results/predictions/)

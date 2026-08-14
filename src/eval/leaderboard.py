@@ -45,6 +45,47 @@ def _load(results_dir):
     return pd.DataFrame(rows)
 
 
+def shared_cell_set(tpm: pd.DataFrame, methods) -> list:
+    """(task, phase) cells where every method in ``methods`` has a completed
+    result in the long-format frame ``tpm`` (columns: task, phase, method).
+
+    This is the fix for P4 (newsletter-part2-test-plan.md): a mean/ranking
+    over cells is only valid when every compared method ran every cell in
+    the set, per the plan's standing rule #3. Test scripts (T1, T8, ...)
+    should call this directly with an explicit method list rather than
+    reimplementing the pivot/dropna dance.
+    """
+    methods = list(methods)
+    sub = tpm[tpm["method"].isin(methods)]
+    counts = sub.groupby(["task", "phase"])["method"].nunique()
+    full = counts[counts == len(set(methods))]
+    return list(full.index)
+
+
+def coverage(tpm: pd.DataFrame) -> pd.DataFrame:
+    """method × task table of how many distinct phases each method completed,
+    against how many phases exist for that task at all -- so partial
+    coverage (ft_transformer, tabnet, clinical_embeddings today) is visible
+    instead of silently blended into a skipna mean."""
+    total_phases = tpm.groupby("task")["phase"].nunique()
+    done = tpm.groupby(["method", "task"])["phase"].nunique().unstack(fill_value=0)
+    out = done.astype(str) + "/" + done.columns.map(total_phases).astype(str)
+    return out
+
+
+def _ranked_mean(pivot: pd.DataFrame) -> pd.Series:
+    """Mean over only the columns (phases) every row (method) in ``pivot``
+    has a value for -- i.e. the shared cell set for exactly the methods
+    present in this table. Columns not fully covered are dropped from the
+    mean, not skipna-averaged over (the bug this replaces: the old
+    ``pivot.mean(axis=1)`` silently skipped NaN, blending partial-coverage
+    methods in on an unequal footing -- see report.md)."""
+    shared_cols = pivot.columns[pivot.notna().all(axis=0)]
+    if len(shared_cols) == 0:
+        return pd.Series(np.nan, index=pivot.index)
+    return pivot[shared_cols].mean(axis=1)
+
+
 def build(results_dir):
     df = _load(results_dir)
     if df.empty:
@@ -63,23 +104,42 @@ def build(results_dir):
     # average over seeds -> (task, phase, method)
     tpm = ok.groupby(["task", "phase", "method"])["headline_mean"].mean().reset_index()
 
+    cov = coverage(tpm)
+    lines.append("## Coverage (phases completed / phases in task)")
+    lines.append("")
+    lines.append(cov.to_markdown())
+    lines.append("")
+    cov.to_csv(os.path.join(results_dir, "coverage.csv"))
+
     # per-task table: methods × phases (headline = PR-AUC)
     for task in sorted(tpm["task"].unique()):
         sub = tpm[tpm["task"] == task]
         pivot = sub.pivot_table(index="method", columns="phase", values="headline_mean")
-        pivot["mean"] = pivot.mean(axis=1)
-        pivot = pivot.sort_values("mean", ascending=False)
-        lines.append(f"## {task}  (headline: PR-AUC)")
+        n_shared = int(pivot.notna().all(axis=0).sum())
+        pivot["mean_shared"] = _ranked_mean(pivot)
+        pivot = pivot.sort_values("mean_shared", ascending=False)
+        lines.append(f"## {task}  (headline: PR-AUC; ranked by mean_shared, "
+                      f"{n_shared}/{pivot.shape[1] - 1} phases shared by every method shown)")
         lines.append("")
         lines.append(pivot.round(4).to_markdown())
         lines.append("")
 
-    # overall ranking: mean headline across all task×phase
-    overall = (tpm.groupby("method")["headline_mean"].mean()
+    # overall ranking: restricted to the (task, phase) cells every currently
+    # -successful method ran -- NOT a skipna mean across mismatched coverage.
+    all_methods = sorted(tpm["method"].unique())
+    shared = set(shared_cell_set(tpm, all_methods))
+    tpm_shared = tpm[tpm.apply(lambda r: (r["task"], r["phase"]) in shared, axis=1)]
+    overall = (tpm_shared.groupby("method")["headline_mean"].mean()
                .sort_values(ascending=False).round(4))
-    lines.append("## Overall (mean PR-AUC across all task×phase)")
+    lines.append(f"## Overall (mean PR-AUC over the {len(shared)} cells shared "
+                  f"by all {len(all_methods)} methods with a completed run)")
     lines.append("")
-    lines.append(overall.to_frame("mean_prauc").to_markdown())
+    if overall.empty:
+        lines.append("_No cell is shared by every method with a completed run "
+                      "-- see the coverage table above; compare specific "
+                      "method subsets with `shared_cell_set()` instead._")
+    else:
+        lines.append(overall.to_frame("mean_prauc_shared").to_markdown())
     lines.append("")
 
     pivot_csv = tpm.pivot_table(index="method", columns=["task", "phase"], values="headline_mean")

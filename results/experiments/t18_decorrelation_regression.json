@@ -1,0 +1,124 @@
+{
+  "test_id": "T18",
+  "claim_at_stake": "gain tracks decorrelation (Spearman 0.481/approval vs 0.790/mortality, n=2)",
+  "inputs": {
+    "seeds": [
+      42,
+      7,
+      123,
+      2024,
+      5
+    ],
+    "n_boot": 10000,
+    "rng_seed": 1,
+    "note": "OLS slope of mean_lift on mean_spearman across the 16 cells; CI via nonparametric bootstrap resampling of cells."
+  },
+  "n_cells": 16,
+  "per_cell": [
+    {
+      "task": "outcome",
+      "phase": "Phase1",
+      "mean_spearman": 0.5158332686669783,
+      "mean_lift": 0.019097342781732148
+    },
+    {
+      "task": "outcome",
+      "phase": "Phase2",
+      "mean_spearman": 0.519262900477772,
+      "mean_lift": 0.04703136862682243
+    },
+    {
+      "task": "outcome",
+      "phase": "Phase3",
+      "mean_spearman": 0.5515420573985488,
+      "mean_lift": 0.014966958434114217
+    },
+    {
+      "task": "outcome",
+      "phase": "Phase4",
+      "mean_spearman": 0.5633745581264094,
+      "mean_lift": 0.03171430964476132
+    },
+    {
+      "task": "mortality_rate_yn",
+      "phase": "Phase1",
+      "mean_spearman": 0.8499976953592558,
+      "mean_lift": 0.01213380827067761
+    },
+    {
+      "task": "mortality_rate_yn",
+      "phase": "Phase2",
+      "mean_spearman": 0.6316945043112755,
+      "mean_lift": 0.008932886647936565
+    },
+    {
+      "task": "mortality_rate_yn",
+      "phase": "Phase3",
+      "mean_spearman": 0.5420214572054526,
+      "mean_lift": 0.022325178850657483
+    },
+    {
+      "task": "mortality_rate_yn",
+      "phase": "Phase4",
+      "mean_spearman": 0.4627137092005209,
+      "mean_lift": 0.058519497349702666
+    },
+    {
+      "task": "serious_adverse_rate_yn",
+      "phase": "Phase1",
+      "mean_spearman": 0.8344363338017388,
+      "mean_lift": 0.0060999943682343875
+    },
+    {
+      "task": "serious_adverse_rate_yn",
+      "phase": "Phase2",
+      "mean_spearman": 0.5518532107474854,
+      "mean_lift": 0.009225066874598727
+    },
+    {
+      "task": "serious_adverse_rate_yn",
+      "phase": "Phase3",
+      "mean_spearman": 0.5841884100890449,
+      "mean_lift": 0.005969009035655676
+    },
+    {
+      "task": "serious_adverse_rate_yn",
+      "phase": "Phase4",
+      "mean_spearman": 0.5344077266125369,
+      "mean_lift": 0.027372808629452378
+    },
+    {
+      "task": "patient_dropout_rate_yn",
+      "phase": "Phase1",
+      "mean_spearman": 0.6439291476673454,
+      "mean_lift": 0.014352772709587614
+    },
+    {
+      "task": "patient_dropout_rate_yn",
+      "phase": "Phase2",
+      "mean_spearman": 0.5404892931736915,
+      "mean_lift": 0.01189499989641968
+    },
+    {
+      "task": "patient_dropout_rate_yn",
+      "phase": "Phase3",
+      "mean_spearman": 0.4935094322655399,
+      "mean_lift": 0.0061454066173494415
+    },
+    {
+      "task": "patient_dropout_rate_yn",
+      "phase": "Phase4",
+      "mean_spearman": 0.4624629571003142,
+      "mean_lift": 0.01609684994740748
+    }
+  ],
+  "slope": -0.05636896210246402,
+  "intercept": 0.05219243709141817,
+  "slope_ci_lo": -0.19458335690559234,
+  "slope_ci_hi": -0.011004928654342917,
+  "slope_clears_zero": true,
+  "decision_rule": "If the slope CI clears zero, CONFIRMED -- becomes a usable rule of thumb. If it crosses zero, CUT and handed to Part 3 as untested.",
+  "verdict": "CONFIRMED: slope=-0.0564, bootstrap CI [-0.1946, -0.0110] clears zero -- decorrelation is a usable rule of thumb.",
+  "git_sha": "5679ebf7595019775860792a11bf9d5cfa3b4208",
+  "wall_clock_secs": 1.9
+}

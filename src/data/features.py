@@ -21,13 +21,39 @@ from __future__ import annotations
 import numpy as np
 import pandas as pd
 
-TEXT_COLS = {
+# As-shipped column list (kept as a *set* originally, which made
+# ``concat_text``'s join order vary between processes -- see P1 in
+# newsletter-part2-test-plan.md). "brief_summary" and "detailed_description"
+# are also missing the "/textblock" suffix the actual CSV columns carry, so
+# those two fields silently never make it into the text view at all (T7 in
+# the test plan measures what that cost). This exact list is preserved here,
+# unfixed, as the historical "as-shipped" comparison point -- do not repair
+# the names in this constant; the live default below is where the repair
+# lands once T7 confirms it.
+TEXT_COLS_AS_SHIPPED = (
     "brief_title", "brief_summary", "detailed_description",
     "eligibility/study_pop/textblock", "eligibility/criteria/textblock",
     "intervention/description", "keyword",
     "study_design_info/intervention_model_description",
     "study_design_info/masking_description", "condition",
-}
+)
+
+# Live default: an ordered tuple (not a set) so column order -- and therefore
+# concat_text's joined string -- is deterministic across processes/seeds, with
+# the name typo repaired (T7 in the test plan): "brief_summary" ->
+# "brief_summary/textblock", "detailed_description" -> "detailed_description/textblock"
+# (present only on trial-failure-reason-identification; concat_text already
+# skips columns absent from a given task's frame). T7 measured the repair's
+# effect at ~+0.003 to +0.036 PR-AUC per cell -- below the T1 noise floor on
+# 19/20 cells, real only on failure_reason/Phase2 (+0.0285) -- but it's landed
+# regardless because it's the objectively correct column mapping, and T8/T9
+# depend on the tabular view no longer double-counting these columns as
+# categoricals.
+TEXT_COLS = tuple(
+    {"brief_summary": "brief_summary/textblock",
+     "detailed_description": "detailed_description/textblock"}.get(c, c)
+    for c in TEXT_COLS_AS_SHIPPED
+)
 MOLECULE_COLS = {"smiless", "intervention/intervention_name"}
 DISEASE_COLS = {"icdcode"}
 AGE_COLS = ["eligibility/minimum_age", "eligibility/maximum_age"]
@@ -180,9 +206,15 @@ class TabularFeaturizer:
         return X
 
 
-def concat_text(X: pd.DataFrame) -> list:
-    """Concatenate available free-text columns into one string per row (raw view)."""
-    present = [c for c in TEXT_COLS if c in X.columns]
+def concat_text(X: pd.DataFrame, text_cols=None) -> list:
+    """Concatenate available free-text columns into one string per row (raw view).
+
+    ``text_cols`` defaults to the module-level ``TEXT_COLS``; pass an explicit
+    ordered sequence (e.g. ``TEXT_COLS_AS_SHIPPED`` or a repaired variant) to
+    probe alternate text configurations without mutating shared state.
+    """
+    cols = TEXT_COLS if text_cols is None else text_cols
+    present = [c for c in cols if c in X.columns]
     if not present:
         return ["" for _ in range(len(X))]
     return (X[present].fillna("").astype(str).agg(" ".join, axis=1)).tolist()

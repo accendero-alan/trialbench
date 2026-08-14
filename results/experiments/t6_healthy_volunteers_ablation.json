@@ -1,0 +1,732 @@
+{
+  "test_id": "T6",
+  "claim_at_stake": "healthy_volunteers is 51.7% of FT-Transformer's skill above chance",
+  "inputs": {
+    "seeds": [
+      42,
+      7,
+      123,
+      2024,
+      5
+    ],
+    "drop_column": "eligibility/healthy_volunteers",
+    "scope_note": "field populated 40-68% on every cell, not a few -- FT-Transformer capped to mortality/Phase1 (the cell the quoted number is about) for budget; best GBM and tfidf_logreg run the full 20-cell grid."
+  },
+  "n_cells": 20,
+  "per_cell": [
+    {
+      "task": "outcome",
+      "phase": "Phase1",
+      "best_gbm": "catboost",
+      "base_rate": 0.43080357142857145,
+      "ft_transformer_run": false,
+      "methods": {
+        "gbm": {
+          "prauc_with_column": 0.723071206645326,
+          "prauc_without_column": 0.7215943600706053,
+          "drop_in_prauc": 0.0014768465747206916,
+          "skill_above_base_with": 0.29226763521675453,
+          "skill_above_base_without": 0.29079078864203384,
+          "pct_of_skill_above_base_lost_by_dropping": 0.5053062319491576
+        },
+        "tfidf": {
+          "prauc_with_column": 0.6706221867043212,
+          "prauc_without_column": 0.6706221867043212,
+          "drop_in_prauc": 0.0,
+          "skill_above_base_with": 0.2398186152757497,
+          "skill_above_base_without": 0.2398186152757497,
+          "pct_of_skill_above_base_lost_by_dropping": 0.0
+        }
+      }
+    },
+    {
+      "task": "outcome",
+      "phase": "Phase2",
+      "best_gbm": "catboost",
+      "base_rate": 0.36833731105807477,
+      "ft_transformer_run": false,
+      "methods": {
+        "gbm": {
+          "prauc_with_column": 0.6026314335174192,
+          "prauc_without_column": 0.6024382876315437,
+          "drop_in_prauc": 0.00019314588587548975,
+          "skill_above_base_with": 0.23429412245934444,
+          "skill_above_base_without": 0.23410097657346896,
+          "pct_of_skill_above_base_lost_by_dropping": 0.08243735858504309
+        },
+        "tfidf": {
+          "prauc_with_column": 0.614600281973609,
+          "prauc_without_column": 0.614600281973609,
+          "drop_in_prauc": 0.0,
+          "skill_above_base_with": 0.24626297091553428,
+          "skill_above_base_without": 0.24626297091553428,
+          "pct_of_skill_above_base_lost_by_dropping": 0.0
+        }
+      }
+    },
+    {
+      "task": "outcome",
+      "phase": "Phase3",
+      "best_gbm": "catboost",
+      "base_rate": 0.5551489806586514,
+      "ft_transformer_run": false,
+      "methods": {
+        "gbm": {
+          "prauc_with_column": 0.7445256764484934,
+          "prauc_without_column": 0.7447821583323984,
+          "drop_in_prauc": -0.0002564818839049243,
+          "skill_above_base_with": 0.18937669578984206,
+          "skill_above_base_without": 0.189633177673747,
+          "pct_of_skill_above_base_lost_by_dropping": -0.13543476552656258
+        },
+        "tfidf": {
+          "prauc_with_column": 0.8375487765837935,
+          "prauc_without_column": 0.8375487765837935,
+          "drop_in_prauc": 0.0,
+          "skill_above_base_with": 0.2823997959251421,
+          "skill_above_base_without": 0.2823997959251421,
+          "pct_of_skill_above_base_lost_by_dropping": 0.0
+        }
+      }
+    },
+    {
+      "task": "outcome",
+      "phase": "Phase4",
+      "best_gbm": "catboost",
+      "base_rate": 0.40022421524663676,
+      "ft_transformer_run": false,
+      "methods": {
+        "gbm": {
+          "prauc_with_column": 0.6614404799710231,
+          "prauc_without_column": 0.6625495730601192,
+          "drop_in_prauc": -0.0011090930890961248,
+          "skill_above_base_with": 0.2612162647243863,
+          "skill_above_base_without": 0.26232535781348243,
+          "pct_of_skill_above_base_lost_by_dropping": -0.42458806700507246
+        },
+        "tfidf": {
+          "prauc_with_column": 0.6550276263090118,
+          "prauc_without_column": 0.6550276263090118,
+          "drop_in_prauc": 0.0,
+          "skill_above_base_with": 0.25480341106237503,
+          "skill_above_base_without": 0.25480341106237503,
+          "pct_of_skill_above_base_lost_by_dropping": 0.0
+        }
+      }
+    },
+    {
+      "task": "mortality_rate_yn",
+      "phase": "Phase1",
+      "best_gbm": "catboost",
+      "base_rate": 0.26968973747016706,
+      "ft_transformer_run": true,
+      "methods": {
+        "gbm": {
+          "prauc_with_column": 0.7771962129209499,
+          "prauc_without_column": 0.7554115152702228,
+          "drop_in_prauc": 0.021784697650727103,
+          "skill_above_base_with": 0.5075064754507828,
+          "skill_above_base_without": 0.4857217778000557,
+          "pct_of_skill_above_base_lost_by_dropping": 4.292496491079688
+        },
+        "tfidf": {
+          "prauc_with_column": 0.8593147121095989,
+          "prauc_without_column": 0.8593147121095989,
+          "drop_in_prauc": 0.0,
+          "skill_above_base_with": 0.5896249746394318,
+          "skill_above_base_without": 0.5896249746394318,
+          "pct_of_skill_above_base_lost_by_dropping": 0.0
+        },
+        "ft_transformer": {
+          "prauc_with_column": 0.8208731802501408,
+          "prauc_without_column": 0.7918862440120196,
+          "drop_in_prauc": 0.028986936238121208,
+          "skill_above_base_with": 0.5511834427799738,
+          "skill_above_base_without": 0.5221965065418526,
+          "pct_of_skill_above_base_lost_by_dropping": 5.259036100925199
+        }
+      }
+    },
+    {
+      "task": "mortality_rate_yn",
+      "phase": "Phase2",
+      "best_gbm": "catboost",
+      "base_rate": 0.45875000000000005,
+      "ft_transformer_run": false,
+      "methods": {
+        "gbm": {
+          "prauc_with_column": 0.730066173144069,
+          "prauc_without_column": 0.7205571814031938,
+          "drop_in_prauc": 0.009508991740875161,
+          "skill_above_base_with": 0.2713161731440689,
+          "skill_above_base_without": 0.26180718140319376,
+          "pct_of_skill_above_base_lost_by_dropping": 3.5047640657329655
+        },
+        "tfidf": {
+          "prauc_with_column": 0.8572891434737834,
+          "prauc_without_column": 0.8572891434737834,
+          "drop_in_prauc": 0.0,
+          "skill_above_base_with": 0.39853914347378333,
+          "skill_above_base_without": 0.39853914347378333,
+          "pct_of_skill_above_base_lost_by_dropping": 0.0
+        }
+      }
+    },
+    {
+      "task": "mortality_rate_yn",
+      "phase": "Phase3",
+      "best_gbm": "catboost",
+      "base_rate": 0.4846560846560847,
+      "ft_transformer_run": false,
+      "methods": {
+        "gbm": {
+          "prauc_with_column": 0.7466440619571755,
+          "prauc_without_column": 0.7407873228798387,
+          "drop_in_prauc": 0.005856739077336748,
+          "skill_above_base_with": 0.2619879773010908,
+          "skill_above_base_without": 0.25613123822375405,
+          "pct_of_skill_above_base_lost_by_dropping": 2.2354991773557096
+        },
+        "tfidf": {
+          "prauc_with_column": 0.8605746654041815,
+          "prauc_without_column": 0.8605746654041815,
+          "drop_in_prauc": 0.0,
+          "skill_above_base_with": 0.3759185807480968,
+          "skill_above_base_without": 0.3759185807480968,
+          "pct_of_skill_above_base_lost_by_dropping": 0.0
+        }
+      }
+    },
+    {
+      "task": "mortality_rate_yn",
+      "phase": "Phase4",
+      "best_gbm": "xgboost",
+      "base_rate": 0.17465753424657535,
+      "ft_transformer_run": false,
+      "methods": {
+        "gbm": {
+          "prauc_with_column": 0.42017216523336376,
+          "prauc_without_column": 0.37713393600717027,
+          "drop_in_prauc": 0.04303822922619349,
+          "skill_above_base_with": 0.2455146309867884,
+          "skill_above_base_without": 0.20247640176059492,
+          "pct_of_skill_above_base_lost_by_dropping": 17.52980221716785
+        },
+        "tfidf": {
+          "prauc_with_column": 0.5053021504588279,
+          "prauc_without_column": 0.5053021504588279,
+          "drop_in_prauc": 0.0,
+          "skill_above_base_with": 0.3306446162122525,
+          "skill_above_base_without": 0.3306446162122525,
+          "pct_of_skill_above_base_lost_by_dropping": 0.0
+        }
+      }
+    },
+    {
+      "task": "serious_adverse_rate_yn",
+      "phase": "Phase1",
+      "best_gbm": "catboost",
+      "base_rate": 0.4343675417661098,
+      "ft_transformer_run": false,
+      "methods": {
+        "gbm": {
+          "prauc_with_column": 0.839474596128787,
+          "prauc_without_column": 0.8154241960555979,
+          "drop_in_prauc": 0.02405040007318915,
+          "skill_above_base_with": 0.40510705436267724,
+          "skill_above_base_without": 0.3810566542894881,
+          "pct_of_skill_above_base_lost_by_dropping": 5.936801103359144
+        },
+        "tfidf": {
+          "prauc_with_column": 0.9125703733608731,
+          "prauc_without_column": 0.9125703733608731,
+          "drop_in_prauc": 0.0,
+          "skill_above_base_with": 0.4782028315947633,
+          "skill_above_base_without": 0.4782028315947633,
+          "pct_of_skill_above_base_lost_by_dropping": 0.0
+        }
+      }
+    },
+    {
+      "task": "serious_adverse_rate_yn",
+      "phase": "Phase2",
+      "best_gbm": "catboost",
+      "base_rate": 0.745625,
+      "ft_transformer_run": false,
+      "methods": {
+        "gbm": {
+          "prauc_with_column": 0.8970406731979773,
+          "prauc_without_column": 0.8963821295922122,
+          "drop_in_prauc": 0.0006585436057651162,
+          "skill_above_base_with": 0.15141567319797733,
+          "skill_above_base_without": 0.1507571295922122,
+          "pct_of_skill_above_base_lost_by_dropping": 0.43492433237348194
+        },
+        "tfidf": {
+          "prauc_with_column": 0.9283195013338063,
+          "prauc_without_column": 0.9283195013338063,
+          "drop_in_prauc": 0.0,
+          "skill_above_base_with": 0.18269450133380627,
+          "skill_above_base_without": 0.18269450133380627,
+          "pct_of_skill_above_base_lost_by_dropping": 0.0
+        }
+      }
+    },
+    {
+      "task": "serious_adverse_rate_yn",
+      "phase": "Phase3",
+      "best_gbm": "lightgbm",
+      "base_rate": 0.8465608465608465,
+      "ft_transformer_run": false,
+      "methods": {
+        "gbm": {
+          "prauc_with_column": 0.948428995907806,
+          "prauc_without_column": 0.9473089759675384,
+          "drop_in_prauc": 0.0011200199402676692,
+          "skill_above_base_with": 0.10186814934695954,
+          "skill_above_base_without": 0.10074812940669187,
+          "pct_of_skill_above_base_lost_by_dropping": 1.0994800116108112
+        },
+        "tfidf": {
+          "prauc_with_column": 0.9708136922737118,
+          "prauc_without_column": 0.9708136922737118,
+          "drop_in_prauc": 0.0,
+          "skill_above_base_with": 0.12425284571286532,
+          "skill_above_base_without": 0.12425284571286532,
+          "pct_of_skill_above_base_lost_by_dropping": 0.0
+        }
+      }
+    },
+    {
+      "task": "serious_adverse_rate_yn",
+      "phase": "Phase4",
+      "best_gbm": "catboost",
+      "base_rate": 0.3852739726027397,
+      "ft_transformer_run": false,
+      "methods": {
+        "gbm": {
+          "prauc_with_column": 0.6062516603208026,
+          "prauc_without_column": 0.5925151611001483,
+          "drop_in_prauc": 0.01373649922065423,
+          "skill_above_base_with": 0.22097768771806287,
+          "skill_above_base_without": 0.20724118849740863,
+          "pct_of_skill_above_base_lost_by_dropping": 6.2162381019119515
+        },
+        "tfidf": {
+          "prauc_with_column": 0.7207499667581148,
+          "prauc_without_column": 0.7207499667581148,
+          "drop_in_prauc": 0.0,
+          "skill_above_base_with": 0.33547599415537505,
+          "skill_above_base_without": 0.33547599415537505,
+          "pct_of_skill_above_base_lost_by_dropping": 0.0
+        }
+      }
+    },
+    {
+      "task": "patient_dropout_rate_yn",
+      "phase": "Phase1",
+      "best_gbm": "lightgbm",
+      "base_rate": 0.5900339750849377,
+      "ft_transformer_run": false,
+      "methods": {
+        "gbm": {
+          "prauc_with_column": 0.7398278172166238,
+          "prauc_without_column": 0.7283857789709505,
+          "drop_in_prauc": 0.011442038245673358,
+          "skill_above_base_with": 0.14979384213168612,
+          "skill_above_base_without": 0.13835180388601276,
+          "pct_of_skill_above_base_lost_by_dropping": 7.638523775639911
+        },
+        "tfidf": {
+          "prauc_with_column": 0.8004156334668678,
+          "prauc_without_column": 0.8004156334668678,
+          "drop_in_prauc": 0.0,
+          "skill_above_base_with": 0.21038165838193013,
+          "skill_above_base_without": 0.21038165838193013,
+          "pct_of_skill_above_base_lost_by_dropping": 0.0
+        }
+      }
+    },
+    {
+      "task": "patient_dropout_rate_yn",
+      "phase": "Phase2",
+      "best_gbm": "catboost",
+      "base_rate": 0.7678684376976597,
+      "ft_transformer_run": false,
+      "methods": {
+        "gbm": {
+          "prauc_with_column": 0.8742377277289591,
+          "prauc_without_column": 0.8731845488746357,
+          "drop_in_prauc": 0.0010531788543234333,
+          "skill_above_base_with": 0.10636929003129947,
+          "skill_above_base_without": 0.10531611117697603,
+          "pct_of_skill_above_base_lost_by_dropping": 0.9901155248977712
+        },
+        "tfidf": {
+          "prauc_with_column": 0.8840689300434835,
+          "prauc_without_column": 0.8840689300434835,
+          "drop_in_prauc": 0.0,
+          "skill_above_base_with": 0.11620049234582386,
+          "skill_above_base_without": 0.11620049234582386,
+          "pct_of_skill_above_base_lost_by_dropping": 0.0
+        }
+      }
+    },
+    {
+      "task": "patient_dropout_rate_yn",
+      "phase": "Phase3",
+      "best_gbm": "catboost",
+      "base_rate": 0.910377358490566,
+      "ft_transformer_run": false,
+      "methods": {
+        "gbm": {
+          "prauc_with_column": 0.969674292093662,
+          "prauc_without_column": 0.9683405610854754,
+          "drop_in_prauc": 0.0013337310081865672,
+          "skill_above_base_with": 0.05929693360309596,
+          "skill_above_base_without": 0.05796320259490939,
+          "pct_of_skill_above_base_lost_by_dropping": 2.2492411110393937
+        },
+        "tfidf": {
+          "prauc_with_column": 0.9696786351524349,
+          "prauc_without_column": 0.9696786351524349,
+          "drop_in_prauc": 0.0,
+          "skill_above_base_with": 0.05930127666186891,
+          "skill_above_base_without": 0.05930127666186891,
+          "pct_of_skill_above_base_lost_by_dropping": 0.0
+        }
+      }
+    },
+    {
+      "task": "patient_dropout_rate_yn",
+      "phase": "Phase4",
+      "best_gbm": "catboost",
+      "base_rate": 0.7045454545454546,
+      "ft_transformer_run": false,
+      "methods": {
+        "gbm": {
+          "prauc_with_column": 0.8147334023491067,
+          "prauc_without_column": 0.8106570367153154,
+          "drop_in_prauc": 0.0040763656337913234,
+          "skill_above_base_with": 0.11018794780365215,
+          "skill_above_base_without": 0.10611158216986083,
+          "pct_of_skill_above_base_lost_by_dropping": 3.6994659715916893
+        },
+        "tfidf": {
+          "prauc_with_column": 0.8601181712097501,
+          "prauc_without_column": 0.8601181712097501,
+          "drop_in_prauc": 0.0,
+          "skill_above_base_with": 0.1555727166642955,
+          "skill_above_base_without": 0.1555727166642955,
+          "pct_of_skill_above_base_lost_by_dropping": 0.0
+        }
+      }
+    },
+    {
+      "task": "failure_reason",
+      "phase": "Phase1",
+      "best_gbm": "catboost",
+      "base_rate": NaN,
+      "ft_transformer_run": false,
+      "methods": {
+        "gbm": {
+          "prauc_with_column": 0.31710752409039367,
+          "prauc_without_column": 0.30227046119746503,
+          "drop_in_prauc": 0.014837062892928632,
+          "skill_above_base_with": NaN,
+          "skill_above_base_without": NaN,
+          "pct_of_skill_above_base_lost_by_dropping": NaN
+        },
+        "tfidf": {
+          "prauc_with_column": 0.3483861709930473,
+          "prauc_without_column": 0.3483861709930473,
+          "drop_in_prauc": 0.0,
+          "skill_above_base_with": NaN,
+          "skill_above_base_without": NaN,
+          "pct_of_skill_above_base_lost_by_dropping": NaN
+        }
+      }
+    },
+    {
+      "task": "failure_reason",
+      "phase": "Phase2",
+      "best_gbm": "catboost",
+      "base_rate": NaN,
+      "ft_transformer_run": false,
+      "methods": {
+        "gbm": {
+          "prauc_with_column": 0.3038968986097577,
+          "prauc_without_column": 0.3020171145792828,
+          "drop_in_prauc": 0.0018797840304748958,
+          "skill_above_base_with": NaN,
+          "skill_above_base_without": NaN,
+          "pct_of_skill_above_base_lost_by_dropping": NaN
+        },
+        "tfidf": {
+          "prauc_with_column": 0.4089508395861966,
+          "prauc_without_column": 0.4089508395861966,
+          "drop_in_prauc": 0.0,
+          "skill_above_base_with": NaN,
+          "skill_above_base_without": NaN,
+          "pct_of_skill_above_base_lost_by_dropping": NaN
+        }
+      }
+    },
+    {
+      "task": "failure_reason",
+      "phase": "Phase3",
+      "best_gbm": "xgboost",
+      "base_rate": NaN,
+      "ft_transformer_run": false,
+      "methods": {
+        "gbm": {
+          "prauc_with_column": 0.3229848846705772,
+          "prauc_without_column": 0.3227764044656906,
+          "drop_in_prauc": 0.00020848020488656305,
+          "skill_above_base_with": NaN,
+          "skill_above_base_without": NaN,
+          "pct_of_skill_above_base_lost_by_dropping": NaN
+        },
+        "tfidf": {
+          "prauc_with_column": 0.4400483063222026,
+          "prauc_without_column": 0.4400483063222026,
+          "drop_in_prauc": 0.0,
+          "skill_above_base_with": NaN,
+          "skill_above_base_without": NaN,
+          "pct_of_skill_above_base_lost_by_dropping": NaN
+        }
+      }
+    },
+    {
+      "task": "failure_reason",
+      "phase": "Phase4",
+      "best_gbm": "catboost",
+      "base_rate": NaN,
+      "ft_transformer_run": false,
+      "methods": {
+        "gbm": {
+          "prauc_with_column": 0.25569773889910835,
+          "prauc_without_column": 0.2569454300593095,
+          "drop_in_prauc": -0.0012476911602011254,
+          "skill_above_base_with": NaN,
+          "skill_above_base_without": NaN,
+          "pct_of_skill_above_base_lost_by_dropping": NaN
+        },
+        "tfidf": {
+          "prauc_with_column": 0.3033850206854888,
+          "prauc_without_column": 0.3033850206854888,
+          "drop_in_prauc": 0.0,
+          "skill_above_base_with": NaN,
+          "skill_above_base_without": NaN,
+          "pct_of_skill_above_base_lost_by_dropping": NaN
+        }
+      }
+    }
+  ],
+  "crosstabs_phase_and_label": {
+    "outcome": [
+      {
+        "phase": "Phase1",
+        "healthy_volunteers": "Accepts Healthy Volunteers",
+        "mean": 0.4975514201762977,
+        "count": 1021
+      },
+      {
+        "phase": "Phase1",
+        "healthy_volunteers": "No",
+        "mean": 0.40456911509543086,
+        "count": 3458
+      },
+      {
+        "phase": "Phase2",
+        "healthy_volunteers": "Accepts Healthy Volunteers",
+        "mean": 0.5936920222634509,
+        "count": 539
+      },
+      {
+        "phase": "Phase2",
+        "healthy_volunteers": "No",
+        "mean": 0.3722021963282756,
+        "count": 11929
+      },
+      {
+        "phase": "Phase3",
+        "healthy_volunteers": "Accepts Healthy Volunteers",
+        "mean": 0.7362637362637363,
+        "count": 637
+      },
+      {
+        "phase": "Phase3",
+        "healthy_volunteers": "No",
+        "mean": 0.5476331011686932,
+        "count": 8471
+      },
+      {
+        "phase": "Phase4",
+        "healthy_volunteers": "Accepts Healthy Volunteers",
+        "mean": 0.39215686274509803,
+        "count": 510
+      },
+      {
+        "phase": "Phase4",
+        "healthy_volunteers": "No",
+        "mean": 0.40479161467431996,
+        "count": 4007
+      }
+    ],
+    "mortality_rate_yn": [
+      {
+        "phase": "Phase1",
+        "healthy_volunteers": "Accepts Healthy Volunteers",
+        "mean": 0.025565388397246803,
+        "count": 1017
+      },
+      {
+        "phase": "Phase1",
+        "healthy_volunteers": "No",
+        "mean": 0.4864593781344032,
+        "count": 997
+      },
+      {
+        "phase": "Phase2",
+        "healthy_volunteers": "Accepts Healthy Volunteers",
+        "mean": 0.17267267267267267,
+        "count": 666
+      },
+      {
+        "phase": "Phase2",
+        "healthy_volunteers": "No",
+        "mean": 0.46201342281879193,
+        "count": 7450
+      },
+      {
+        "phase": "Phase3",
+        "healthy_volunteers": "Accepts Healthy Volunteers",
+        "mean": 0.27956989247311825,
+        "count": 558
+      },
+      {
+        "phase": "Phase3",
+        "healthy_volunteers": "No",
+        "mean": 0.5275572162540869,
+        "count": 4282
+      },
+      {
+        "phase": "Phase4",
+        "healthy_volunteers": "Accepts Healthy Volunteers",
+        "mean": 0.046703296703296704,
+        "count": 728
+      },
+      {
+        "phase": "Phase4",
+        "healthy_volunteers": "No",
+        "mean": 0.226985559566787,
+        "count": 2216
+      }
+    ],
+    "serious_adverse_rate_yn": [
+      {
+        "phase": "Phase1",
+        "healthy_volunteers": "Accepts Healthy Volunteers",
+        "mean": 0.17699115044247787,
+        "count": 1017
+      },
+      {
+        "phase": "Phase1",
+        "healthy_volunteers": "No",
+        "mean": 0.720160481444333,
+        "count": 997
+      },
+      {
+        "phase": "Phase2",
+        "healthy_volunteers": "Accepts Healthy Volunteers",
+        "mean": 0.4924924924924925,
+        "count": 666
+      },
+      {
+        "phase": "Phase2",
+        "healthy_volunteers": "No",
+        "mean": 0.743489932885906,
+        "count": 7450
+      },
+      {
+        "phase": "Phase3",
+        "healthy_volunteers": "Accepts Healthy Volunteers",
+        "mean": 0.6648745519713262,
+        "count": 558
+      },
+      {
+        "phase": "Phase3",
+        "healthy_volunteers": "No",
+        "mean": 0.8706212050443718,
+        "count": 4282
+      },
+      {
+        "phase": "Phase4",
+        "healthy_volunteers": "Accepts Healthy Volunteers",
+        "mean": 0.18543956043956045,
+        "count": 728
+      },
+      {
+        "phase": "Phase4",
+        "healthy_volunteers": "No",
+        "mean": 0.4395306859205776,
+        "count": 2216
+      }
+    ],
+    "patient_dropout_rate_yn": [
+      {
+        "phase": "Phase1",
+        "healthy_volunteers": "Accepts Healthy Volunteers",
+        "mean": 0.45475113122171945,
+        "count": 2210
+      },
+      {
+        "phase": "Phase1",
+        "healthy_volunteers": "No",
+        "mean": 0.6929252383341696,
+        "count": 1993
+      },
+      {
+        "phase": "Phase2",
+        "healthy_volunteers": "Accepts Healthy Volunteers",
+        "mean": 0.7479674796747967,
+        "count": 1230
+      },
+      {
+        "phase": "Phase2",
+        "healthy_volunteers": "No",
+        "mean": 0.7756983624604376,
+        "count": 14534
+      },
+      {
+        "phase": "Phase3",
+        "healthy_volunteers": "Accepts Healthy Volunteers",
+        "mean": 0.8261886204208886,
+        "count": 1283
+      },
+      {
+        "phase": "Phase3",
+        "healthy_volunteers": "No",
+        "mean": 0.9247047244094488,
+        "count": 10160
+      },
+      {
+        "phase": "Phase4",
+        "healthy_volunteers": "Accepts Healthy Volunteers",
+        "mean": 0.6243016759776536,
+        "count": 1432
+      },
+      {
+        "phase": "Phase4",
+        "healthy_volunteers": "No",
+        "mean": 0.7609657206044969,
+        "count": 5426
+      }
+    ]
+  },
+  "decision_rule": "Quote the drop-column number, not the permutation number. If the measured drop puts the field below 40% of skill above chance, the 'over half' line is CUT and replaced with the measured figure. If the cross-tab shows near-collinearity with phase/condition, SOFTENED to a design-confound finding.",
+  "verdict": "CUT: measured drop-column effect on mortality/Phase1 is 5.3% of FT-Transformer's skill above base rate -- well below the quoted 51.7%. The 'over half of everything the model earns' line is replaced by this figure.",
+  "git_sha": "5679ebf7595019775860792a11bf9d5cfa3b4208",
+  "wall_clock_secs": 2008.0
+}

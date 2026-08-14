@@ -1,0 +1,184 @@
+{
+  "test_id": "T17",
+  "claim_at_stake": "approval +0.0302 and mortality +0.0176 blend lifts",
+  "inputs": {
+    "n_resamples": 10000,
+    "rng_seed": 0,
+    "seeds": [
+      42,
+      7,
+      123,
+      2024,
+      5
+    ],
+    "note": "paired bootstrap over shared test-row resample indices, applied to all 5 seeds' fits and averaged per resample -- see module docstring for the full design rationale."
+  },
+  "n_cells": 16,
+  "per_cell": [
+    {
+      "task": "outcome",
+      "phase": "Phase1",
+      "mean_lift": 0.019097342781732148,
+      "ci_lo": -0.0016941834723892943,
+      "ci_hi": 0.04004485570888561,
+      "clears_zero": false,
+      "tfidf_bootstrap_halfwidth": 0.05090927377162885,
+      "lift_ci_width_over_tfidf_ci_width": 0.4099355194940493
+    },
+    {
+      "task": "outcome",
+      "phase": "Phase2",
+      "mean_lift": 0.04703136862682243,
+      "ci_lo": 0.034049107475133934,
+      "ci_hi": 0.05994531415932703,
+      "clears_zero": true,
+      "tfidf_bootstrap_halfwidth": 0.032981367964016906,
+      "lift_ci_width_over_tfidf_ci_width": 0.39258842617513906
+    },
+    {
+      "task": "outcome",
+      "phase": "Phase3",
+      "mean_lift": 0.014966958434114217,
+      "ci_lo": 0.007844845758090328,
+      "ci_hi": 0.022295365874691452,
+      "clears_zero": true,
+      "tfidf_bootstrap_halfwidth": 0.022518598829320724,
+      "lift_ci_width_over_tfidf_ci_width": 0.3208574437985364
+    },
+    {
+      "task": "outcome",
+      "phase": "Phase4",
+      "mean_lift": 0.03171430964476132,
+      "ci_lo": 0.0038756771387646414,
+      "ci_hi": 0.060358216521180855,
+      "clears_zero": true,
+      "tfidf_bootstrap_halfwidth": 0.052476112521920915,
+      "lift_ci_width_over_tfidf_ci_width": 0.5381738153604813
+    },
+    {
+      "task": "mortality_rate_yn",
+      "phase": "Phase1",
+      "mean_lift": 0.01213380827067761,
+      "ci_lo": -0.003318375227886466,
+      "ci_hi": 0.029131048897844857,
+      "clears_zero": false,
+      "tfidf_bootstrap_halfwidth": 0.06466341479755089,
+      "lift_ci_width_over_tfidf_ci_width": 0.25091022665076096
+    },
+    {
+      "task": "mortality_rate_yn",
+      "phase": "Phase2",
+      "mean_lift": 0.008932886647936565,
+      "ci_lo": 0.0023940493281153045,
+      "ci_hi": 0.01618591652171105,
+      "clears_zero": true,
+      "tfidf_bootstrap_halfwidth": 0.026227118566314878,
+      "lift_ci_width_over_tfidf_ci_width": 0.26293142265558483
+    },
+    {
+      "task": "mortality_rate_yn",
+      "phase": "Phase3",
+      "mean_lift": 0.022325178850657483,
+      "ci_lo": 0.010084495651991347,
+      "ci_hi": 0.035281312020457756,
+      "clears_zero": true,
+      "tfidf_bootstrap_halfwidth": 0.028045714273644884,
+      "lift_ci_width_over_tfidf_ci_width": 0.4492097459636526
+    },
+    {
+      "task": "mortality_rate_yn",
+      "phase": "Phase4",
+      "mean_lift": 0.058519497349702666,
+      "ci_lo": 0.02764027544948463,
+      "ci_hi": 0.09046466555606134,
+      "clears_zero": true,
+      "tfidf_bootstrap_halfwidth": 0.10162105169658314,
+      "lift_ci_width_over_tfidf_ci_width": 0.30911109980516505
+    },
+    {
+      "task": "serious_adverse_rate_yn",
+      "phase": "Phase1",
+      "mean_lift": 0.0060999943682343875,
+      "ci_lo": -0.0002294507936472167,
+      "ci_hi": 0.012868236517319892,
+      "clears_zero": false,
+      "tfidf_bootstrap_halfwidth": 0.030377543756669845,
+      "lift_ci_width_over_tfidf_ci_width": 0.21558173721815996
+    },
+    {
+      "task": "serious_adverse_rate_yn",
+      "phase": "Phase2",
+      "mean_lift": 0.009225066874598727,
+      "ci_lo": 0.001828871925641564,
+      "ci_hi": 0.017116626805054134,
+      "clears_zero": true,
+      "tfidf_bootstrap_halfwidth": 0.014332970248554622,
+      "lift_ci_width_over_tfidf_ci_width": 0.53330728433467
+    },
+    {
+      "task": "serious_adverse_rate_yn",
+      "phase": "Phase3",
+      "mean_lift": 0.005969009035655676,
+      "ci_lo": 0.0011036895624335036,
+      "ci_hi": 0.011190131610399967,
+      "clears_zero": true,
+      "tfidf_bootstrap_halfwidth": 0.010389525508395114,
+      "lift_ci_width_over_tfidf_ci_width": 0.48541398930183344
+    },
+    {
+      "task": "serious_adverse_rate_yn",
+      "phase": "Phase4",
+      "mean_lift": 0.027372808629452378,
+      "ci_lo": -0.006530887625769974,
+      "ci_hi": 0.0643513087467882,
+      "clears_zero": false,
+      "tfidf_bootstrap_halfwidth": 0.06415076992444557,
+      "lift_ci_width_over_tfidf_ci_width": 0.5524656715425289
+    },
+    {
+      "task": "patient_dropout_rate_yn",
+      "phase": "Phase1",
+      "mean_lift": 0.014352772709587614,
+      "ci_lo": 0.0019972108562445975,
+      "ci_hi": 0.02656859912722385,
+      "clears_zero": true,
+      "tfidf_bootstrap_halfwidth": 0.03669361550057715,
+      "lift_ci_width_over_tfidf_ci_width": 0.334818304707433
+    },
+    {
+      "task": "patient_dropout_rate_yn",
+      "phase": "Phase2",
+      "mean_lift": 0.01189499989641968,
+      "ci_lo": 0.005408624343177331,
+      "ci_hi": 0.018757536948005155,
+      "clears_zero": true,
+      "tfidf_bootstrap_halfwidth": 0.014004847704029932,
+      "lift_ci_width_over_tfidf_ci_width": 0.4765818553309451
+    },
+    {
+      "task": "patient_dropout_rate_yn",
+      "phase": "Phase3",
+      "mean_lift": 0.0061454066173494415,
+      "ci_lo": 0.003683866157377218,
+      "ci_hi": 0.00899986132485139,
+      "clears_zero": true,
+      "tfidf_bootstrap_halfwidth": 0.008155016509431734,
+      "lift_ci_width_over_tfidf_ci_width": 0.32593405306573725
+    },
+    {
+      "task": "patient_dropout_rate_yn",
+      "phase": "Phase4",
+      "mean_lift": 0.01609684994740748,
+      "ci_lo": 0.006808955431641602,
+      "ci_hi": 0.026272320681407724,
+      "clears_zero": true,
+      "tfidf_bootstrap_halfwidth": 0.022957073987069865,
+      "lift_ci_width_over_tfidf_ci_width": 0.4239077954953774
+    }
+  ],
+  "n_cells_clearing_zero": 12,
+  "decision_rule": "Quote only lifts whose CI clears zero. If <4/16 cells clear zero, CUT to a Part 3 hypothesis.",
+  "verdict": "12/16 cells clear zero -- quote only these lifts: outcome/Phase2 +0.0470, outcome/Phase3 +0.0150, outcome/Phase4 +0.0317, mortality_rate_yn/Phase2 +0.0089, mortality_rate_yn/Phase3 +0.0223, mortality_rate_yn/Phase4 +0.0585, serious_adverse_rate_yn/Phase2 +0.0092, serious_adverse_rate_yn/Phase3 +0.0060, patient_dropout_rate_yn/Phase1 +0.0144, patient_dropout_rate_yn/Phase2 +0.0119, patient_dropout_rate_yn/Phase3 +0.0061, patient_dropout_rate_yn/Phase4 +0.0161 | Part 1 correction needed: mortality/Phase1's blend lift (+0.0121, CI [-0.0033, +0.0291]) does not clear zero -- the cell where text supposedly dominates is the cell where the improvement is not significant.",
+  "git_sha": "5679ebf7595019775860792a11bf9d5cfa3b4208",
+  "wall_clock_secs": 972.0
+}

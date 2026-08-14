@@ -12,7 +12,7 @@ import os
 
 import numpy as np
 
-from ..data.features import concat_text
+from ..data.features import TEXT_COLS, concat_text
 from .base import BaseMethod
 from .registry import register
 
@@ -82,8 +82,20 @@ class ClinicalEmbeddings(BaseMethod):
     BATCH_SIZE = 32
     CACHE_DIR = os.path.join("results", "cache", "clinical_embeddings")
 
+    POOLING = "mean"
+
     def _cache_path(self, X):
-        key_src = self.MODEL_NAME + "|" + ",".join(sorted(str(i) for i in X.index))
+        # Folds in every knob that changes the resulting vectors -- model
+        # name, MAX_LENGTH, pooling strategy, and the text-column set --
+        # not just model name + row ids. Before this fix, changing
+        # MAX_LENGTH (e.g. for a truncation ablation) silently reloaded
+        # stale 256-token vectors from a still-matching cache path instead
+        # of re-embedding, with no error (P3 in newsletter-part2-test-plan.md).
+        text_cols_key = ",".join(TEXT_COLS)
+        key_src = "|".join([
+            self.MODEL_NAME, str(self.MAX_LENGTH), self.POOLING, text_cols_key,
+            ",".join(sorted(str(i) for i in X.index)),
+        ])
         key = hashlib.sha256(key_src.encode()).hexdigest()[:24]
         return os.path.join(self.CACHE_DIR, f"{key}.npy")
 

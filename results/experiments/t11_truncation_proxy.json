@@ -1,0 +1,152 @@
+{
+  "test_id": "T11",
+  "claim_at_stake": "BERT lost fair and square, 9 of 9 -- vs. BERT was crippled by MAX_LENGTH=256",
+  "inputs": {
+    "seeds": [
+      42,
+      7,
+      123,
+      2024,
+      5
+    ],
+    "model_name": "emilyalsentzer/Bio_ClinicalBERT",
+    "max_length": 256,
+    "cells": [
+      [
+        "mortality_rate_yn",
+        "Phase1"
+      ],
+      [
+        "mortality_rate_yn",
+        "Phase2"
+      ],
+      [
+        "mortality_rate_yn",
+        "Phase3"
+      ],
+      [
+        "mortality_rate_yn",
+        "Phase4"
+      ],
+      [
+        "outcome",
+        "Phase1"
+      ],
+      [
+        "outcome",
+        "Phase2"
+      ],
+      [
+        "outcome",
+        "Phase3"
+      ],
+      [
+        "outcome",
+        "Phase4"
+      ],
+      [
+        "serious_adverse_rate_yn",
+        "Phase1"
+      ]
+    ],
+    "note": "TF-IDF is a proxy that bounds where signal is located in the document, not a measurement of BERT's own ability to use it."
+  },
+  "n_cells": 9,
+  "per_cell": [
+    {
+      "task": "mortality_rate_yn",
+      "phase": "Phase1",
+      "frac_doc_retained_at_256_tokens": 0.33289770826307064,
+      "full_text_prauc": 0.8593147121095989,
+      "truncated_256_prauc": 0.8337914684663538,
+      "gap": 0.025523243643245097,
+      "delta_cell": 0.17719041082190973,
+      "gap_within_delta_cell": true
+    },
+    {
+      "task": "mortality_rate_yn",
+      "phase": "Phase2",
+      "frac_doc_retained_at_256_tokens": 0.3608663388092445,
+      "full_text_prauc": 0.8572891434737834,
+      "truncated_256_prauc": 0.8434428428623477,
+      "gap": 0.013846300611435658,
+      "delta_cell": 0.0576272922851343,
+      "gap_within_delta_cell": true
+    },
+    {
+      "task": "mortality_rate_yn",
+      "phase": "Phase3",
+      "frac_doc_retained_at_256_tokens": 0.41434014027262056,
+      "full_text_prauc": 0.8605746654041815,
+      "truncated_256_prauc": 0.8564559839586096,
+      "gap": 0.004118681445571926,
+      "delta_cell": 0.043366813211424715,
+      "gap_within_delta_cell": true
+    },
+    {
+      "task": "mortality_rate_yn",
+      "phase": "Phase4",
+      "frac_doc_retained_at_256_tokens": 0.4956997415572373,
+      "full_text_prauc": 0.5053021504588279,
+      "truncated_256_prauc": 0.462869222487754,
+      "gap": 0.0424329279710739,
+      "delta_cell": 0.08606255317722626,
+      "gap_within_delta_cell": true
+    },
+    {
+      "task": "outcome",
+      "phase": "Phase1",
+      "frac_doc_retained_at_256_tokens": 0.38497760422193256,
+      "full_text_prauc": 0.6706221867043212,
+      "truncated_256_prauc": 0.6558878620374118,
+      "gap": 0.014734324666909382,
+      "delta_cell": 0.09634921563637254,
+      "gap_within_delta_cell": true
+    },
+    {
+      "task": "outcome",
+      "phase": "Phase2",
+      "frac_doc_retained_at_256_tokens": 0.4140190038598028,
+      "full_text_prauc": 0.614600281973609,
+      "truncated_256_prauc": 0.5998387496645756,
+      "gap": 0.014761532309033432,
+      "delta_cell": 0.06093495558423234,
+      "gap_within_delta_cell": true
+    },
+    {
+      "task": "outcome",
+      "phase": "Phase3",
+      "frac_doc_retained_at_256_tokens": 0.4934999571737352,
+      "full_text_prauc": 0.8375487765837935,
+      "truncated_256_prauc": 0.8291074519603342,
+      "gap": 0.008441324623459256,
+      "delta_cell": 0.045375460623549774,
+      "gap_within_delta_cell": true
+    },
+    {
+      "task": "outcome",
+      "phase": "Phase4",
+      "frac_doc_retained_at_256_tokens": 0.5424329981380273,
+      "full_text_prauc": 0.6550276263090118,
+      "truncated_256_prauc": 0.6585482705707089,
+      "gap": -0.00352064426169707,
+      "delta_cell": 0.11103835629101706,
+      "gap_within_delta_cell": true
+    },
+    {
+      "task": "serious_adverse_rate_yn",
+      "phase": "Phase1",
+      "frac_doc_retained_at_256_tokens": 0.33289770826307064,
+      "full_text_prauc": 0.9125703733608731,
+      "truncated_256_prauc": 0.8879284051966859,
+      "gap": 0.024641968164187178,
+      "delta_cell": 0.10055074331885575,
+      "gap_within_delta_cell": true
+    }
+  ],
+  "n_cells_gap_within_delta": 9,
+  "decision_rule": "If truncated TF-IDF is within delta_cell of full TF-IDF on all 9 cells, truncation cannot explain BERT's loss -- CONFIRMED. If it loses materially, SOFTENED.",
+  "verdict": "CONFIRMED: truncated TF-IDF is within delta_cell of full TF-IDF on all 9/9 cells BERT ran -- truncation cannot explain BERT's loss, the 9-of-9 claim is CONFIRMED with the objection pre-empted.",
+  "git_sha": "5679ebf7595019775860792a11bf9d5cfa3b4208",
+  "wall_clock_secs": 396.0
+}

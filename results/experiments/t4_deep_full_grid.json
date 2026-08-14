@@ -1,0 +1,173 @@
+{
+  "test_id": "T4",
+  "claim_at_stake": "every FT-Transformer comparison, based on 10 of 20 cells",
+  "inputs": {
+    "seeds": [
+      42,
+      7,
+      123
+    ],
+    "methods": [
+      "majority",
+      "logreg_l2",
+      "logreg_l1",
+      "random_forest",
+      "extra_trees",
+      "hist_gbm",
+      "knn",
+      "svm_linear",
+      "xgboost",
+      "lightgbm",
+      "catboost",
+      "tfidf_logreg",
+      "ft_transformer",
+      "tabnet"
+    ],
+    "original_ft_cells": [
+      [
+        "outcome",
+        "Phase1"
+      ],
+      [
+        "outcome",
+        "Phase2"
+      ],
+      [
+        "outcome",
+        "Phase3"
+      ],
+      [
+        "outcome",
+        "Phase4"
+      ],
+      [
+        "mortality_rate_yn",
+        "Phase1"
+      ],
+      [
+        "mortality_rate_yn",
+        "Phase2"
+      ],
+      [
+        "mortality_rate_yn",
+        "Phase3"
+      ],
+      [
+        "mortality_rate_yn",
+        "Phase4"
+      ],
+      [
+        "serious_adverse_rate_yn",
+        "Phase1"
+      ],
+      [
+        "serious_adverse_rate_yn",
+        "Phase2"
+      ]
+    ],
+    "note": "gap was serious_adverse_rate_yn Phase3-4 + all patient_dropout_rate_yn + all failure_reason (10 cells), confirmed directly from run files."
+  },
+  "scores_10cell_subset": {
+    "majority": 0.4322259976530871,
+    "logreg_l2": 0.6785125416304427,
+    "logreg_l1": 0.6782984427346949,
+    "random_forest": 0.7221590077996459,
+    "extra_trees": 0.7116573269048169,
+    "hist_gbm": 0.6932561344057638,
+    "knn": 0.6751808246937022,
+    "svm_linear": 0.6792680784471374,
+    "xgboost": 0.7039667637726873,
+    "lightgbm": 0.6999146447413808,
+    "catboost": 0.7160429544045407,
+    "tfidf_logreg": 0.7701444198625969,
+    "ft_transformer": 0.7288462990955247,
+    "tabnet": 0.5979193277366047
+  },
+  "scores_20cell_full": {
+    "majority": 0.4763460010756538,
+    "logreg_l2": 0.6498491980947497,
+    "logreg_l1": 0.6498125922673944,
+    "random_forest": 0.6687053584202832,
+    "extra_trees": 0.6617827416038055,
+    "hist_gbm": 0.6484556319258216,
+    "knn": 0.6419866606222243,
+    "svm_linear": 0.651809192741691,
+    "xgboost": 0.655973540844928,
+    "lightgbm": 0.6533817347666588,
+    "catboost": 0.6648226081893002,
+    "tfidf_logreg": 0.7205272522969376,
+    "ft_transformer": 0.6555051571685959,
+    "tabnet": 0.5879916169160986
+  },
+  "ft_transformer_rank_10cell": 2,
+  "ft_transformer_rank_20cell_full": 6,
+  "rank_shift": 4,
+  "tabnet_rank_20cell_full": 13,
+  "newly_filled_cells": [
+    {
+      "task": "serious_adverse_rate_yn",
+      "phase": "Phase3",
+      "ft_transformer_mean_prauc": 0.9541836164620592,
+      "n_seeds_present": 3
+    },
+    {
+      "task": "serious_adverse_rate_yn",
+      "phase": "Phase4",
+      "ft_transformer_mean_prauc": 0.6743147852039147,
+      "n_seeds_present": 3
+    },
+    {
+      "task": "patient_dropout_rate_yn",
+      "phase": "Phase1",
+      "ft_transformer_mean_prauc": 0.790270063588026,
+      "n_seeds_present": 3
+    },
+    {
+      "task": "patient_dropout_rate_yn",
+      "phase": "Phase2",
+      "ft_transformer_mean_prauc": 0.9002719494059908,
+      "n_seeds_present": 3
+    },
+    {
+      "task": "patient_dropout_rate_yn",
+      "phase": "Phase3",
+      "ft_transformer_mean_prauc": 0.9717764757278693,
+      "n_seeds_present": 3
+    },
+    {
+      "task": "patient_dropout_rate_yn",
+      "phase": "Phase4",
+      "ft_transformer_mean_prauc": 0.8267427151857077,
+      "n_seeds_present": 3
+    },
+    {
+      "task": "failure_reason",
+      "phase": "Phase1",
+      "ft_transformer_mean_prauc": 0.31908825652076683,
+      "n_seeds_present": 3
+    },
+    {
+      "task": "failure_reason",
+      "phase": "Phase2",
+      "ft_transformer_mean_prauc": 0.310519101221274,
+      "n_seeds_present": 3
+    },
+    {
+      "task": "failure_reason",
+      "phase": "Phase3",
+      "ft_transformer_mean_prauc": 0.3009079016509801,
+      "n_seeds_present": 3
+    },
+    {
+      "task": "failure_reason",
+      "phase": "Phase4",
+      "ft_transformer_mean_prauc": 0.2625062336296093,
+      "n_seeds_present": 3
+    }
+  ],
+  "n_newly_filled_cells_incomplete": 0,
+  "decision_rule": "Re-rank against the full Tier A pack on the complete shared cell set. If FT-Transformer's full-grid rank differs from its 10-cell rank by more than 2 positions, report the full-grid rank and note the partial-coverage number as the artifact it is.",
+  "verdict": "FT-Transformer 10-cell rank: 2/14. Full 20-cell rank: 6/14. Rank differs by 4 positions (>2) -- Part 2 reports the full-grid rank (6) and notes the partial-coverage number (2) as the artifact it is.",
+  "git_sha": "5679ebf7595019775860792a11bf9d5cfa3b4208",
+  "wall_clock_secs": 0.1
+}

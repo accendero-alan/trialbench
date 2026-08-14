@@ -78,7 +78,12 @@ attempt=0
 while true; do
   attempt=$((attempt + 1))
   before=$(n_runs_dir_files)
-  attempt_log="$LOG_DIR/attempt_${attempt}.log"
+  # Include this process's own PID: the attempt counter resets to 1 on every
+  # fresh run_forever.sh invocation (e.g. each systemd restart), so without
+  # something invocation-unique here, attempt_1.log from one restart just
+  # keeps getting appended to by every future restart's first attempt too --
+  # confusing when inspecting "what did the most recent run actually do".
+  attempt_log="$LOG_DIR/attempt_${attempt}_pid$$.log"
   log "attempt #$attempt: starting run_benchmark (args: $*) -> $attempt_log"
 
   "$PY" -m src.run_benchmark "$@" >>"$attempt_log" 2>&1

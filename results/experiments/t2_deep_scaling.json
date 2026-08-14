@@ -1,0 +1,126 @@
+{
+  "test_id": "T2",
+  "claim_at_stake": "deep tabular is mediocre -- architecture result or missing preprocessing step?",
+  "inputs": {
+    "cells": [
+      [
+        "outcome",
+        "Phase1"
+      ],
+      [
+        "outcome",
+        "Phase2"
+      ],
+      [
+        "mortality_rate_yn",
+        "Phase1"
+      ],
+      [
+        "serious_adverse_rate_yn",
+        "Phase2"
+      ],
+      [
+        "patient_dropout_rate_yn",
+        "Phase1"
+      ],
+      [
+        "patient_dropout_rate_yn",
+        "Phase2"
+      ]
+    ],
+    "seeds": [
+      42,
+      7
+    ],
+    "scope_note": "reduced from the full 20 cells x 3 seeds (~4h) to 6 cells x 2 seeds (~45 min) by explicit user request for a directional read; this cannot resolve the plan's own CUT/closed decision rule, which needs the full 20-cell grid."
+  },
+  "n_cells": 6,
+  "per_cell": [
+    {
+      "task": "outcome",
+      "phase": "Phase1",
+      "delta_cell": 0.09634921563637254,
+      "ft_transformer_unscaled_mean": 0.6716999710270748,
+      "ft_transformer_scaled_mean": 0.6859762634437034,
+      "ft_transformer_scaling_gain": 0.014276292416628644,
+      "ft_gain_exceeds_delta_cell": false,
+      "tabnet_unscaled_mean": 0.609893096268412,
+      "tabnet_scaled_mean": 0.5731652912885777,
+      "tabnet_scaling_gain": -0.0367278049798343,
+      "tabnet_gain_exceeds_delta_cell": false
+    },
+    {
+      "task": "outcome",
+      "phase": "Phase2",
+      "delta_cell": 0.06093495558423234,
+      "ft_transformer_unscaled_mean": 0.5890551943614715,
+      "ft_transformer_scaled_mean": 0.5905967064638127,
+      "ft_transformer_scaling_gain": 0.0015415121023412137,
+      "ft_gain_exceeds_delta_cell": false,
+      "tabnet_unscaled_mean": 0.4686509099222119,
+      "tabnet_scaled_mean": 0.49836447893279834,
+      "tabnet_scaling_gain": 0.029713569010586416,
+      "tabnet_gain_exceeds_delta_cell": false
+    },
+    {
+      "task": "mortality_rate_yn",
+      "phase": "Phase1",
+      "delta_cell": 0.17719041082190973,
+      "ft_transformer_unscaled_mean": 0.829002201193051,
+      "ft_transformer_scaled_mean": 0.7682238156453076,
+      "ft_transformer_scaling_gain": -0.060778385547743397,
+      "ft_gain_exceeds_delta_cell": false,
+      "tabnet_unscaled_mean": 0.6549747191114594,
+      "tabnet_scaled_mean": 0.6646512999969134,
+      "tabnet_scaling_gain": 0.009676580885453978,
+      "tabnet_gain_exceeds_delta_cell": false
+    },
+    {
+      "task": "serious_adverse_rate_yn",
+      "phase": "Phase2",
+      "delta_cell": 0.02281481430412657,
+      "ft_transformer_unscaled_mean": 0.9025180211125909,
+      "ft_transformer_scaled_mean": 0.9002936811825246,
+      "ft_transformer_scaling_gain": -0.0022243399300663214,
+      "ft_gain_exceeds_delta_cell": false,
+      "tabnet_unscaled_mean": 0.8369697667618079,
+      "tabnet_scaled_mean": 0.8684053120892108,
+      "tabnet_scaling_gain": 0.03143554532740289,
+      "tabnet_gain_exceeds_delta_cell": true
+    },
+    {
+      "task": "patient_dropout_rate_yn",
+      "phase": "Phase1",
+      "delta_cell": 0.07616331385646859,
+      "ft_transformer_unscaled_mean": 0.7882732743251925,
+      "ft_transformer_scaled_mean": 0.7651777348151403,
+      "ft_transformer_scaling_gain": -0.023095539510052165,
+      "ft_gain_exceeds_delta_cell": false,
+      "tabnet_unscaled_mean": 0.7161124699433307,
+      "tabnet_scaled_mean": 0.6901665885735118,
+      "tabnet_scaling_gain": -0.0259458813698189,
+      "tabnet_gain_exceeds_delta_cell": false
+    },
+    {
+      "task": "patient_dropout_rate_yn",
+      "phase": "Phase2",
+      "delta_cell": 0.025199951714714335,
+      "ft_transformer_unscaled_mean": 0.8996431785577423,
+      "ft_transformer_scaled_mean": 0.8829185818375136,
+      "ft_transformer_scaling_gain": -0.016724596720228746,
+      "ft_gain_exceeds_delta_cell": false,
+      "tabnet_unscaled_mean": 0.841222631356032,
+      "tabnet_scaled_mean": 0.8616540034463654,
+      "tabnet_scaling_gain": 0.02043137209033341,
+      "tabnet_gain_exceeds_delta_cell": false
+    }
+  ],
+  "mean_ft_transformer_scaling_gain": -0.014500842864853461,
+  "mean_tabnet_scaling_gain": 0.0047638968273539155,
+  "n_cells_ft_gain_above_delta": 0,
+  "n_cells_tabnet_gain_above_delta": 1,
+  "decision_rule": "(Full-scope rule, not resolvable by this subset.) If mean scaled-minus-unscaled gain exceeds delta_cell in >=5/20 cells, CUT and replaced with the preprocessing finding. If below delta_cell in >=16/20 cells, the scaling objection is closed.",
+  "verdict": "DIRECTIONAL ONLY (6/20 cells, 2 seeds -- cannot trigger the plan's own >=5-of-20 / >=16-of-20 decision thresholds). FT-Transformer: mean scaling gain -0.0145, exceeds delta_cell on 0/6 subset cells. TabNet (scaling isolated from T3's other two fixes): mean gain +0.0048, exceeds delta_cell on 1/6. Sign is at or below zero on this subset -- scaling does not appear to help FT-Transformer here, tentatively supporting closing the scaling objection, but the full grid was not run.",
+  "git_sha": "5679ebf7595019775860792a11bf9d5cfa3b4208",
+  "wall_clock_secs": 1313.7
+}

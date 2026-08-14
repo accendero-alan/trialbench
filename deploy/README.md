@@ -133,7 +133,9 @@ Two layers, matching the two ways a long CPU run actually fails:
    cap) between retries. It gives up after `MAX_RETRIES` (default 20)
    *consecutive* attempts with **no new progress** — a real, reproducible
    failure (bad config, missing dependency) won't crash-loop forever; check
-   `logs/attempt_N.log` for the last failure. Any attempt that *does* make
+   `logs/attempt_<N>_pid<PID>.log` for the last failure — the PID makes each
+   *invocation's* logs distinct, so a fresh restart never appends to a
+   previous restart's file. Any attempt that *does* make
    progress resets the counter. The systemd unit adds one more layer on top:
    if the instance reboots, `trialbench-benchmark.service` starts on boot
    and `run_forever.sh` resumes from disk exactly as above.
@@ -154,9 +156,9 @@ Two layers, matching the two ways a long CPU run actually fails:
 ## Monitoring
 
 ```bash
-tail -f logs/supervisor.log        # retry/backoff decisions
-tail -f logs/attempt_<N>.log       # a specific attempt's run_benchmark output
-tail -f results/leaderboard.md     # current standings, updated during the run
+tail -f logs/supervisor.log                       # retry/backoff decisions
+tail -f "$(ls -t logs/attempt_*.log | head -1)"    # the most recent attempt's output
+tail -f results/leaderboard.md                    # current standings, updated during the run
 journalctl -u trialbench-benchmark -f   # if running under systemd
 ```
 

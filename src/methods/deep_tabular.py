@@ -122,13 +122,29 @@ class TabPFN(BaseMethod):
 @register("tabnet")
 class TabNet(BaseMethod):
     """pytorch-tabnet TabNetClassifier. Small network, capped epochs with
-    early stopping on a held-out validation set, sized for CPU."""
+    early stopping on a held-out validation set, sized for CPU.
+
+    T3 in newsletter-part2-test-plan.md: as originally shipped, this scored
+    within noise of the majority prior (mean 0.5115 vs 0.4319) on several
+    cells. `experiments/tabnet_fix_compare.py` found three fixes that moved
+    real-data PR-AUC by +0.054 across 3 seeds (see rerun.md) and this class
+    now ships them:
+      1. class weighting (`weights=1`, pytorch-tabnet's inverse-freq option)
+      2. StandardScaler fit on train only, applied to valid/test -- TabNet is
+         one of the scale-sensitive methods that, unlike logreg/knn/svm here,
+         never got a scaler
+      3. loss-based early stopping (`eval_metric=["logloss"]`) instead of the
+         accuracy-ish pytorch-tabnet default, which stops too early/late on
+         these imbalanced cells
+    """
     feature_view = "tabular"
 
     def fit(self, X_train, y_train, X_valid=None, y_valid=None):
         from pytorch_tabnet.tab_model import TabNetClassifier
+        from sklearn.preprocessing import StandardScaler
 
-        X_train = np.asarray(X_train, dtype=np.float32)
+        self.scaler_ = StandardScaler().fit(np.asarray(X_train, dtype=float))
+        X_train = self.scaler_.transform(np.asarray(X_train, dtype=float)).astype(np.float32)
         y_train = np.asarray(y_train, dtype=np.int64)
         n = len(X_train)
         batch_size = max(8, min(256, n))
@@ -136,7 +152,8 @@ class TabNet(BaseMethod):
 
         eval_set, eval_name = None, None
         if X_valid is not None and len(X_valid) > 0:
-            eval_set = [(np.asarray(X_valid, dtype=np.float32), np.asarray(y_valid, dtype=np.int64))]
+            Xva = self.scaler_.transform(np.asarray(X_valid, dtype=float)).astype(np.float32)
+            eval_set = [(Xva, np.asarray(y_valid, dtype=np.int64))]
             eval_name = ["valid"]
 
         self.model_ = TabNetClassifier(
@@ -145,6 +162,7 @@ class TabNet(BaseMethod):
         )
         self.model_.fit(
             X_train, y_train, eval_set=eval_set, eval_name=eval_name,
+            eval_metric=["logloss"], weights=1,
             max_epochs=100, patience=15,
             batch_size=batch_size, virtual_batch_size=virtual_batch_size,
             drop_last=False,
@@ -153,7 +171,7 @@ class TabNet(BaseMethod):
         return self
 
     def predict_proba(self, X):
-        X = np.asarray(X, dtype=np.float32)
+        X = self.scaler_.transform(np.asarray(X, dtype=float)).astype(np.float32)
         proba = self.model_.predict_proba(X)
         if self.task_type == "binary":
             return self._binary_scores(proba)
