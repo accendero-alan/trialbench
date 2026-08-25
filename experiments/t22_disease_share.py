@@ -41,7 +41,8 @@ FULL_METHODS = NONTEXT_METHODS + ["tfidf_logreg"]
 SEEDS = [42, 7, 123, 2024, 5]
 DATA_ROOT = "data"
 
-BASELINE_DIR = "results/extracted/trialbench/results"  # T1's tabular arm + tfidf_logreg
+BASELINE_DIR = "results/extracted/trialbench/results"  # T1's tabular arm + tfidf_logreg (top-level, for load_predictions)
+BASELINE_RUNS = BASELINE_DIR + "/runs"                  # same arm, run-JSON files (for _load_point)
 ARM_A_DIR = "results_codes_only"                        # T21's "codes" (char3) view
 ARM_BC_DIR = "results_disease_text"                      # disease_text_only, disease_blind
 T1_ARTIFACT = "results/experiments/t1_noise_floor.json"
@@ -159,12 +160,12 @@ def main():
         # ---- per-cell descriptive table (all 20 cells, mean-based) --------
         per_cell = []
         for task, phase in ALL_CELLS:
-            maj_mean, maj_n = _mean_over_seeds(BASELINE_DIR, task, phase, "majority")
-            a_best, a_mean = _best_method(ARM_A_DIR, task, phase, NONTEXT_METHODS)
-            b_mean, b_n = _mean_over_seeds(ARM_BC_DIR, task, phase, "disease_text_only")
-            c_mean, c_n = _mean_over_seeds(ARM_BC_DIR, task, phase, "disease_blind")
-            tfidf_mean, tfidf_n = _mean_over_seeds(BASELINE_DIR, task, phase, "tfidf_logreg")
-            full_best, full_mean = _best_method(BASELINE_DIR, task, phase, FULL_METHODS)
+            maj_mean, maj_n = _mean_over_seeds(BASELINE_RUNS, task, phase, "majority")
+            a_best, a_mean = _best_method(ARM_A_DIR + "/runs", task, phase, NONTEXT_METHODS)
+            b_mean, b_n = _mean_over_seeds(ARM_BC_DIR + "/runs", task, phase, "disease_text_only")
+            c_mean, c_n = _mean_over_seeds(ARM_BC_DIR + "/runs", task, phase, "disease_blind")
+            tfidf_mean, tfidf_n = _mean_over_seeds(BASELINE_RUNS, task, phase, "tfidf_logreg")
+            full_best, full_mean = _best_method(BASELINE_RUNS, task, phase, FULL_METHODS)
 
             disease_only_mean = np.nanmax([a_mean, b_mean if b_n else np.nan])
             denom = full_mean - maj_mean
@@ -269,26 +270,26 @@ def main():
             verdict += (f" Also: disease-only recovers only {min_clinical_share:.1%} of full skill on the "
                         f"weakest clinical task (< 1/3) -- premise weakened per the plan's own threshold.")
 
-        artifact = {
-            "test_id": "T22",
-            "claim_at_stake": "the most informative thing about a trial is the disease it studies "
-                               "(disease share orders clinical > mixed > operational)",
-            "inputs": {"nontext_methods": NONTEXT_METHODS, "full_methods": FULL_METHODS, "seeds": SEEDS,
-                       "baseline_dir": BASELINE_DIR, "arm_a_dir": ARM_A_DIR, "arm_bc_dir": ARM_BC_DIR},
-            "per_cell": per_cell,
-            "pooled_per_task_disease_share": pooled_per_task,
-            "pooled_per_task_blind_drop": blind_drop_pooled,
-            "decision_rule": {
-                "primary": "CONFIRMED if pooled disease_share on mortality+SAE exceeds dropout's by more "
-                            "than the pooled CI width, and blind_drop orders the same way. Else SOFTENED "
-                            "to 'disease dominates everywhere' if shares aren't distinguishable. If "
-                            "disease-only recovers <1/3 of full skill on a clinical task, the premise is "
-                            "flagged as weakened regardless of the ordering verdict.",
-            },
-            "verdict": verdict,
-            "git_sha": git_sha(),
-            "wall_clock_secs": round(t.secs, 1),
-        }
+    artifact = {
+        "test_id": "T22",
+        "claim_at_stake": "the most informative thing about a trial is the disease it studies "
+                           "(disease share orders clinical > mixed > operational)",
+        "inputs": {"nontext_methods": NONTEXT_METHODS, "full_methods": FULL_METHODS, "seeds": SEEDS,
+                   "baseline_dir": BASELINE_DIR, "arm_a_dir": ARM_A_DIR, "arm_bc_dir": ARM_BC_DIR},
+        "per_cell": per_cell,
+        "pooled_per_task_disease_share": pooled_per_task,
+        "pooled_per_task_blind_drop": blind_drop_pooled,
+        "decision_rule": {
+            "primary": "CONFIRMED if pooled disease_share on mortality+SAE exceeds dropout's by more "
+                        "than the pooled CI width, and blind_drop orders the same way. Else SOFTENED "
+                        "to 'disease dominates everywhere' if shares aren't distinguishable. If "
+                        "disease-only recovers <1/3 of full skill on a clinical task, the premise is "
+                        "flagged as weakened regardless of the ordering verdict.",
+        },
+        "verdict": verdict,
+        "git_sha": git_sha(),
+        "wall_clock_secs": round(t.secs, 1),
+    }
     write_artifact(OUT_PATH, artifact)
     print(f"\nwrote {OUT_PATH}")
     print(artifact["verdict"])
