@@ -12,8 +12,8 @@ results/extracted/
 results/predictions/
 results/results.tar.gz
 results/experiments/_snapshots/
-/results_codes/
-/results_codes_only/
+/results_codes*/
+/results_disease_text/
 .pytest_cache/
 .DS_Store
 /logs/
