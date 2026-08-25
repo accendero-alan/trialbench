@@ -318,18 +318,37 @@ def _icd_char3(code: str) -> str:
     return code.strip()[:3].upper()
 
 
-# P9 (disease-representation-test-plan.md, T23 granularity ladder). "char3"
-# needs no external data; "chapter"/"block" are parsed from the official
-# Tabular List XML (icd10_hierarchy.py); "ccsr" from the HCUP crosswalk
-# (ccsr.py). "full" is the untouched, unrolled-up codes.
-ICD_GRANULARITIES = ("char3", "full", "chapter", "block", "ccsr")
+# P9 (disease-representation-test-plan.md, T23 granularity ladder + T24).
+# "char3" needs no external data; "chapter"/"block" are parsed from the
+# official Tabular List XML (icd10_hierarchy.py); "ccsr" from the HCUP
+# crosswalk (ccsr.py). "full" is the untouched, unrolled-up codes.
+# "ancestors"/"stack" (T24) both expand each code to leaf/char3/block/chapter
+# -- "ancestors" unions all four into one multi-hot (flattened GRAM);
+# "stack" keeps them as four separate blocks, the ablation of whether
+# merging the levels (vs. keeping them separable) matters. No collision risk
+# unioning levels: full codes have dots, char3 is 3 chars, block/chapter are
+# "X00-X99"-shaped -- the four level's terms never look alike.
+ICD_GRANULARITIES = ("char3", "full", "chapter", "block", "ccsr", "ancestors", "stack")
+_ICD_ANCESTOR_LEVELS = ("full", "char3", "block", "chapter")
+
+
+def _icd_level_terms(codes: list, level: str) -> set:
+    if level == "full":
+        return set(codes)
+    if level == "char3":
+        return {_icd_char3(c) for c in codes}
+    if level == "chapter":
+        return {t for c in codes for t in [icd10_chapter(_icd_char3(c))] if t}
+    if level == "block":
+        return {t for c in codes for t in [icd10_block(_icd_char3(c))] if t}
+    raise ValueError(level)
 
 
 class CodeFeaturizer:
-    """Three separate multi-hot code blocks -- ICD (at the configured
-    granularity), MeSH condition terms, MeSH intervention terms -- never
-    concatenated into one vocabulary, so per-block importances and ablations
-    stay readable (per the plan).
+    """Multi-hot code blocks -- ICD (at the configured granularity: one
+    block, except ``"stack"``'s four), MeSH condition terms, MeSH
+    intervention terms -- never concatenated into one vocabulary, so
+    per-block importances and ablations stay readable (per the plan).
 
     Each block gets a per-row ``n_<block>_terms`` count and ``has_<block>``
     indicator (the presence controls, mirroring ``mol_features.aggregate``'s
@@ -339,39 +358,48 @@ class CodeFeaturizer:
     (standard multi-hot behavior).
     """
 
-    BLOCKS = ("icd", "mesh_cond", "mesh_int")
+    MESH_BLOCKS = ("mesh_cond", "mesh_int")
     SOURCE_COLS = {
-        "icd": "icdcode",
         "mesh_cond": "condition_browse/mesh_term",
         "mesh_int": "intervention_browse/mesh_term",
     }
+    ICD_SOURCE_COL = "icdcode"
 
     def __init__(self, min_df: int = 10, granularity: str = "char3"):
         if granularity not in ICD_GRANULARITIES:
             raise ValueError(f"unknown ICD granularity {granularity!r}, expected one of {ICD_GRANULARITIES}")
         self.min_df = min_df
         self.granularity = granularity
+        icd_blocks = (tuple(f"icd_{lvl}" for lvl in _ICD_ANCESTOR_LEVELS)
+                      if granularity == "stack" else ("icd",))
+        self.BLOCKS = icd_blocks + self.MESH_BLOCKS
 
     def _parse_block(self, X: pd.DataFrame, block: str) -> list:
-        col = self.SOURCE_COLS[block]
-        if col not in X.columns:
+        if block in self.MESH_BLOCKS:
+            col = self.SOURCE_COLS[block]
+            if col not in X.columns:
+                return [[] for _ in range(len(X))]
+            return [sorted(set(_recursive_parse_terms(v))) for v in X[col].values]
+        if self.ICD_SOURCE_COL not in X.columns:
             return [[] for _ in range(len(X))]
-        raw = X[col].values
-        if block != "icd":
-            return [sorted(set(_recursive_parse_terms(v))) for v in raw]
+        raw = X[self.ICD_SOURCE_COL].values
+        if block != "icd":  # "stack": block is "icd_<level>"
+            level = block[len("icd_"):]
+            return [sorted(_icd_level_terms([c for c in _recursive_parse_terms(v) if c.strip()], level))
+                    for v in raw]
         return [self._icd_terms(v) for v in raw]
 
     def _icd_terms(self, value) -> list:
         codes = [c for c in _recursive_parse_terms(value) if c.strip()]
-        if self.granularity == "full":
-            return sorted(set(codes))
-        if self.granularity == "char3":
-            return sorted({_icd_char3(c) for c in codes})
-        if self.granularity == "chapter":
-            return sorted({t for c in codes for t in [icd10_chapter(_icd_char3(c))] if t})
-        if self.granularity == "block":
-            return sorted({t for c in codes for t in [icd10_block(_icd_char3(c))] if t})
-        return sorted({t for c in codes for t in icd10_ccsr(c)})  # granularity == "ccsr"
+        if self.granularity in ("full", "char3", "chapter", "block"):
+            return sorted(_icd_level_terms(codes, self.granularity))
+        if self.granularity == "ccsr":
+            return sorted({t for c in codes for t in icd10_ccsr(c)})
+        # granularity == "ancestors"
+        terms = set()
+        for level in _ICD_ANCESTOR_LEVELS:
+            terms |= _icd_level_terms(codes, level)
+        return sorted(terms)
 
     def fit(self, X: pd.DataFrame) -> "CodeFeaturizer":
         self.vocabs_ = {}
