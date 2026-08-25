@@ -1,7 +1,7 @@
 """The method contract every model implements.
 
 A method takes a train (and optional validation) set and produces class
-probabilities on a test set. Two *feature views* are supported:
+probabilities on a test set. Feature views:
 
 - ``"tabular"``: a dense numeric matrix (numpy array) produced by
   :class:`src.data.features.TabularFeaturizer`. Used by classical, GBM, and
@@ -9,6 +9,16 @@ probabilities on a test set. Two *feature views* are supported:
 - ``"raw"``: the original pandas DataFrame with all multimodal columns
   (text, SMILES, ICD codes, MeSH). Used by text/NLP, multimodal, and LLM
   methods that do their own encoding.
+- ``"tabular+codes"`` / ``"codes"`` (T21, newsletter-part2-test-plan.md
+  continuation): not a method-declared view -- no registered method sets
+  ``feature_view`` to either of these. They're produced by ``run_cell``
+  (src/run_benchmark.py) when ``feature_view_override`` is configured, which
+  swaps in :class:`src.data.features.CodeFeaturizer` output (horizontally
+  stacked with ``TabularFeaturizer`` for ``"tabular+codes"``, alone for
+  ``"codes"``) for any method whose *declared* view is ``"tabular"`` --
+  letting the same 12 Tier A method names run twice and pair exactly, without
+  renaming them or duplicating method classes. ``"raw"`` methods are always
+  left untouched by the override.
 
 ``predict_proba`` returns:
 - binary tasks: a 1-D array of shape (n,) giving P(y = 1);
@@ -22,7 +32,8 @@ import numpy as np
 class BaseMethod:
     #: registry key (set by @register)
     name: str = "base"
-    #: "tabular" or "raw"
+    #: "tabular" or "raw" -- see module docstring for the run-time-only
+    #: "tabular+codes" / "codes" views ``feature_view_override`` can swap in.
     feature_view: str = "tabular"
 
     def __init__(self, task_type: str = "binary", num_classes: int = 2, seed: int = 42, **params):

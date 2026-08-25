@@ -18,8 +18,13 @@ methods that want them use ``feature_view = "raw"`` and read the DataFrame.
 """
 from __future__ import annotations
 
+import ast
+from collections import Counter
+
 import numpy as np
 import pandas as pd
+
+from .mol_features import vocab_matrix
 
 # As-shipped column list (kept as a *set* originally, which made
 # ``concat_text``'s join order vary between processes -- see P1 in
@@ -218,3 +223,105 @@ def concat_text(X: pd.DataFrame, text_cols=None) -> list:
     if not present:
         return ["" for _ in range(len(X))]
     return (X[present].fillna("").astype(str).agg(" ".join, axis=1)).tolist()
+
+
+# ----------------------------------------------------------------------------
+# T21 (newsletter-part2-test-plan.md continuation, t21-code-channel-plan.md):
+# ICD / MeSH code channel, currently dropped by ``_is_raw_multimodal`` from the
+# default tabular view. ``CodeFeaturizer`` is deliberately separate from
+# ``TabularFeaturizer`` and does not alter its output in any way (P5) -- the
+# default path must keep reproducing today's leaderboard exactly.
+# ----------------------------------------------------------------------------
+def _recursive_parse_terms(value) -> list:
+    """Parse a (possibly multiply-nested) stringified list into a flat list of
+    scalar term strings. ``icdcode`` entries are commonly a list whose single
+    element is itself a stringified list, e.g. ``["['J45.998', 'J82.83']"]`` --
+    a single ``ast.literal_eval`` returns one opaque token. This recurses until
+    the leaves are scalars, dropping ``"None"``/``"nan"``/``""`` at every level
+    (present in the data and not real terms).
+    """
+    if value is None or (isinstance(value, float) and pd.isna(value)):
+        return []
+    s = str(value).strip()
+    if s in ("", "None", "nan", "NaN", "[]"):
+        return []
+    try:
+        parsed = ast.literal_eval(s)
+    except (ValueError, SyntaxError):
+        return [s]  # scalar leaf -- a real term (e.g. "Filariasis")
+    if isinstance(parsed, (list, tuple)):
+        out = []
+        for item in parsed:
+            out.extend(_recursive_parse_terms(item))
+        return out
+    s2 = str(parsed).strip()
+    return [] if s2 in ("", "None", "nan", "NaN") else [s2]
+
+
+def _icd_chapter(code: str) -> str:
+    """Roll an ICD-10-CM code up to its 3-character chapter, e.g. 'J45.998' -> 'J45'."""
+    return code.strip()[:3].upper()
+
+
+class CodeFeaturizer:
+    """Three separate multi-hot code blocks -- ICD chapters, MeSH condition
+    terms, MeSH intervention terms -- never concatenated into one vocabulary,
+    so per-block importances and ablations stay readable (per the plan).
+
+    Each block gets a per-row ``n_<block>_terms`` count and ``has_<block>``
+    indicator (the presence controls, mirroring ``mol_features.aggregate``'s
+    ``[has_molecule, n_molecules]`` -- the same control that made the
+    chemistry probe's conclusions legible). Vocabulary is fit on train only at
+    ``min_df`` frequency; terms unseen at valid/test are silently dropped
+    (standard multi-hot behavior).
+    """
+
+    BLOCKS = ("icd", "mesh_cond", "mesh_int")
+    SOURCE_COLS = {
+        "icd": "icdcode",
+        "mesh_cond": "condition_browse/mesh_term",
+        "mesh_int": "intervention_browse/mesh_term",
+    }
+
+    def __init__(self, min_df: int = 10, icd_rollup: bool = True):
+        self.min_df = min_df
+        self.icd_rollup = icd_rollup
+
+    def _parse_block(self, X: pd.DataFrame, block: str) -> list:
+        col = self.SOURCE_COLS[block]
+        if col not in X.columns:
+            return [[] for _ in range(len(X))]
+        raw = X[col].values
+        if block == "icd" and self.icd_rollup:
+            return [sorted({_icd_chapter(c) for c in _recursive_parse_terms(v) if c.strip()})
+                    for v in raw]
+        return [sorted(set(_recursive_parse_terms(v))) for v in raw]
+
+    def fit(self, X: pd.DataFrame) -> "CodeFeaturizer":
+        self.vocabs_ = {}
+        for block in self.BLOCKS:
+            terms_lists = self._parse_block(X, block)
+            counts = Counter(t for terms in terms_lists for t in terms)
+            self.vocabs_[block] = sorted(t for t, c in counts.items() if c >= self.min_df)
+        self.feature_names_ = self._build_names()
+        return self
+
+    def _build_names(self) -> list:
+        names = []
+        for block in self.BLOCKS:
+            names += [f"{block}__{t}" for t in self.vocabs_[block]]
+            names += [f"n_{block}_terms", f"has_{block}"]
+        return names
+
+    def transform(self, X: pd.DataFrame) -> np.ndarray:
+        blocks_out = []
+        for block in self.BLOCKS:
+            terms_lists = self._parse_block(X, block)
+            mh = vocab_matrix(terms_lists, self.vocabs_[block])
+            n_terms = np.array([len(t) for t in terms_lists], dtype=float).reshape(-1, 1)
+            has = (n_terms > 0).astype(float)
+            blocks_out.append(np.hstack([mh, n_terms, has]))
+        return np.hstack(blocks_out) if blocks_out else np.zeros((len(X), 0))
+
+    def fit_transform(self, X: pd.DataFrame) -> np.ndarray:
+        return self.fit(X).transform(X)
