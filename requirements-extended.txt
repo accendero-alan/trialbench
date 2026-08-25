@@ -2,10 +2,13 @@
 # Install only the block you need; several are slow on CPU.
 
 # --- Tier B: deep tabular ---
-# torch needs the CPU-only wheel index, so install it separately first:
-#   pip install torch --index-url https://download.pytorch.org/whl/cpu
-# (deploy/bootstrap_ec2.sh --extended does this automatically.) Once torch is
-# in place, the two lines below are plain PyPI installs.
+# torch needs a separate install first:
+#   pip install torch --index-url https://download.pytorch.org/whl/cpu   (CPU, the repo default)
+#   pip install torch                                                    (GPU build, needs a CUDA driver --
+#                                                                          the disease-representation campaign
+#                                                                          only, see CLAUDE.md)
+# (deploy/bootstrap_ec2.sh --extended does the CPU install automatically.) Once
+# torch is in place, the two lines below are plain PyPI installs.
 # tabpfn needs a one-time free license token before it'll actually run --
 # see deploy/README.md. Without one it's recorded as "skipped", not an error.
 tabpfn              # tabular foundation model (CPU-runnable within size limits)

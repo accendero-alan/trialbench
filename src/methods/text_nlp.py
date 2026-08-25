@@ -21,15 +21,16 @@ from .registry import register
 _ENCODER_CACHE = {}
 
 
-def _get_encoder(model_name: str):
-    if model_name not in _ENCODER_CACHE:
+def _get_encoder(model_name: str, revision: str = None):
+    key = (model_name, revision)
+    if key not in _ENCODER_CACHE:
         from transformers import AutoModel, AutoTokenizer
 
-        tok = AutoTokenizer.from_pretrained(model_name)
-        model = AutoModel.from_pretrained(model_name)
+        tok = AutoTokenizer.from_pretrained(model_name, revision=revision)
+        model = AutoModel.from_pretrained(model_name, revision=revision)
         model.eval()
-        _ENCODER_CACHE[model_name] = (tok, model)
-    return _ENCODER_CACHE[model_name]
+        _ENCODER_CACHE[key] = (tok, model)
+    return _ENCODER_CACHE[key]
 
 
 def _mean_pool(last_hidden_state, attention_mask):
@@ -184,3 +185,81 @@ class ClinicalEmbeddings(BaseMethod):
         for j, c in enumerate(self.clf_.classes_):
             full[:, int(c)] = proba[:, j]
         return full
+
+
+class SapBERTEncoder:
+    """P11 (disease-representation-test-plan.md, T25/T26) infra: encodes
+    condition strings to 768-d SapBERT vectors, cached **per unique string**
+    (not per row-set like ``ClinicalEmbeddings`` -- condition strings repeat
+    heavily across trials, and T25/T26 both need vectors for individual
+    strings, not a fixed row-aligned matrix) under
+    ``results/cache/sapbert/``. GPU (T25's budget note); falls back to CPU if
+    none is available. Not a ``BaseMethod`` -- T25 composes this encoder's
+    output with other blocks (multi-hot, MeSH graph embeddings) in ways that
+    vary per arm, so it's a featurizer, built once here and wired up when
+    T25 actually runs.
+    """
+    MODEL_NAME = "cambridgeltl/SapBERT-from-PubMedBERT-fulltext"
+    # Pinned per P9/P11 standing rule 10 ("every external asset is pinned").
+    # lastModified 2023-06-14 per the HF Hub API -- this model hasn't been
+    # updated since, but pin the commit, not just the name, regardless.
+    REVISION = "090663c3ae57bf35ffe4d0d468a2a88d03051a4d"
+    MAX_LENGTH = 64  # condition strings are short (SapBERT's own recommendation)
+    BATCH_SIZE = 64
+    CACHE_DIR = os.path.join("results", "cache", "sapbert")
+    POOLING = "mean"
+
+    def _cache_path(self, text: str) -> str:
+        key_src = "|".join([self.MODEL_NAME, self.REVISION, str(self.MAX_LENGTH), self.POOLING, text])
+        key = hashlib.sha256(key_src.encode()).hexdigest()[:24]
+        return os.path.join(self.CACHE_DIR, f"{key}.npy")
+
+    def encode_strings(self, texts) -> dict:
+        """``{text: 768-d np.ndarray}`` for every string in ``texts``,
+        reading/populating the per-string cache. Encoding order is sorted,
+        so a repeated call with a growing ``texts`` set re-batches
+        deterministically."""
+        unique = sorted(set(texts))
+        out, to_encode, paths = {}, [], {}
+        for t in unique:
+            p = self._cache_path(t)
+            if os.path.exists(p):
+                out[t] = np.load(p)
+            else:
+                to_encode.append(t)
+                paths[t] = p
+
+        if to_encode:
+            import torch
+
+            tok, model = _get_encoder(self.MODEL_NAME, revision=self.REVISION)
+            with torch.no_grad():
+                for i in range(0, len(to_encode), self.BATCH_SIZE):
+                    batch = to_encode[i:i + self.BATCH_SIZE]
+                    enc = tok(batch, padding=True, truncation=True,
+                              max_length=self.MAX_LENGTH, return_tensors="pt")
+                    out_t = model(**enc)
+                    pooled = _mean_pool(out_t.last_hidden_state, enc["attention_mask"]).numpy()
+                    for t, vec in zip(batch, pooled):
+                        vec = vec.astype(np.float32)
+                        out[t] = vec
+                        os.makedirs(self.CACHE_DIR, exist_ok=True)
+                        tmp_path = paths[t] + ".tmp"
+                        np.save(tmp_path, vec)
+                        os.replace(tmp_path + ".npy", paths[t])
+        return out
+
+    def trial_vectors(self, condition_lists) -> np.ndarray:
+        """``condition_lists``: one list of condition strings per trial ->
+        ``(n, 768)``, each row the mean of that trial's condition-string
+        vectors (all-zero if the trial has none -- pair with a
+        ``has_condition`` presence control, per the T21 pattern)."""
+        all_strings = [s for terms in condition_lists for s in terms]
+        vecs = self.encode_strings(all_strings)
+        dim = next(iter(vecs.values())).shape[0] if vecs else 768
+        out = np.zeros((len(condition_lists), dim), dtype=np.float32)
+        for i, terms in enumerate(condition_lists):
+            rows = [vecs[t] for t in terms if t in vecs]
+            if rows:
+                out[i] = np.mean(rows, axis=0)
+        return out
