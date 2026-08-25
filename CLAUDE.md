@@ -1,8 +1,11 @@
 # CLAUDE.md — working conventions for this benchmark
 
-This repo benchmarks predictive methods on TrialBench's **classification** tasks
-on **CPU only**. Read `PLAN.md` first; it is the source of truth for scope,
-method tiers, and the evaluation protocol.
+This repo benchmarks predictive methods on TrialBench's **classification** tasks,
+on **CPU by default**. A GPU is available as of 2026-08-20 for the
+disease-representation campaign (SapBERT encoding, T25 fine-tuning, local
+LLM inference in Wave 2 — see `../disease-representation-test-plan.md`).
+**Tier A stays CPU-only** regardless. Read `PLAN.md` first; it is the source of
+truth for scope, method tiers, and the evaluation protocol.
 
 ## Golden rules
 
@@ -46,6 +49,10 @@ To add a method: implement the class, `@register("name")`, add `name` to
   dropped by the loader. Use macro-averaged metrics.
 - CPU wall-clock: start slow methods with `--max-test-rows` / `--max-train-rows`
   and a single `--phases Phase1` before scaling.
+- GPU methods (SapBERT, fine-tuned encoders, local LLMs) are scoped to the
+  disease-representation campaign only — don't assume GPU availability
+  elsewhere in this repo, and keep GPU-only code paths lazily imported per
+  golden rule 5.
 - `pandas.to_markdown` needs `tabulate` (in requirements.txt).
 - Label columns differ by task (`Y/N` vs named targets); the loader resolves
   them via a candidate list — extend `TASKS` in `loader.py` if a column is named
