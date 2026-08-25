@@ -94,7 +94,7 @@ def main():
         for task, phase in ALL_CELLS:
             for method in METHODS:
                 for rung in RUNGS:
-                    mean, vals = _mean_over_seeds(RUNG_DIRS[rung], task, phase, method)
+                    mean, vals = _mean_over_seeds(RUNG_DIRS[rung] + "/runs", task, phase, method)
                     rows.append({"task": task, "phase": phase, "method": method, "rung": rung,
                                  "mean_prauc": mean, "n_seeds": len(vals)})
             print(f"  {task}/{phase} done", flush=True)

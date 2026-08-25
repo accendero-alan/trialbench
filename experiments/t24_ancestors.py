@@ -119,9 +119,9 @@ def main():
         for task, phase in ALL_CELLS:
             best_rung = best_rung_per_task.get(task, "char3")
             for method in METHODS:
-                base_mean, _ = _mean_over_seeds(RUNG_DIRS[best_rung], task, phase, method)
+                base_mean, _ = _mean_over_seeds(RUNG_DIRS[best_rung] + "/runs", task, phase, method)
                 for arm in ARMS:
-                    arm_mean, arm_vals = _mean_over_seeds(ARM_DIRS[arm], task, phase, method)
+                    arm_mean, arm_vals = _mean_over_seeds(ARM_DIRS[arm] + "/runs", task, phase, method)
                     gain = arm_mean - base_mean if (arm_vals and not np.isnan(base_mean)) else float("nan")
                     rows.append({"task": task, "phase": phase, "method": method, "arm": arm,
                                  "best_rung_used": best_rung, "best_rung_mean": base_mean,
@@ -146,8 +146,8 @@ def main():
                     if rare_mask is None:
                         continue
                     n_excluded_total += n_excl
-                    best_method, _ = _best_method(ARM_DIRS[arm], task, phase)
-                    base_method, _ = _best_method(RUNG_DIRS[best_rung], task, phase)
+                    best_method, _ = _best_method(ARM_DIRS[arm] + "/runs", task, phase)
+                    base_method, _ = _best_method(RUNG_DIRS[best_rung] + "/runs", task, phase)
                     if best_method is None or base_method is None:
                         continue
                     for seed in SEEDS:
