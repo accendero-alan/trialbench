@@ -138,10 +138,9 @@ def main():
                          "per-fit predictions (P2) since this always means a real experiment "
                          "arm, not the default leaderboard build")
     ap.add_argument("--code-min-df", type=int, help="T21: CodeFeaturizer min_df (default 10)")
-    ap.add_argument("--icd-granularity", choices=["char3", "full", "chapter"],
+    ap.add_argument("--icd-granularity", choices=["char3", "full", "chapter", "block", "ccsr"],
                     help="P9/T23: ICD granularity rung for the code views (default 'char3', "
-                         "i.e. T21's original encoding). 'block' and 'ccsr' aren't available "
-                         "yet -- see icd10_hierarchy.py.")
+                         "i.e. T21's original encoding).")
     args = ap.parse_args()
 
     cfg = load_config(args.config)

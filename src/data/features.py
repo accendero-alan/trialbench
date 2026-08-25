@@ -25,7 +25,8 @@ from collections import Counter
 import numpy as np
 import pandas as pd
 
-from .icd10_hierarchy import icd10_chapter
+from .ccsr import icd10_ccsr
+from .icd10_hierarchy import icd10_block, icd10_chapter
 from .mol_features import vocab_matrix
 
 # As-shipped column list (kept as a *set* originally, which made
@@ -317,12 +318,11 @@ def _icd_char3(code: str) -> str:
     return code.strip()[:3].upper()
 
 
-# P9 (disease-representation-test-plan.md, T23 granularity ladder): the
-# ``chapter``/``full``/``char3`` rungs need no external data (chapter is a
-# pure function of the 3-char prefix, via icd10_hierarchy). ``block`` and
-# ``ccsr`` need an external range/crosswalk file not yet in data/external/ --
-# see icd10_hierarchy.py's docstring -- so they're not offered here yet.
-ICD_GRANULARITIES = ("char3", "full", "chapter")
+# P9 (disease-representation-test-plan.md, T23 granularity ladder). "char3"
+# needs no external data; "chapter"/"block" are parsed from the official
+# Tabular List XML (icd10_hierarchy.py); "ccsr" from the HCUP crosswalk
+# (ccsr.py). "full" is the untouched, unrolled-up codes.
+ICD_GRANULARITIES = ("char3", "full", "chapter", "block", "ccsr")
 
 
 class CodeFeaturizer:
@@ -348,11 +348,7 @@ class CodeFeaturizer:
 
     def __init__(self, min_df: int = 10, granularity: str = "char3"):
         if granularity not in ICD_GRANULARITIES:
-            raise NotImplementedError(
-                f"ICD granularity {granularity!r} needs an external reference file not "
-                f"yet in data/external/ (see icd10_hierarchy.py docstring and P9 in "
-                f"disease-representation-test-plan.md). Implemented: {ICD_GRANULARITIES}."
-            )
+            raise ValueError(f"unknown ICD granularity {granularity!r}, expected one of {ICD_GRANULARITIES}")
         self.min_df = min_df
         self.granularity = granularity
 
@@ -361,15 +357,21 @@ class CodeFeaturizer:
         if col not in X.columns:
             return [[] for _ in range(len(X))]
         raw = X[col].values
-        if block != "icd" or self.granularity == "full":
+        if block != "icd":
             return [sorted(set(_recursive_parse_terms(v))) for v in raw]
+        return [self._icd_terms(v) for v in raw]
+
+    def _icd_terms(self, value) -> list:
+        codes = [c for c in _recursive_parse_terms(value) if c.strip()]
+        if self.granularity == "full":
+            return sorted(set(codes))
         if self.granularity == "char3":
-            return [sorted({_icd_char3(c) for c in _recursive_parse_terms(v) if c.strip()})
-                    for v in raw]
-        # granularity == "chapter"
-        return [sorted({t for c in _recursive_parse_terms(v) if c.strip()
-                         for t in [icd10_chapter(_icd_char3(c))] if t is not None})
-                for v in raw]
+            return sorted({_icd_char3(c) for c in codes})
+        if self.granularity == "chapter":
+            return sorted({t for c in codes for t in [icd10_chapter(_icd_char3(c))] if t})
+        if self.granularity == "block":
+            return sorted({t for c in codes for t in [icd10_block(_icd_char3(c))] if t})
+        return sorted({t for c in codes for t in icd10_ccsr(c)})  # granularity == "ccsr"
 
     def fit(self, X: pd.DataFrame) -> "CodeFeaturizer":
         self.vocabs_ = {}
