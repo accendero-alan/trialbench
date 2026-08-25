@@ -70,7 +70,8 @@ def run_cell(cfg, task, phase, method_name, seed):
         proba = method.predict_proba(Xte)
         n_features = Xtr.shape[1]
     elif effective_view in ("tabular+codes", "codes"):
-        cz = CodeFeaturizer(min_df=cfg.get("code_min_df", 10)).fit(td.X_train)
+        cz = CodeFeaturizer(min_df=cfg.get("code_min_df", 10),
+                            granularity=cfg.get("icd_granularity", "char3")).fit(td.X_train)
         Ctr, Cva, Cte = cz.transform(td.X_train), cz.transform(td.X_valid), cz.transform(td.X_test)
         if effective_view == "tabular+codes":
             fz = TabularFeaturizer(task_type=td.task_type)
@@ -112,6 +113,7 @@ def run_cell(cfg, task, phase, method_name, seed):
         "n_train": int(len(td.y_train)), "n_test": int(len(td.y_test)),
         "n_features": n_features, "fit_secs": round(fit_secs, 2),
         "feature_view": effective_view,
+        "icd_granularity": cfg.get("icd_granularity", "char3") if effective_view in ("tabular+codes", "codes") else None,
         "headline": M.HEADLINE, "point": point, "bootstrap": boot,
         "status": "ok",
     }
@@ -136,6 +138,10 @@ def main():
                          "per-fit predictions (P2) since this always means a real experiment "
                          "arm, not the default leaderboard build")
     ap.add_argument("--code-min-df", type=int, help="T21: CodeFeaturizer min_df (default 10)")
+    ap.add_argument("--icd-granularity", choices=["char3", "full", "chapter"],
+                    help="P9/T23: ICD granularity rung for the code views (default 'char3', "
+                         "i.e. T21's original encoding). 'block' and 'ccsr' aren't available "
+                         "yet -- see icd10_hierarchy.py.")
     args = ap.parse_args()
 
     cfg = load_config(args.config)
@@ -151,6 +157,7 @@ def main():
         cfg.setdefault("bootstrap", {})["n_resamples"] = args.n_resamples
     if args.feature_view_override: cfg["feature_view_override"] = args.feature_view_override
     if args.code_min_df is not None: cfg["code_min_df"] = args.code_min_df
+    if args.icd_granularity: cfg["icd_granularity"] = args.icd_granularity
 
     runs_dir = os.path.join(cfg["results_dir"], "runs")
     os.makedirs(runs_dir, exist_ok=True)

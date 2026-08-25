@@ -12,7 +12,7 @@ import os
 
 import numpy as np
 
-from ..data.features import TEXT_COLS, concat_text
+from ..data.features import DISEASE_TEXT_COLS, TEXT_COLS, concat_text, disease_blind_text
 from .base import BaseMethod
 from .registry import register
 
@@ -39,9 +39,16 @@ def _mean_pool(last_hidden_state, attention_mask):
     return summed / counts
 
 
-@register("tfidf_logreg")
-class TfidfLogReg(BaseMethod):
+class _TfidfLogRegBase(BaseMethod):
+    """TF-IDF -> LogisticRegression over whatever ``_texts`` returns.
+    Subclasses vary only in which text they hand the vectorizer -- the
+    P10 text configurations (T22) are this with a narrower or scrubbed
+    ``_texts``, everything else is shared.
+    """
     feature_view = "raw"
+
+    def _texts(self, X) -> list:
+        raise NotImplementedError
 
     def fit(self, X_train, y_train, X_valid=None, y_valid=None):
         from sklearn.feature_extraction.text import TfidfVectorizer
@@ -49,14 +56,14 @@ class TfidfLogReg(BaseMethod):
 
         self.vec_ = TfidfVectorizer(max_features=50000, ngram_range=(1, 2),
                                     min_df=2, sublinear_tf=True)
-        Xtr = self.vec_.fit_transform(concat_text(X_train))
+        Xtr = self.vec_.fit_transform(self._texts(X_train))
         self.clf_ = LogisticRegression(C=1.0, class_weight="balanced",
                                        max_iter=2000, random_state=self.seed)
         self.clf_.fit(Xtr, y_train)
         return self
 
     def predict_proba(self, X):
-        Xt = self.vec_.transform(concat_text(X))
+        Xt = self.vec_.transform(self._texts(X))
         proba = self.clf_.predict_proba(Xt)
         if self.task_type == "binary":
             return self._binary_scores(proba)
@@ -64,6 +71,35 @@ class TfidfLogReg(BaseMethod):
         for j, c in enumerate(self.clf_.classes_):
             full[:, int(c)] = proba[:, j]
         return full
+
+
+@register("tfidf_logreg")
+class TfidfLogReg(_TfidfLogRegBase):
+    def _texts(self, X) -> list:
+        return concat_text(X)
+
+
+@register("disease_text_only")
+class DiseaseTextOnly(_TfidfLogRegBase):
+    """P10 (T22 arm b): TF-IDF over only ``condition`` and
+    ``condition_browse/mesh_term`` -- the disease-only text lower bound."""
+
+    def _texts(self, X) -> list:
+        return concat_text(X, text_cols=DISEASE_TEXT_COLS)
+
+
+@register("disease_blind")
+class DiseaseBlind(_TfidfLogRegBase):
+    """P10 (T22 arm c): full ``concat_text`` with each row's own condition
+    and MeSH-condition phrases scrubbed -- the disease-blind upper bound.
+    Under-masks by construction (see ``disease_blind_text``'s docstring);
+    ``mask_lists_`` holds the last call's per-row scrub list, for the T22
+    artifact.
+    """
+
+    def _texts(self, X) -> list:
+        texts, self.mask_lists_ = disease_blind_text(X)
+        return texts
 
 
 @register("clinical_embeddings")

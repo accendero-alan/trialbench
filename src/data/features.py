@@ -19,11 +19,13 @@ methods that want them use ``feature_view = "raw"`` and read the DataFrame.
 from __future__ import annotations
 
 import ast
+import re
 from collections import Counter
 
 import numpy as np
 import pandas as pd
 
+from .icd10_hierarchy import icd10_chapter
 from .mol_features import vocab_matrix
 
 # As-shipped column list (kept as a *set* originally, which made
@@ -226,6 +228,58 @@ def concat_text(X: pd.DataFrame, text_cols=None) -> list:
 
 
 # ----------------------------------------------------------------------------
+# P10 (disease-representation-test-plan.md, T22): two text configurations
+# for tfidf_logreg that bound the disease share from both directions.
+# ----------------------------------------------------------------------------
+DISEASE_TEXT_COLS = ("condition", "condition_browse/mesh_term")
+
+
+def _disease_mask_terms(condition_val, mesh_val) -> set:
+    """A row's own condition string(s) and MeSH condition term(s), lowercased
+    -- the phrases ``disease_blind`` scrubs from that row's free text."""
+    terms = set()
+    for v in (condition_val, mesh_val):
+        for t in _recursive_parse_terms(v):
+            t = t.strip().lower()
+            if t:
+                terms.add(t)
+    return terms
+
+
+def disease_blind_text(X: pd.DataFrame, text_cols=None) -> tuple:
+    """``concat_text`` with each row's own condition/MeSH-condition phrases
+    scrubbed before vectorization (P10's ``disease_blind`` arm) -- masks
+    exact phrase occurrences only, case-insensitive, longest phrase first so
+    a longer match isn't shadowed by a shorter substring of itself.
+
+    This does **not** expand to MeSH entry-term synonyms (P10's full spec) --
+    that needs the MeSH descriptor/synonym file, not yet in ``data/external/``
+    -- so this arm under-masks more than the plan anticipates (e.g. a
+    synonym like "metastatic" survives even though it wasn't the trial's own
+    condition string either). That direction was already expected per the
+    plan ("the blind arm under-masks... record that direction in the
+    artifact"); this implementation just starts from a narrower mask list.
+
+    Returns ``(texts, mask_lists)`` -- the masked strings and, per row, the
+    sorted list of phrases removed (for the T22 artifact).
+    """
+    cols = TEXT_COLS if text_cols is None else text_cols
+    texts = concat_text(X, text_cols=cols)
+    cond = X["condition"] if "condition" in X.columns else pd.Series([None] * len(X), index=X.index)
+    mesh = (X["condition_browse/mesh_term"] if "condition_browse/mesh_term" in X.columns
+            else pd.Series([None] * len(X), index=X.index))
+
+    masked_texts, mask_lists = [], []
+    for txt, c, m in zip(texts, cond.values, mesh.values):
+        terms = _disease_mask_terms(c, m)
+        for t in sorted(terms, key=len, reverse=True):
+            txt = re.sub(re.escape(t), " ", txt, flags=re.IGNORECASE)
+        masked_texts.append(txt)
+        mask_lists.append(sorted(terms))
+    return masked_texts, mask_lists
+
+
+# ----------------------------------------------------------------------------
 # T21 (newsletter-part2-test-plan.md continuation, t21-code-channel-plan.md):
 # ICD / MeSH code channel, currently dropped by ``_is_raw_multimodal`` from the
 # default tabular view. ``CodeFeaturizer`` is deliberately separate from
@@ -258,15 +312,24 @@ def _recursive_parse_terms(value) -> list:
     return [] if s2 in ("", "None", "nan", "NaN") else [s2]
 
 
-def _icd_chapter(code: str) -> str:
-    """Roll an ICD-10-CM code up to its 3-character chapter, e.g. 'J45.998' -> 'J45'."""
+def _icd_char3(code: str) -> str:
+    """Roll an ICD-10-CM code up to its 3-character category, e.g. 'J45.998' -> 'J45'."""
     return code.strip()[:3].upper()
 
 
+# P9 (disease-representation-test-plan.md, T23 granularity ladder): the
+# ``chapter``/``full``/``char3`` rungs need no external data (chapter is a
+# pure function of the 3-char prefix, via icd10_hierarchy). ``block`` and
+# ``ccsr`` need an external range/crosswalk file not yet in data/external/ --
+# see icd10_hierarchy.py's docstring -- so they're not offered here yet.
+ICD_GRANULARITIES = ("char3", "full", "chapter")
+
+
 class CodeFeaturizer:
-    """Three separate multi-hot code blocks -- ICD chapters, MeSH condition
-    terms, MeSH intervention terms -- never concatenated into one vocabulary,
-    so per-block importances and ablations stay readable (per the plan).
+    """Three separate multi-hot code blocks -- ICD (at the configured
+    granularity), MeSH condition terms, MeSH intervention terms -- never
+    concatenated into one vocabulary, so per-block importances and ablations
+    stay readable (per the plan).
 
     Each block gets a per-row ``n_<block>_terms`` count and ``has_<block>``
     indicator (the presence controls, mirroring ``mol_features.aggregate``'s
@@ -283,19 +346,30 @@ class CodeFeaturizer:
         "mesh_int": "intervention_browse/mesh_term",
     }
 
-    def __init__(self, min_df: int = 10, icd_rollup: bool = True):
+    def __init__(self, min_df: int = 10, granularity: str = "char3"):
+        if granularity not in ICD_GRANULARITIES:
+            raise NotImplementedError(
+                f"ICD granularity {granularity!r} needs an external reference file not "
+                f"yet in data/external/ (see icd10_hierarchy.py docstring and P9 in "
+                f"disease-representation-test-plan.md). Implemented: {ICD_GRANULARITIES}."
+            )
         self.min_df = min_df
-        self.icd_rollup = icd_rollup
+        self.granularity = granularity
 
     def _parse_block(self, X: pd.DataFrame, block: str) -> list:
         col = self.SOURCE_COLS[block]
         if col not in X.columns:
             return [[] for _ in range(len(X))]
         raw = X[col].values
-        if block == "icd" and self.icd_rollup:
-            return [sorted({_icd_chapter(c) for c in _recursive_parse_terms(v) if c.strip()})
+        if block != "icd" or self.granularity == "full":
+            return [sorted(set(_recursive_parse_terms(v))) for v in raw]
+        if self.granularity == "char3":
+            return [sorted({_icd_char3(c) for c in _recursive_parse_terms(v) if c.strip()})
                     for v in raw]
-        return [sorted(set(_recursive_parse_terms(v))) for v in raw]
+        # granularity == "chapter"
+        return [sorted({t for c in _recursive_parse_terms(v) if c.strip()
+                         for t in [icd10_chapter(_icd_char3(c))] if t is not None})
+                for v in raw]
 
     def fit(self, X: pd.DataFrame) -> "CodeFeaturizer":
         self.vocabs_ = {}
