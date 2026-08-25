@@ -60,13 +60,12 @@ def run_cell(cfg, task, phase, method_name, seed):
     t0 = time.time()
     valid_proba = None
     if effective_view == "tabular":
-        # Only reached when `override` is unset (see effective_view above) --
-        # unchanged from before P7, no extra valid-set inference call added.
         fz = TabularFeaturizer(task_type=td.task_type)
         Xtr = fz.fit_transform(td.X_train, td.y_train)
         Xva = fz.transform(td.X_valid)
         Xte = fz.transform(td.X_test)
         method.fit(Xtr, td.y_train, Xva, td.y_valid)
+        valid_proba = method.predict_proba(Xva)
         proba = method.predict_proba(Xte)
         n_features = Xtr.shape[1]
     elif effective_view in ("tabular+codes", "codes"):
@@ -86,6 +85,7 @@ def run_cell(cfg, task, phase, method_name, seed):
         n_features = Xtr.shape[1]
     else:  # raw
         method.fit(td.X_train, td.y_train, td.X_valid, td.y_valid)
+        valid_proba = method.predict_proba(td.X_valid)
         proba = method.predict_proba(td.X_test)
         n_features = None
     fit_secs = time.time() - t0
@@ -93,7 +93,12 @@ def run_cell(cfg, task, phase, method_name, seed):
     # save_predictions (P2) only handles a scalar P(y=1) column; multiclass
     # cells (failure_reason) are skipped here -- their metrics still come
     # through in the JSON record's "point"/"bootstrap" fields as usual.
-    if override and valid_proba is not None and td.task_type == "binary":
+    # Unconditional as of the disease-representation campaign (T22-T24's
+    # pooled paired bootstrap needs predictions from the T1/tfidf_logreg
+    # baseline too, not just override runs) -- was gated behind `if
+    # override`, which is why T1's original runs have no predictions/ and
+    # needed a backfill re-run.
+    if valid_proba is not None and td.task_type == "binary":
         save_predictions(
             cfg["results_dir"], task, phase, method_name, seed,
             valid_ids=td.X_valid.index, valid_proba=valid_proba, valid_y=td.y_valid,
