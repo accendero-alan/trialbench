@@ -81,3 +81,41 @@ def icd10_block(char3: str, xml_path: str = TABULAR_XML_PATH) -> str | None:
     finer than the 22 chapters and coarser than the 509 char3 categories."""
     _char3_to_chapter, char3_to_block = _load(xml_path)
     return char3_to_block.get(char3.strip().upper())
+
+
+@lru_cache(maxsize=1)
+def _load_full_descriptors(xml_path: str = TABULAR_XML_PATH) -> dict[str, str]:
+    """P13.6 (wave2-start-plan.md), the L3 arm: official descriptor text for
+    every full (dotted) ICD-10-CM code, not just the char3 rollups ``_load``
+    builds. The Tabular List XML nests ``<diag>`` recursively -- A00 -> A00.0,
+    A00.1, ... -- so a full code's descriptor is only reachable by walking
+    each section's diag tree to its leaves, not by a single top-level pass."""
+    if not os.path.exists(xml_path):
+        raise FileNotFoundError(
+            f"{xml_path} not found. See icd10_chapter's docstring for how to obtain it."
+        )
+    root = ET.parse(xml_path).getroot()
+    out: dict[str, str] = {}
+
+    def walk(diag):
+        code = (diag.findtext("name") or "").strip().upper()
+        desc = (diag.findtext("desc") or "").strip()
+        if code and desc:
+            out[code] = desc
+        for child in diag.findall("diag"):
+            walk(child)
+
+    for chapter in root.findall("chapter"):
+        for section in chapter.findall("section"):
+            for diag in section.findall("diag"):
+                walk(diag)
+    return out
+
+
+def icd10_full_descriptor(code: str, xml_path: str = TABULAR_XML_PATH) -> str | None:
+    """Official descriptor for a full ICD-10-CM code (e.g. ``"E11.9"`` ->
+    ``"Type 2 diabetes mellitus without complications"``), or ``None`` if the
+    code (with or without its decimal point) isn't in the Tabular List."""
+    descriptors = _load_full_descriptors(xml_path)
+    key = code.strip().upper()
+    return descriptors.get(key) or descriptors.get(key.replace(".", ""))

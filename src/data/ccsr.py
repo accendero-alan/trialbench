@@ -57,3 +57,41 @@ def icd10_ccsr(code: str, csv_path: str = DXCCSR_CSV_PATH) -> list:
     derivable from a char3 rollup."""
     key = code.strip().upper().replace(".", "")
     return _load(csv_path).get(key, [])
+
+
+# Category id -> description columns are one to the right of each of
+# _CATEGORY_COLS in the same row (e.g. col 6 "CCSR CATEGORY 1" / col 7
+# "CCSR CATEGORY 1 DESCRIPTION").
+_CATEGORY_NAME_COLS = tuple(c + 1 for c in _CATEGORY_COLS)
+
+
+@lru_cache(maxsize=1)
+def _load_names(csv_path: str = DXCCSR_CSV_PATH) -> dict:
+    """P13.6, the L5 arm: CCSR category *names* (e.g. ``"END011"`` ->
+    ``"Diabetes mellitus"``), not just codes -- ``L5`` renders category
+    names into the disease slot, and this is the crosswalk's own source for
+    them rather than a second, hand-maintained code->name table that could
+    drift from the pinned DXCCSR version."""
+    if not os.path.exists(csv_path):
+        raise FileNotFoundError(
+            f"{csv_path} not found. See icd10_ccsr's docstring for how to obtain it."
+        )
+    names: dict = {}
+    with open(csv_path, encoding="utf-8-sig", newline="") as f:
+        reader = csv.reader(f)
+        next(reader)  # header
+        for row in reader:
+            if len(row) <= max(_CATEGORY_NAME_COLS):
+                continue
+            for code_col, name_col in zip(_CATEGORY_COLS, _CATEGORY_NAME_COLS):
+                code = _unquote(row[code_col])
+                name = row[name_col].strip()
+                if code and name:
+                    names[code] = name
+    return names
+
+
+def icd10_ccsr_name(category: str, csv_path: str = DXCCSR_CSV_PATH) -> str | None:
+    """The human-readable name for a CCSR category id (e.g.
+    ``"DIG001"`` -> ``"Intestinal infection"``), or ``None`` if unknown."""
+    return _load_names(csv_path).get(_unquote(category))

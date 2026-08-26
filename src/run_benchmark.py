@@ -53,7 +53,8 @@ def _expected_view_and_granularity(cfg, method_name):
     return effective_view, granularity
 
 
-def _assert_resume_matches(out_path, stem, expected_view, expected_granularity):
+def _assert_resume_matches(out_path, stem, expected_view, expected_granularity,
+                           expected_llm_arm=None, expected_llm_model=None):
     """B3 (wave1-preflight-review.md): the skip-if-exists resume path used to
     compare nothing but the file's existence, so one mistyped
     ``--icd-granularity`` on a resumed sweep silently mixed two rungs into
@@ -73,20 +74,32 @@ def _assert_resume_matches(out_path, stem, expected_view, expected_granularity):
     every resume of that directory, including a legitimate backfill.
     ``feature_view`` has no such legacy gap (always written) and is still
     checked unconditionally.
+
+    P13.1 (wave2-start-plan.md): the same failure mode, one mistyped
+    ``--llm-arm``/``--llm-model`` on a resumed T28 sweep, mixes two arms or
+    models in one results directory -- with money attached this time.
+    ``llm_arm``/``llm_model`` are checked the same way ``icd_granularity``
+    is: only when the record actually carries the key (absent on every
+    non-LLM run, and on LLM records predating this check).
     """
     with open(out_path) as f:
         rec = json.load(f)
     if rec.get("status") != "ok":
         return
     granularity_mismatch = "icd_granularity" in rec and rec["icd_granularity"] != expected_granularity
-    if rec.get("feature_view") != expected_view or granularity_mismatch:
+    llm_arm_mismatch = "llm_arm" in rec and rec["llm_arm"] != expected_llm_arm
+    llm_model_mismatch = "llm_model" in rec and rec["llm_model"] != expected_llm_model
+    if rec.get("feature_view") != expected_view or granularity_mismatch or llm_arm_mismatch or llm_model_mismatch:
         sys.exit(
             f"ABORT: {stem} on disk was recorded with feature_view="
             f"{rec.get('feature_view')!r}, icd_granularity={rec.get('icd_granularity')!r}, "
+            f"llm_arm={rec.get('llm_arm')!r}, llm_model={rec.get('llm_model')!r}, "
             f"but the current config resolves to feature_view={expected_view!r}, "
-            f"icd_granularity={expected_granularity!r}. Resuming would mix granularities/"
-            f"views in one results directory. Fix the config/flags, or point --results-dir "
-            f"at a fresh directory, or --force this cell if the mismatch is intentional."
+            f"icd_granularity={expected_granularity!r}, llm_arm={expected_llm_arm!r}, "
+            f"llm_model={expected_llm_model!r}. Resuming would mix granularities/views/LLM "
+            f"arms/models in one results directory. Fix the config/flags, or point "
+            f"--results-dir at a fresh directory, or --force this cell if the mismatch is "
+            f"intentional."
         )
 
 
@@ -96,6 +109,7 @@ def run_cell(cfg, task, phase, method_name, seed):
         data_root, task, phase, seed=seed,
         max_train_rows=cfg.get("max_train_rows"),
         max_test_rows=cfg.get("max_test_rows"),
+        test_subset_file=cfg.get("test_subset_file"),
     )
     MethodCls = get_method(method_name)
     # H2 (wave1-preflight-review.md): every method that parallelizes its own
@@ -105,8 +119,16 @@ def run_cell(cfg, task, phase, method_name, seed):
     # usually slower than running them in sequence. cfg["n_jobs"] (default
     # -1, unchanged solo behavior) lets a concurrent launch cap each
     # process's share; see deploy/run_codes_sweep.sh.
+    # P13.1: task/llm_* land in every method's self.params (BaseMethod's
+    # generic **params __init__) -- harmless for non-LLM methods, same as
+    # n_jobs already was before llm_probability existed.
     method = MethodCls(task_type=td.task_type, num_classes=td.num_classes, seed=seed,
-                       n_jobs=cfg.get("n_jobs", -1))
+                       n_jobs=cfg.get("n_jobs", -1), task=task,
+                       llm_arm=cfg.get("llm_arm"), llm_model=cfg.get("llm_model"),
+                       llm_temperature=cfg.get("llm_temperature", 0.0),
+                       primary_elicitation=cfg.get("primary_elicitation", "logprob"),
+                       llm_max_calls=cfg.get("llm_max_calls"),
+                       llm_base_url=cfg.get("llm_base_url", "http://127.0.0.1:8080"))
 
     # T21 (t21-code-channel-plan.md, P7): a config-level override that swaps
     # the view for any method *declaring* "tabular" -- "raw" methods (e.g.
@@ -170,7 +192,7 @@ def run_cell(cfg, task, phase, method_name, seed):
     )
     point = M.compute(td.y_test, proba, td.task_type, td.num_classes)
 
-    return {
+    rec = {
         "task": task, "phase": phase, "method": method_name, "seed": seed,
         "task_type": td.task_type, "num_classes": td.num_classes,
         "n_train": int(len(td.y_train)), "n_test": int(len(td.y_test)),
@@ -180,6 +202,22 @@ def run_cell(cfg, task, phase, method_name, seed):
         "headline": M.HEADLINE, "point": point, "bootstrap": boot,
         "status": "ok",
     }
+    if method_name == "llm_probability":
+        # P13.1/P13.5: written unconditionally for this method (None for
+        # everyone else) so the B3 guard above has something to compare on
+        # resume, and so a run record is self-describing about which arm/
+        # model/sample produced it without needing the sweep's own config.
+        rec["llm_arm"] = cfg.get("llm_arm")
+        rec["llm_model"] = cfg.get("llm_model")
+        rec["primary_elicitation"] = cfg.get("primary_elicitation", "logprob")
+        rec["test_subset_file"] = cfg.get("test_subset_file")
+        rec["llm_meter"] = method.llm_meter.summary()
+        rec["llm_parse_failure_rate"] = round(method.llm_parse_failure_rate, 4)
+        if method.llm_parse_failure_rate > 0.02:
+            print(f"  WARNING: {task}/{phase}/seed{seed} LLM parse failure rate "
+                  f"{method.llm_parse_failure_rate:.1%} exceeds 2% (P13.3) -- likely a harness bug, "
+                  f"not model behavior.", flush=True)
+    return rec
 
 
 def main():
@@ -212,6 +250,26 @@ def main():
                          "(claim the whole machine) -- fine for one solo sweep, but cap this "
                          "when running several sweeps concurrently so they don't oversubscribe "
                          "the same cores; see deploy/run_codes_sweep.sh.")
+    ap.add_argument("--llm-arm", choices=["L0", "L1", "L2", "L3", "L4", "L5", "L6", "L7"],
+                    help="P13.1: disease-representation arm for llm_probability (src/data/serialize.py).")
+    ap.add_argument("--llm-model",
+                    help="P13.1: model id passed through to the llama-server client, and recorded "
+                         "in the run for the B3 guard/provenance -- not validated against a server "
+                         "here (llm_probability's fit() fails loudly if the server can't be reached).")
+    ap.add_argument("--llm-temperature", type=float, help="P13.3: default 0.0 (deterministic).")
+    ap.add_argument("--llm-primary-elicitation", choices=["verbalized", "logprob"],
+                    help="§3 amendment: which of the two probability paths is primary. "
+                         "Default 'logprob' -- pre-register before the first T28a call, don't "
+                         "pick this after seeing which path gives a cleaner ordering.")
+    ap.add_argument("--llm-max-calls", type=int,
+                    help="P13.1: hard cap: predict_proba raises rather than silently truncating "
+                         "if the sample exceeds this. Use --test-subset-file to size the sample "
+                         "instead of relying on this to cut it down.")
+    ap.add_argument("--llm-base-url", help="P13.3: llama-server base URL. Default http://127.0.0.1:8080.")
+    ap.add_argument("--test-subset-file",
+                    help="P13.7: fixed NCT-id sample (src/data/subset.py) applied to the test "
+                         "split in file order, instead of --max-test-rows's head-n truncation. "
+                         "Required for T28/T29 cells so arms/models pair on identical rows.")
     args = ap.parse_args()
 
     cfg = load_config(args.config)
@@ -229,6 +287,13 @@ def main():
     if args.feature_view_override: cfg["feature_view_override"] = args.feature_view_override
     if args.code_min_df is not None: cfg["code_min_df"] = args.code_min_df
     if args.icd_granularity: cfg["icd_granularity"] = args.icd_granularity
+    if args.llm_arm: cfg["llm_arm"] = args.llm_arm
+    if args.llm_model: cfg["llm_model"] = args.llm_model
+    if args.llm_temperature is not None: cfg["llm_temperature"] = args.llm_temperature
+    if args.llm_primary_elicitation: cfg["primary_elicitation"] = args.llm_primary_elicitation
+    if args.llm_max_calls is not None: cfg["llm_max_calls"] = args.llm_max_calls
+    if args.llm_base_url: cfg["llm_base_url"] = args.llm_base_url
+    if args.test_subset_file: cfg["test_subset_file"] = args.test_subset_file
 
     runs_dir = os.path.join(cfg["results_dir"], "runs")
     os.makedirs(runs_dir, exist_ok=True)
@@ -254,7 +319,8 @@ def main():
             out_path = os.path.join(runs_dir, stem + ".json")
             if os.path.exists(out_path) and not args.force:
                 expected_view, expected_granularity = _expected_view_and_granularity(cfg, method_name)
-                _assert_resume_matches(out_path, stem, expected_view, expected_granularity)
+                _assert_resume_matches(out_path, stem, expected_view, expected_granularity,
+                                       expected_llm_arm=cfg.get("llm_arm"), expected_llm_model=cfg.get("llm_model"))
                 print(f"  [{i}/{len(grid)}] skip (done): {stem}", flush=True)
                 continue
             try:

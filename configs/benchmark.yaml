@@ -49,10 +49,13 @@ methods:
   # that). No license gate, unlike tabpfn. Same graceful-skip-if-missing-deps
   # behavior as Tier B.
   - clinical_embeddings
-  # Tier D — multimodal / LLM / repo baseline (stubs)
+  # Tier D — multimodal / repo baseline (stubs)
   # - fingerprint_fusion
   # - hint_reference
-  # - llm_fewshot
+  # Tier D — LLM (P13, wave2-start-plan.md). Needs --llm-arm/--llm-model
+  # (or icd_granularity-style config keys) set -- fit() raises otherwise.
+  # Requires a llama-server instance reachable at --llm-base-url.
+  # - llm_probability
 
 seeds: [42]                 # add more for multi-seed variance, e.g. [42, 7, 123]
 

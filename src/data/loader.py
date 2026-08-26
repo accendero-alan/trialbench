@@ -72,9 +72,15 @@ def _pick_label(y_df: pd.DataFrame, candidates) -> pd.Series:
     return y_df.iloc[:, -1]
 
 
+def _load_subset_ids(path: str) -> list:
+    with open(path) as f:
+        return [line.strip() for line in f if line.strip()]
+
+
 def load_task_phase(data_root: str, task: str, phase: str,
                     valid_size: float = 0.2, seed: int = 42,
-                    max_train_rows=None, max_test_rows=None) -> TaskData:
+                    max_train_rows=None, max_test_rows=None,
+                    test_subset_file=None) -> TaskData:
     if task not in TASKS:
         raise KeyError(f"unknown task '{task}'. Known: {sorted(TASKS)}")
     folder, label_candidates, task_type = TASKS[task]
@@ -111,7 +117,26 @@ def load_task_phase(data_root: str, task: str, phase: str,
     if max_train_rows:
         Xtr_full = Xtr_full.iloc[:max_train_rows]
         ytr_enc = ytr_enc[:max_train_rows]
-    if max_test_rows:
+
+    if test_subset_file:
+        # P13.7 (wave2-start-plan.md): the plan's fixed sample -- "min(full
+        # test, 1,000 trials) per cell, stratified by label, identical rows
+        # across all arms and all models" -- not max_test_rows's head-n
+        # truncation. Order comes from the file (generated once per cell,
+        # src/data/subset.py), preserved here, so two arms' prediction
+        # frames pair exactly for pooled_paired_bootstrap's clustered draw.
+        subset_ids = _load_subset_ids(test_subset_file)
+        missing = [i for i in subset_ids if i not in Xte.index]
+        if missing:
+            raise ValueError(
+                f"--test-subset-file {test_subset_file!r} lists {len(missing)} NCT id(s) not "
+                f"present in this cell's test split (e.g. {missing[:3]}) -- the subset file must "
+                f"be generated per (task, phase), not reused across cells."
+            )
+        positions = [Xte.index.get_loc(i) for i in subset_ids]
+        Xte = Xte.iloc[positions]
+        yte_enc = yte_enc[positions]
+    elif max_test_rows:
         Xte = Xte.iloc[:max_test_rows]
         yte_enc = yte_enc[:max_test_rows]
 
