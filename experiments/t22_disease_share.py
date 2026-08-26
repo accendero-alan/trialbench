@@ -30,7 +30,7 @@ import pandas as pd
 
 from experiments._common import Timer, git_sha, write_artifact
 from src.data.loader import TASKS, load_task_phase
-from src.eval.pooled_bootstrap import pool_predictions, pooled_paired_bootstrap
+from src.eval.pooled_bootstrap import cluster_bootstrap_indices, pool_predictions, pooled_paired_bootstrap
 from src.eval.predictions import load_predictions
 
 NONTEXT_METHODS = [
@@ -93,7 +93,7 @@ def _pooled_trials(runs_dir, task, method, seeds=SEEDS, phases=("Phase1", "Phase
                 df = load_predictions(runs_dir, task, phase, method, seed, split="test")
             except FileNotFoundError:
                 continue
-            rows.append((df["y_true"].to_numpy(), df["y_proba"].to_numpy()))
+            rows.append((df["nct_id"].to_numpy(), df["y_true"].to_numpy(), df["y_proba"].to_numpy()))
     return pool_predictions(rows)
 
 
@@ -114,20 +114,23 @@ def _disease_share_bootstrap(task, majority_method, disease_dir, disease_method,
     # (phase, seed) test sets in the same phase order, so row i in each is
     # the same trial -- true here since every arm runs the identical T1 grid
     # and TrialBench's test split doesn't vary by seed within a phase. Guard
-    # it rather than assume it silently.
+    # it on nct_id (the real identity key), not just the label vector, which
+    # could coincidentally match on the wrong row.
     n = len(maj["y_true"])
     if not (len(dis["y_true"]) == len(full["y_true"]) == n) or not (
-        np.array_equal(maj["y_true"], dis["y_true"]) and np.array_equal(maj["y_true"], full["y_true"])
+        np.array_equal(maj["nct_id"], dis["nct_id"]) and np.array_equal(maj["nct_id"], full["nct_id"])
     ):
-        raise ValueError(f"{task}: majority/disease/full pooled label vectors don't align row-for-row; "
+        raise ValueError(f"{task}: majority/disease/full pooled nct_id vectors don't align row-for-row; "
                           f"lens={len(maj['y_true'])},{len(dis['y_true'])},{len(full['y_true'])}")
 
+    # A1 (wave1-preflight-review.md): cluster-resample by nct_id, not row --
+    # pooling across (phase, seed) puts every trial in here once per seed, so
+    # row resampling would treat five correlated copies of the same trial as
+    # independent draws and understate the CI. See pooled_bootstrap.py.
     from sklearn.metrics import average_precision_score
     y = maj["y_true"]
-    rng = np.random.default_rng(seed)
     shares, maj_v, dis_v, full_v = [], [], [], []
-    for _ in range(n_resamples):
-        idx = rng.integers(0, n, size=n)
+    for idx in cluster_bootstrap_indices(maj["nct_id"], n_resamples, seed=seed):
         yt = y[idx]
         if len(np.unique(yt)) < 2:
             continue
@@ -150,7 +153,7 @@ def _disease_share_bootstrap(task, majority_method, disease_dir, disease_method,
         "disease_share_lo": float(np.percentile(shares, lo_q)) if has else float("nan"),
         "disease_share_hi": float(np.percentile(shares, hi_q)) if has else float("nan"),
         "disease_share_width": float(np.percentile(shares, hi_q) - np.percentile(shares, lo_q)) if has else float("nan"),
-        "n_resamples_used": int(len(shares)), "n_rows": n,
+        "n_resamples_used": int(len(shares)), "n_rows": n, "n_clusters": int(len(np.unique(maj["nct_id"]))),
         "disease_method": disease_method, "full_method": full_method,
     }
 
@@ -224,9 +227,9 @@ def main():
             tfidf = _pooled_trials(BASELINE_DIR, task, "tfidf_logreg")
             blind = _pooled_trials(ARM_BC_DIR, task, "disease_blind")
             if len(tfidf["y_true"]) and len(tfidf["y_true"]) == len(blind["y_true"]) and \
-               np.array_equal(tfidf["y_true"], blind["y_true"]):
+               np.array_equal(tfidf["nct_id"], blind["nct_id"]):
                 blind_drop_pooled[task] = pooled_paired_bootstrap(
-                    tfidf["y_true"], tfidf["proba"], blind["proba"], metric="prauc",
+                    tfidf["nct_id"], tfidf["y_true"], tfidf["proba"], blind["proba"], metric="prauc",
                 )
             else:
                 blind_drop_pooled[task] = {"error": "row mismatch or missing predictions"}
@@ -247,7 +250,16 @@ def main():
             not np.isnan(dropout_share) and all(not np.isnan(s) for s in clinical_shares)
             and all((s - dropout_share) > max_width for s in clinical_shares)
         )
+        # "What T22 found" (wave1-preflight-review.md): disease_share's half of
+        # this conjunct is CI-gated (order_confirmed above, via max_width) but
+        # this half used to compare bare mean_delta points -- ignoring the lo/hi
+        # this same bootstrap call already computes -- so a clinical task whose
+        # blind_drop was really indistinguishable from zero could veto the whole
+        # conjunct on noise. Gated the same way now: a clinical task's blind_drop
+        # must itself clear zero (lo > 0, a real drop, not just a positive point
+        # estimate) *and* exceed dropout's point estimate.
         blind_orders_same = all(
+            blind_drop_pooled.get(t, {}).get("lo", float("nan")) > 0 and
             blind_drop_pooled.get(t, {}).get("mean_delta", float("nan")) >
             blind_drop_pooled.get(OPERATIONAL_TASK, {}).get("mean_delta", float("-inf"))
             for t in CLINICAL_TASKS

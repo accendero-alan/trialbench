@@ -28,6 +28,15 @@ _CHAPTER_DESC_RE = re.compile(r"^(.*)\s+\(([A-Z0-9]+)-([A-Z0-9]+)\)\s*$")
 
 @lru_cache(maxsize=1)
 def _load(xml_path: str = TABULAR_XML_PATH):
+    """Build explicit ``char3 -> label`` maps for both chapter and block by
+    walking the XML's actual ``<section>``/``<diag>`` tree rather than
+    comparing a code against ``<sectionRef first="..." last="...">`` bounds
+    as strings. String comparison mis-handles any code whose third character
+    is a letter under a numerically-bounded section (``"M1A" > "M14"``
+    because ``'A' > '4'``), silently dropping it. Every top-level ``<diag>``
+    under a ``<section>`` is confirmed 3 characters (verified against this
+    release), so ``diag/name`` is a direct, unambiguous key.
+    """
     if not os.path.exists(xml_path):
         raise FileNotFoundError(
             f"{xml_path} not found. P9 needs the official ICD-10-CM Tabular List XML: "
@@ -36,40 +45,39 @@ def _load(xml_path: str = TABULAR_XML_PATH):
             f"and unzip the *-tabular-*.xml file to this path (or pass xml_path)."
         )
     root = ET.parse(xml_path).getroot()
-    chapters, blocks = [], []
+    n_chapters = 0
+    char3_to_chapter: dict[str, str] = {}
+    char3_to_block: dict[str, str] = {}
     for chapter in root.findall("chapter"):
         desc = chapter.findtext("desc", default="").strip()
         m = _CHAPTER_DESC_RE.match(desc)
         if not m:
             continue
-        title, start, end = m.group(1), m.group(2), m.group(3)
-        chapters.append((start, end, title))
-        for ref in chapter.findall("./sectionIndex/sectionRef"):
-            blocks.append((ref.get("first"), ref.get("last"), ref.get("id"),
-                            (ref.text or "").strip()))
-    if len(chapters) != 22:
-        raise ValueError(f"expected 22 ICD-10-CM chapters in {xml_path}, parsed {len(chapters)}")
-    return tuple(chapters), tuple(blocks)
-
-
-def _range_lookup(char3: str, ranges) -> str | None:
-    c = char3.strip().upper()
-    for start, end, *_rest in ranges:
-        if start <= c <= end:
-            return f"{start}-{end}"
-    return None
+        n_chapters += 1
+        chapter_label = f"{m.group(2)}-{m.group(3)}"
+        for section in chapter.findall("section"):
+            block_label = section.get("id")
+            for diag in section.findall("diag"):
+                code = (diag.findtext("name") or "").strip().upper()
+                if len(code) != 3:
+                    continue
+                char3_to_chapter[code] = chapter_label
+                char3_to_block[code] = block_label
+    if n_chapters != 22:
+        raise ValueError(f"expected 22 ICD-10-CM chapters in {xml_path}, parsed {n_chapters}")
+    return char3_to_chapter, char3_to_block
 
 
 def icd10_chapter(char3: str, xml_path: str = TABULAR_XML_PATH) -> str | None:
     """Map a 3-character ICD-10-CM prefix (e.g. ``"J45"``) to its chapter's
     range label (e.g. ``"J00-J99"``), or ``None`` if it matches no chapter."""
-    chapters, _blocks = _load(xml_path)
-    return _range_lookup(char3, chapters)
+    char3_to_chapter, _char3_to_block = _load(xml_path)
+    return char3_to_chapter.get(char3.strip().upper())
 
 
 def icd10_block(char3: str, xml_path: str = TABULAR_XML_PATH) -> str | None:
     """Map a 3-character ICD-10-CM prefix to its block's range label (e.g.
     ``"J40-J47"``), or ``None`` if it matches no block. ~280 blocks are
     finer than the 22 chapters and coarser than the 509 char3 categories."""
-    _chapters, blocks = _load(xml_path)
-    return _range_lookup(char3, blocks)
+    _char3_to_chapter, char3_to_block = _load(xml_path)
+    return char3_to_block.get(char3.strip().upper())

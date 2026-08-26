@@ -56,6 +56,13 @@ methods:
 
 seeds: [42]                 # add more for multi-seed variance, e.g. [42, 7, 123]
 
+# Per-fit parallelism cap (random_forest/extra_trees/knn's n_jobs,
+# xgboost/lightgbm's n_jobs, catboost's thread_count). -1 = claim every core,
+# fine for one solo sweep. Override with --n-jobs when running several sweeps
+# concurrently (deploy/run_codes_sweep.sh does this for you) so they don't all
+# claim the same machine at once (wave1-preflight-review.md H2).
+n_jobs: -1
+
 bootstrap:
   n_resamples: 1000         # repo default is 20; raise for stable CIs
   ci: 0.95

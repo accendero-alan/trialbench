@@ -16,6 +16,7 @@ from __future__ import annotations
 import argparse
 import json
 import os
+import sys
 import time
 import traceback
 
@@ -40,6 +41,55 @@ def load_config(path):
         return yaml.safe_load(f)
 
 
+def _expected_view_and_granularity(cfg, method_name):
+    """What ``run_cell`` would write to a fresh record's ``feature_view`` /
+    ``icd_granularity`` for this method under the current config -- computed
+    without actually running the cell, so the resume check below can compare
+    against it before deciding to skip."""
+    MethodCls = get_method(method_name)
+    override = cfg.get("feature_view_override")
+    effective_view = override if (override and MethodCls.feature_view == "tabular") else MethodCls.feature_view
+    granularity = cfg.get("icd_granularity", "char3") if effective_view in ("tabular+codes", "codes") else None
+    return effective_view, granularity
+
+
+def _assert_resume_matches(out_path, stem, expected_view, expected_granularity):
+    """B3 (wave1-preflight-review.md): the skip-if-exists resume path used to
+    compare nothing but the file's existence, so one mistyped
+    ``--icd-granularity`` on a resumed sweep silently mixed two rungs into
+    one results directory -- a corruption ``leaderboard.md`` cannot reveal
+    and the T22-T24 analysis scripts never check for. Only ``status: "ok"``
+    records carry ``feature_view``/``icd_granularity`` at all (skipped/
+    no_data/error records don't reach the code that writes them), so those
+    statuses have nothing to compare and are left alone -- resuming past a
+    genuinely skipped or errored cell is unaffected.
+
+    ``icd_granularity`` is checked only when the record actually has the key.
+    ``results_codes/`` (char3, T21's original sweep) predates this field --
+    its early records have no ``icd_granularity`` key at all, not a null
+    value -- and that directory has only ever held char3 by construction, so
+    an absent key isn't evidence of a mismatch the way a present-but-wrong
+    value would be. Treating "missing" as "confirmed mismatch" would abort
+    every resume of that directory, including a legitimate backfill.
+    ``feature_view`` has no such legacy gap (always written) and is still
+    checked unconditionally.
+    """
+    with open(out_path) as f:
+        rec = json.load(f)
+    if rec.get("status") != "ok":
+        return
+    granularity_mismatch = "icd_granularity" in rec and rec["icd_granularity"] != expected_granularity
+    if rec.get("feature_view") != expected_view or granularity_mismatch:
+        sys.exit(
+            f"ABORT: {stem} on disk was recorded with feature_view="
+            f"{rec.get('feature_view')!r}, icd_granularity={rec.get('icd_granularity')!r}, "
+            f"but the current config resolves to feature_view={expected_view!r}, "
+            f"icd_granularity={expected_granularity!r}. Resuming would mix granularities/"
+            f"views in one results directory. Fix the config/flags, or point --results-dir "
+            f"at a fresh directory, or --force this cell if the mismatch is intentional."
+        )
+
+
 def run_cell(cfg, task, phase, method_name, seed):
     data_root = cfg["data_root"]
     td = load_task_phase(
@@ -48,7 +98,15 @@ def run_cell(cfg, task, phase, method_name, seed):
         max_test_rows=cfg.get("max_test_rows"),
     )
     MethodCls = get_method(method_name)
-    method = MethodCls(task_type=td.task_type, num_classes=td.num_classes, seed=seed)
+    # H2 (wave1-preflight-review.md): every method that parallelizes its own
+    # fit (random_forest/extra_trees/knn's n_jobs, xgboost/lightgbm's n_jobs,
+    # catboost's thread_count) defaulted to -1 -- fine for one solo process,
+    # but five concurrent rung sweeps each claiming the whole machine is
+    # usually slower than running them in sequence. cfg["n_jobs"] (default
+    # -1, unchanged solo behavior) lets a concurrent launch cap each
+    # process's share; see deploy/run_codes_sweep.sh.
+    method = MethodCls(task_type=td.task_type, num_classes=td.num_classes, seed=seed,
+                       n_jobs=cfg.get("n_jobs", -1))
 
     # T21 (t21-code-channel-plan.md, P7): a config-level override that swaps
     # the view for any method *declaring* "tabular" -- "raw" methods (e.g.
@@ -147,6 +205,13 @@ def main():
                     choices=["char3", "full", "chapter", "block", "ccsr", "ancestors", "stack"],
                     help="P9/T23/T24: ICD granularity rung for the code views (default 'char3', "
                          "i.e. T21's original encoding).")
+    ap.add_argument("--n-jobs", type=int,
+                    help="H2: per-fit parallelism cap passed to every method that claims "
+                         "multiple cores (random_forest/extra_trees/knn's n_jobs, "
+                         "xgboost/lightgbm's n_jobs, catboost's thread_count). Default -1 "
+                         "(claim the whole machine) -- fine for one solo sweep, but cap this "
+                         "when running several sweeps concurrently so they don't oversubscribe "
+                         "the same cores; see deploy/run_codes_sweep.sh.")
     args = ap.parse_args()
 
     cfg = load_config(args.config)
@@ -158,6 +223,7 @@ def main():
     if args.results_dir: cfg["results_dir"] = args.results_dir
     if args.max_train_rows is not None: cfg["max_train_rows"] = args.max_train_rows
     if args.max_test_rows is not None: cfg["max_test_rows"] = args.max_test_rows
+    if args.n_jobs is not None: cfg["n_jobs"] = args.n_jobs
     if args.n_resamples is not None:
         cfg.setdefault("bootstrap", {})["n_resamples"] = args.n_resamples
     if args.feature_view_override: cfg["feature_view_override"] = args.feature_view_override
@@ -187,6 +253,8 @@ def main():
             stem = f"{task}__{phase}__{method_name}__seed{seed}"
             out_path = os.path.join(runs_dir, stem + ".json")
             if os.path.exists(out_path) and not args.force:
+                expected_view, expected_granularity = _expected_view_and_granularity(cfg, method_name)
+                _assert_resume_matches(out_path, stem, expected_view, expected_granularity)
                 print(f"  [{i}/{len(grid)}] skip (done): {stem}", flush=True)
                 continue
             try:

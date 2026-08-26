@@ -75,7 +75,7 @@ class RandomForest(SklearnMethod):
     def _build(self):
         return RandomForestClassifier(
             n_estimators=400, class_weight="balanced_subsample",
-            n_jobs=-1, random_state=self.seed)
+            n_jobs=self.params.get("n_jobs", -1), random_state=self.seed)
 
 
 @register("extra_trees")
@@ -83,7 +83,7 @@ class ExtraTrees(SklearnMethod):
     def _build(self):
         return ExtraTreesClassifier(
             n_estimators=400, class_weight="balanced_subsample",
-            n_jobs=-1, random_state=self.seed)
+            n_jobs=self.params.get("n_jobs", -1), random_state=self.seed)
 
 
 @register("hist_gbm")
@@ -96,7 +96,8 @@ class HistGBM(SklearnMethod):
 @register("knn")
 class KNN(SklearnMethod):
     def _build(self):
-        return make_pipeline(StandardScaler(), KNeighborsClassifier(n_neighbors=25, n_jobs=-1))
+        return make_pipeline(StandardScaler(),
+                              KNeighborsClassifier(n_neighbors=25, n_jobs=self.params.get("n_jobs", -1)))
 
 
 @register("svm_linear")

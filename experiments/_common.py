@@ -12,12 +12,20 @@ import time
 
 
 def git_sha() -> str:
+    repo_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
     try:
-        return subprocess.check_output(
-            ["git", "rev-parse", "HEAD"], cwd=os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+        sha = subprocess.check_output(
+            ["git", "rev-parse", "HEAD"], cwd=repo_root
         ).decode().strip()
     except Exception as e:  # noqa: BLE001
         return f"unknown ({e})"
+    try:
+        dirty = bool(subprocess.check_output(
+            ["git", "status", "--porcelain"], cwd=repo_root
+        ).decode().strip())
+    except Exception:  # noqa: BLE001
+        dirty = False
+    return f"{sha}-dirty" if dirty else sha
 
 
 def write_artifact(path: str, obj: dict) -> None:

@@ -30,7 +30,7 @@ class XGBoost(_GBMBase):
     def fit(self, X_train, y_train, X_valid=None, y_valid=None):
         from xgboost import XGBClassifier
         kw = dict(n_estimators=500, max_depth=6, learning_rate=0.05,
-                  subsample=0.8, colsample_bytree=0.8, n_jobs=-1,
+                  subsample=0.8, colsample_bytree=0.8, n_jobs=self.params.get("n_jobs", -1),
                   random_state=self.seed, eval_metric="logloss", tree_method="hist")
         if self.task_type == "binary":
             pos = float(np.sum(y_train == 1)); neg = float(np.sum(y_train == 0))
@@ -49,7 +49,7 @@ class LightGBM(_GBMBase):
         from lightgbm import LGBMClassifier
         kw = dict(n_estimators=600, num_leaves=63, learning_rate=0.05,
                   subsample=0.8, colsample_bytree=0.8, class_weight="balanced",
-                  n_jobs=-1, random_state=self.seed)
+                  n_jobs=self.params.get("n_jobs", -1), random_state=self.seed)
         self.model_ = LGBMClassifier(**kw)
         self.model_.fit(X_train, y_train)
         self._classes = self.model_.classes_
@@ -61,8 +61,13 @@ class CatBoost(_GBMBase):
     def fit(self, X_train, y_train, X_valid=None, y_valid=None):
         from catboost import CatBoostClassifier
         kw = dict(iterations=600, depth=6, learning_rate=0.05,
-                  random_seed=self.seed, verbose=False, thread_count=-1,
-                  auto_class_weights="Balanced")
+                  random_seed=self.seed, verbose=False, thread_count=self.params.get("n_jobs", -1),
+                  auto_class_weights="Balanced",
+                  # H1 (wave1-preflight-review.md): unset, every concurrent CatBoost
+                  # fit writes to one shared ./catboost_info/ in the CWD, and
+                  # concurrent processes interleave writes/cleanup there. Nothing
+                  # in this repo reads those logs.
+                  allow_writing_files=False)
         self.model_ = CatBoostClassifier(**kw)
         self.model_.fit(X_train, y_train)
         self._classes = self.model_.classes_

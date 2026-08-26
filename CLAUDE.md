@@ -5,7 +5,10 @@ on **CPU by default**. A GPU is available as of 2026-08-20 for the
 disease-representation campaign (SapBERT encoding, T25 fine-tuning, local
 LLM inference in Wave 2 — see `../disease-representation-test-plan.md`).
 **Tier A stays CPU-only** regardless. Read `PLAN.md` first; it is the source of
-truth for scope, method tiers, and the evaluation protocol.
+truth for scope, method tiers, and the evaluation protocol. Before launching or
+analysing any Wave 1 sweep, read `../wave1-preflight-review.md`: it lists the
+open defects in P9-P11 and T22-T24, which ones invalidate runs versus verdicts,
+and the fix and acceptance check for each.
 
 ## Golden rules
 
