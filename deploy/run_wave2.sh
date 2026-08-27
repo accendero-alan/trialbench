@@ -18,15 +18,32 @@
 #   - AWS credentials for an execution role with:
 #       bedrock:InvokeModel, bedrock:CreateModelInvocationJob,
 #       bedrock:GetModelInvocationJob, bedrock:CreatePromptRouter,
-#       s3:GetObject / s3:PutObject on the batch bucket (WAVE2_S3_BUCKET below)
+#       s3:GetObject / s3:PutObject -- only actually needed once batch
+#       submission is wired in, see the LLM_SERVICE_TIER note just below
 #   - configs/wave2_amendment.yaml resolved (P13.10 refuses otherwise, per model/cell)
 #   - Per-cell fixed test subsets (P13.7) -- generated below if missing
+#
+# Results land in a local dir (RESULTS_DIR below, same as Wave 1) --
+# deploy/fetch_wave2_results.sh pulls it back over SSH/rsync; push whatever
+# needs long-term archival to SharePoint yourself
+# (deploy/sharepoint_transfer.py) afterward. There is no S3 durability layer
+# in this repo -- S3 here is only Bedrock batch inference's required I/O
+# staging area (src/bedrock/batch.py), separate from where results live.
+#
+# KNOWN GAP, found 2026-08-27 (wave2-start-plan.md P13.8's status note):
+# LLM_SERVICE_TIER=batch is this script's own default below, but
+# src/methods/llm.py -> src/bedrock/client.py never actually submits a batch
+# job -- every call is real-time synchronous regardless of this flag, while
+# the cost meter still reports the batch discount as if it applied. Do not
+# run this for a real billable pass until that's fixed or you've
+# consciously decided to eat the accounting error; --llm-service-tier sync
+# below is at least an HONEST label for what actually happens today.
 #
 # Usage:
 #   ./deploy/run_wave2.sh                      # every model × arm × cell
 #   MODELS="amazon.nova-lite" ./deploy/run_wave2.sh   # one model only (e.g. a smoke pass)
 #   ARMS="L0 L1" ./deploy/run_wave2.sh                # a subset of arms
-#   LLM_SERVICE_TIER=sync ./deploy/run_wave2.sh       # override the batch default
+#   LLM_SERVICE_TIER=sync ./deploy/run_wave2.sh       # honest label until batch submission is wired in
 set -euo pipefail
 
 HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"

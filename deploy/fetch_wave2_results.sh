@@ -1,47 +1,49 @@
 #!/usr/bin/env bash
-# P13.11 (wave2-start-plan.md): pull Wave 2 artifacts back from S3.
+# P13.11 (wave2-start-plan.md): pull Wave 2 results back from the EC2
+# instance over SSH -- same mechanism as deploy/fetch_results.sh (Wave 1),
+# not S3. Wave 2 writes to a local results dir on the instance exactly like
+# Wave 1 does; S3 in this repo is only Bedrock batch inference's required
+# input/output staging area (src/bedrock/batch.py), not a results-durability
+# mechanism. Long-term archival is a separate, manual step via
+# deploy/sharepoint_transfer.py once you have the results locally -- this
+# script's job is only instance -> your machine.
 #
-# Unlike fetch_results.sh (SSH/rsync against an EC2 instance's local disk),
-# Wave 2's instance is disposable and everything durable goes to S3 as it's
-# produced -- this script pulls the bucket, not the instance. Fetches run
-# records, prediction parquet, meter totals, and logs only. The response
-# cache (src/bedrock/cache.py) is deliberately left in S3: large, not
-# evidence, and re-fetchable on demand if a specific entry needs auditing.
+# Safe to run at any time, including mid-run (you get whatever
+# leaderboard.md looks like as of the last periodic rebuild).
 #
 # Usage:
-#   WAVE2_S3_BUCKET=my-bucket WAVE2_S3_PREFIX=wave2 ./deploy/fetch_wave2_results.sh
+#   EC2_HOST=ec2-user@1.2.3.4 EC2_KEY=~/.ssh/my-key.pem ./deploy/fetch_wave2_results.sh
+#   RESULTS_DIR=results_wave2 ./deploy/fetch_wave2_results.sh   # default; match run_wave2.sh's RESULTS_DIR
+#   FETCH_CACHE=1 ./deploy/fetch_wave2_results.sh   # also pull results_wave2/cache/bedrock/ (large; usually skip)
 set -euo pipefail
 
 HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$HERE"
 
-: "${WAVE2_S3_BUCKET:?set WAVE2_S3_BUCKET, e.g. WAVE2_S3_BUCKET=my-bucket ./deploy/fetch_wave2_results.sh}"
-WAVE2_S3_PREFIX="${WAVE2_S3_PREFIX:-wave2}"
+: "${EC2_HOST:?set EC2_HOST, e.g. EC2_HOST=ec2-user@1.2.3.4 ./deploy/fetch_wave2_results.sh}"
+REMOTE_DIR="${REMOTE_DIR:-~/trialbench-classification-benchmark}"
 RESULTS_DIR="${RESULTS_DIR:-results_wave2}"
-S3_URI="s3://${WAVE2_S3_BUCKET}/${WAVE2_S3_PREFIX}"
+SSH_OPTS=(-o StrictHostKeyChecking=accept-new)
+[ -n "${EC2_KEY:-}" ] && SSH_OPTS+=(-i "$EC2_KEY")
 
 mkdir -p "$RESULTS_DIR" logs
 
-echo "==> fetching runs/, predictions/, leaderboard.md from ${S3_URI}/results/"
-aws s3 sync "${S3_URI}/results/runs/" "${RESULTS_DIR}/runs/" --exclude "*.tmp"
-aws s3 sync "${S3_URI}/results/predictions/" "${RESULTS_DIR}/predictions/"
-aws s3 cp "${S3_URI}/results/leaderboard.md" "${RESULTS_DIR}/leaderboard.md" 2>/dev/null || \
-  echo "    (no leaderboard.md yet -- run still in progress or not started)"
-
-echo "==> fetching logs/"
-aws s3 sync "${S3_URI}/logs/" "./logs/" || true
-
-# Meter totals: pulled explicitly rather than swept up by the runs/ sync
-# above, since T30/T31's cost artifacts (t30_cost_frontier.json,
-# t31_router.json) live under results/ but outside runs/ -- they're written
-# by the analysis scripts, not per-cell records.
-echo "==> fetching cost/meter artifacts (t28a/t30/t31 json), if present"
-aws s3 sync "${S3_URI}/results/" "${RESULTS_DIR}/" \
-  --exclude "*" \
-  --include "t28a_probe_gate.json" --include "t28_llm_disease_slot.json" \
-  --include "t30_cost_frontier.json" --include "t31_router.json" \
-  --include "t29_fresh_slice.json"
+echo "==> fetching $RESULTS_DIR/ and logs/ from $EC2_HOST:$REMOTE_DIR"
+if command -v rsync >/dev/null 2>&1; then
+  RSYNC_EXCLUDE=()
+  [ -z "${FETCH_CACHE:-}" ] && RSYNC_EXCLUDE=(--exclude "cache/bedrock/")
+  rsync -avz --progress "${RSYNC_EXCLUDE[@]}" -e "ssh ${SSH_OPTS[*]}" \
+    "$EC2_HOST:$REMOTE_DIR/$RESULTS_DIR/" "./$RESULTS_DIR/"
+  rsync -avz --progress -e "ssh ${SSH_OPTS[*]}" \
+    "$EC2_HOST:$REMOTE_DIR/logs/" ./logs/ 2>/dev/null || true
+else
+  # scp has no exclude flag -- the response cache comes along if you're on
+  # this path and FETCH_CACHE is unset; skip it by hand after if it's large.
+  scp -r "${SSH_OPTS[@]}" "$EC2_HOST:$REMOTE_DIR/$RESULTS_DIR" .
+  scp -r "${SSH_OPTS[@]}" "$EC2_HOST:$REMOTE_DIR/logs" . 2>/dev/null || true
+fi
 
 echo
-echo "==> done. Response cache intentionally NOT fetched -- it stays in ${S3_URI}/results/cache/bedrock/."
-echo "    See $RESULTS_DIR/leaderboard.md"
+echo "==> done. See $RESULTS_DIR/leaderboard.md"
+echo "==> for longer-term archival, push what you need to SharePoint, e.g.:"
+echo "        python deploy/sharepoint_transfer.py upload $RESULTS_DIR/leaderboard.md wave2/leaderboard.md"
