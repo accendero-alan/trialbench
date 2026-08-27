@@ -1,0 +1,135 @@
+"""T28a acceptance test (wave2-start-plan.md), run against a fake injected
+Bedrock client and a fake AACT loader -- no live AWS, and no need for the
+real 2.5GB AACT snapshot to exercise the registration-date join path.
+
+Run:  python tests/test_t28a_contamination_probes.py
+"""
+from __future__ import annotations
+
+import os
+import sys
+import tempfile
+
+import pandas as pd
+
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
+from experiments.t28a_contamination_probes import run  # noqa: E402
+from tests.test_smoke import _write_task  # noqa: E402
+
+# amazon.nova-lite: a real priced entry in configs/bedrock_prices.yaml with a
+# real (non-null) cutoff, so this exercises the AUROC-vs-cutoff code path
+# rather than the "no cutoff" skip path.
+MODEL = "amazon.nova-lite"
+
+
+class _FakeConverseClient:
+    """Returns content-aware canned text so every instrument's parser gets
+    something plausible to score, without needing a real model."""
+
+    def __init__(self):
+        self.calls = 0
+
+    def converse(self, modelId, messages, inferenceConfig):
+        self.calls += 1
+        prompt = messages[0]["content"][0]["text"]
+        if "Yes or No" in prompt:
+            text = "Yes"
+        elif "single number" in prompt:
+            text = "500"
+        elif "next word" in prompt:
+            text = "example"
+        elif "missing column" in prompt:
+            text = "enrollment"
+        elif "official title" in prompt:
+            text = "A Study of an Example Intervention"
+        else:
+            text = "the trial continued as expected under standard procedures for this arm"
+        return {
+            "output": {"message": {"content": [{"text": text}]}},
+            "usage": {"inputTokens": 40, "outputTokens": 5},
+        }
+
+
+def _fake_aact_loader(all_old_dates: bool):
+    """Ten synthetic NCT ids (matching tests.test_smoke._write_task's
+    "NCT{i:08d}" convention) with registration dates either all before every
+    model's cutoff (`all_old_dates=True`, forces a single-class label -> AUROC
+    "not computable") or split across a real cutoff (mixed classes)."""
+    ids = [f"NCT{i:08d}" for i in range(10)]
+    dates = (["2015-01-01"] * 10) if all_old_dates else (["2015-01-01"] * 5 + ["2026-06-01"] * 5)
+
+    def _load_table(name, snapshot_dir=None):
+        assert name == "studies"
+        return pd.DataFrame({"nct_id": ids, "study_first_posted_date": dates})
+    return _load_table
+
+
+def test_artifact_shape_and_auroc_not_computable_with_single_class():
+    with tempfile.TemporaryDirectory() as data_root, tempfile.TemporaryDirectory() as results_dir:
+        _write_task(data_root, "mortality-event-prediction", "Phase1", n_train=20, n_test=10)
+        _write_task(data_root, "serious-adverse-event-forecasting", "Phase2", n_train=20, n_test=10)
+
+        fake_client = _FakeConverseClient()
+        out_path = os.path.join(results_dir, "t28a_probe_gate.json")
+        artifact = run(
+            data_root=data_root, results_dir=results_dir, n_trials=6, models=[MODEL], seed=42,
+            boto_client=fake_client, aact_loader=_fake_aact_loader(all_old_dates=True),
+            out_path=out_path,
+        )
+
+        assert artifact["test_id"] == "T28a"
+        for key in ("inputs", "n_trials_sampled", "per_model", "decision_rule", "verdict",
+                   "git_sha", "wall_clock_secs"):
+            assert key in artifact, f"missing top-level key {key!r}"
+
+        assert artifact["n_trials_sampled"] == 6
+        assert MODEL in artifact["per_model"]
+        m = artifact["per_model"][MODEL]
+
+        # Every sampled trial appears in per_trial.
+        assert len(m["per_trial"]) == 6
+
+        # All-old-dates -> single class on the pre/post-cutoff label ->
+        # every detector AUROC is None ("not computable"), not a fabricated number.
+        # (ngram_coverage/guided_prompting_delta are also None for a second,
+        # fixture-specific reason: tests.test_smoke._make_x's synthetic rows
+        # have no brief_summary/textblock column, so those two instruments'
+        # prefix/suffix split has nothing to work with -- tabular_memorization
+        # doesn't depend on that column, which is why it's still exercised.)
+        for name, auroc in m["detector_aurocs"].items():
+            assert auroc is None, f"{name} AUROC should be None (single class), got {auroc}"
+        assert m["blind_baseline_auroc"] is None
+
+        # Real dollars from configs/bedrock_prices.yaml, not zero/hardcoded.
+        assert m["meter"]["dollars_realized"] > 0, m["meter"]
+        assert m["meter"]["calls"] == fake_client.calls
+
+        assert m["branch"] in ("SHRINK_TO_UNRECOGNIZED_STRATUM", "STRATIFY", "PROCEED_AS_DESIGNED")
+        print("shape + not-computable OK:", m["branch"], m["meter"]["dollars_realized"])
+
+
+def test_auroc_computable_with_mixed_classes():
+    with tempfile.TemporaryDirectory() as data_root, tempfile.TemporaryDirectory() as results_dir:
+        _write_task(data_root, "mortality-event-prediction", "Phase1", n_train=20, n_test=10)
+
+        fake_client = _FakeConverseClient()
+        out_path = os.path.join(results_dir, "t28a_probe_gate.json")
+        artifact = run(
+            data_root=data_root, results_dir=results_dir, n_trials=8, models=[MODEL], seed=42,
+            boto_client=fake_client, aact_loader=_fake_aact_loader(all_old_dates=False),
+            out_path=out_path,
+        )
+        m = artifact["per_model"][MODEL]
+        assert m["cutoff_note"] is None, m["cutoff_note"]  # nova-lite has a real cutoff
+        computed = [v for v in m["detector_aurocs"].values() if v is not None]
+        assert computed, f"expected at least one computable AUROC with mixed classes: {m['detector_aurocs']}"
+        for auroc in computed:
+            assert 0.0 <= auroc <= 1.0
+        print("mixed-class AUROC OK:", m["detector_aurocs"])
+
+
+if __name__ == "__main__":
+    test_artifact_shape_and_auroc_not_computable_with_single_class()
+    test_auroc_computable_with_mixed_classes()
+    print("t28a contamination probe tests passed")
