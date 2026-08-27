@@ -70,6 +70,22 @@ def routing_fee_for(n_requests: int, table: dict) -> float:
     return (n_requests / 1000) * table["routing_fee_per_1k_requests_usd"]
 
 
+def resolve_model_id(name: str, table: dict) -> str:
+    """Resolves a price-table key (e.g. ``"anthropic.claude-opus-4-5"``, the
+    human-friendly label used in ``--llm-model``/``configs/wave2_amendment.yaml``)
+    OR an already-concrete Bedrock ``model_id``/inference-profile id to the
+    concrete id that must actually be passed to ``Converse``. These are NOT
+    interchangeable: several ladder models (Opus 4.5, Haiku 4.5, Llama 4
+    Maverick, Nova Pro -- confirmed live, 2026-08-27) reject on-demand
+    invocation on their bare id and require a ``us.``/``global.``-prefixed
+    inference-profile id instead, which is what ``model_id`` in the table
+    holds for those rows. Sending the table *key* to the API instead of its
+    ``model_id`` fails at the API, not here -- this function is what stands
+    between the two. Fails closed (``UnpricedModelError``) via
+    :func:`_model_entry` if ``name`` matches neither a key nor a model_id."""
+    return _model_entry(name, table)["model_id"]
+
+
 def is_verified(model_id: str, table: dict) -> bool:
     """False for every [W1]-flagged row (stale price, unconfirmed model id,
     or both) -- callers that report cost in an artifact should surface this

@@ -62,7 +62,7 @@ from experiments._common import Timer, git_sha, write_artifact
 from src.bedrock.cache import cache_get, cache_put
 from src.bedrock.client import BedrockClient
 from src.bedrock.meter import Meter
-from src.bedrock.prices import is_verified, load_price_table
+from src.bedrock.prices import is_verified, load_price_table, resolve_model_id
 from src.data.aact import load_table as load_aact_table
 from src.data.loader import TASKS, load_task_phase
 from src.data.serialize import render_arm
@@ -472,7 +472,7 @@ def _run_one_model(client, results_dir, model_id, sample, columns, pre_cutoff_la
 # Entry point
 # ----------------------------------------------------------------------------
 def run(data_root="data", results_dir="results", n_trials=40, models=None, seed=42,
-       region="us-east-1", boto_client=None, aact_loader=load_aact_table, out_path=OUT_PATH) -> dict:
+       region="us-west-2", boto_client=None, aact_loader=load_aact_table, out_path=OUT_PATH) -> dict:
     models = models or _default_models()
     price_table = load_price_table()
 
@@ -493,12 +493,20 @@ def run(data_root="data", results_dir="results", n_trials=40, models=None, seed=
                 pre_cutoff_label = (registration_dates < cutoff_date).where(registration_dates.notna())
                 cutoff_note = None
 
+            # `models` holds price-table keys (e.g. "anthropic.claude-opus-4-5");
+            # Converse needs the concrete id/inference-profile ARN instead --
+            # several ladder models reject their bare id (confirmed live,
+            # 2026-08-27). Resolve once per model; per_model stays keyed by
+            # the short key (readability), api_model_id is what's actually
+            # called and cached.
+            api_model_id = resolve_model_id(model_id, price_table)
             client = BedrockClient(region=region, boto_client=boto_client)
             meter = Meter()
-            result = _run_one_model(client, results_dir, model_id, sample, columns,
+            result = _run_one_model(client, results_dir, api_model_id, sample, columns,
                                     pre_cutoff_label, meter)
             result["cutoff"] = cutoff
             result["cutoff_note"] = cutoff_note
+            result["api_model_id"] = api_model_id
             result["n_trials_with_registration_date"] = int(registration_dates.notna().sum())
             per_model[model_id] = result
             print(f"  {model_id}: outcome_recall={result['outcome_recall_rate']}, "
@@ -549,7 +557,7 @@ def main():
                     help="Bedrock model ids to probe; defaults to configs/wave2_amendment.yaml's "
                          "five pre-registered models.")
     ap.add_argument("--seed", type=int, default=42)
-    ap.add_argument("--region", default="us-east-1")
+    ap.add_argument("--region", default="us-west-2")
     args = ap.parse_args()
     run(data_root=args.data_root, results_dir=args.results_dir, n_trials=args.n_trials,
         models=args.models, seed=args.seed, region=args.region)

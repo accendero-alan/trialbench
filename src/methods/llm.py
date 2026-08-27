@@ -67,6 +67,7 @@ class LLMProbability(BaseMethod):
         # live AWS account (see BedrockClient's own `boto_client` param).
         self._injected_boto_client = params.get("llm_boto_client")
         self._client = None
+        self._resolved_model_id = None  # self.model resolved to a concrete Bedrock id; see predict_proba
         self.llm_meter = None  # constructed lazily in fit(); see the note there
         self.llm_n_scored = 0
         self.llm_n_parse_failures = 0
@@ -107,6 +108,17 @@ class LLMProbability(BaseMethod):
             )
         if self._client is None:
             self._client = BedrockClient(region=self.region, boto_client=self._injected_boto_client)
+        if self._resolved_model_id is None:
+            # self.model is configs/bedrock_prices.yaml's table key (e.g.
+            # "anthropic.claude-opus-4-5") -- what --llm-model and
+            # configs/wave2_amendment.yaml's P13.10 guard both use. The
+            # Converse API needs the concrete id/inference-profile ARN
+            # instead (several ladder models reject their bare id --
+            # confirmed live, 2026-08-27; see resolve_model_id's docstring).
+            # Sending the table key straight to the API is exactly the bug
+            # this resolves: it would fail at Bedrock, not here.
+            from ..bedrock.prices import load_price_table, resolve_model_id
+            self._resolved_model_id = resolve_model_id(self.model, load_price_table())
 
         probs = []
         for nct_id, row in X.iterrows():
@@ -143,7 +155,7 @@ class LLMProbability(BaseMethod):
                 primary_prob = prob if prob is not None else 0.5
             else:
                 result = elicit_probability(
-                    self._client, self.results_dir, self.model, prompt, self.temperature,
+                    self._client, self.results_dir, self._resolved_model_id, prompt, self.temperature,
                     self.service_tier, primary=self.primary_elicitation, meter=self.llm_meter,
                 )
                 parse_ok = result.parse_ok
@@ -165,6 +177,14 @@ class LLMProbability(BaseMethod):
     @property
     def llm_refusal_rate(self) -> float:
         return self.llm_n_refusals / self.llm_n_scored if self.llm_n_scored else 0.0
+
+    @property
+    def resolved_model_id(self):
+        """The concrete Bedrock id/inference-profile ARN self.model resolved
+        to -- None until predict_proba has run at least once. Provenance:
+        the run record should carry both self.model (the table key/what was
+        requested) and this (what was actually invoked)."""
+        return self._resolved_model_id
 
     def llm_meter_summary(self) -> dict:
         """P13.5: loads P15's pinned price table and reports both the

@@ -10,7 +10,7 @@ import sys
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from src.bedrock.prices import UnpricedModelError, cost_for, load_price_table  # noqa: E402
+from src.bedrock.prices import UnpricedModelError, cost_for, load_price_table, resolve_model_id  # noqa: E402
 
 
 def test_real_price_table_loads_and_prices_a_known_model():
@@ -56,10 +56,37 @@ def test_bad_service_tier_rejected():
         pass
 
 
+def test_resolve_model_id_key_vs_bare_id():
+    """The bug this guards: several ladder models (Opus 4.5, Haiku 4.5,
+    Llama 4 Maverick, Nova Pro -- confirmed live, 2026-08-27) reject
+    on-demand invocation on their bare/table-key form and need the
+    us./global.-prefixed inference-profile id instead. resolve_model_id
+    must return that concrete id given either the table key or the
+    concrete id itself -- never the table key unchanged, which is what a
+    caller passing the table key straight to Converse would do wrong."""
+    table = load_price_table()
+    concrete = table["models"]["anthropic.claude-opus-4-5"]["model_id"]
+    assert concrete != "anthropic.claude-opus-4-5", "fixture assumption broken -- table key now equals model_id?"
+    assert resolve_model_id("anthropic.claude-opus-4-5", table) == concrete
+    assert resolve_model_id(concrete, table) == concrete  # already-concrete id resolves to itself
+    print("resolve_model_id OK: table key ->", concrete)
+
+
+def test_resolve_model_id_fails_closed():
+    table = load_price_table()
+    try:
+        resolve_model_id("no-such-model", table)
+        raise AssertionError("expected UnpricedModelError")
+    except UnpricedModelError:
+        pass
+
+
 if __name__ == "__main__":
     test_real_price_table_loads_and_prices_a_known_model()
     test_batch_multiplier_applied()
     test_lookup_by_concrete_model_id_or_table_key()
     test_unpriced_model_fails_closed()
     test_bad_service_tier_rejected()
+    test_resolve_model_id_key_vs_bare_id()
+    test_resolve_model_id_fails_closed()
     print("bedrock prices tests passed")

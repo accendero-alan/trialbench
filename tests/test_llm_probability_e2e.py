@@ -56,9 +56,11 @@ class _FakeConverseClient:
     def __init__(self, probability: int = 55):
         self.probability = probability
         self.calls = 0
+        self.model_ids_seen = []
 
     def converse(self, modelId, messages, inferenceConfig):
         self.calls += 1
+        self.model_ids_seen.append(modelId)
         text = json.dumps({"probability": self.probability})
         return {
             "output": {"message": {"content": [{"text": text}]}},
@@ -116,6 +118,38 @@ def test_llm_probability_smoke_and_meter():
         # not run_cell's -- calling run_cell directly here is what lets this
         # test inject a fake Converse client with no CLI plumbing for it.
         print("smoke + meter OK: dollars_realized =", meter["dollars_realized"])
+
+
+def test_converse_receives_resolved_model_id_not_table_key():
+    """The bug this guards: --llm-model/configs/wave2_amendment.yaml use
+    price-table keys (e.g. "anthropic.claude-opus-4-5"), but several ladder
+    models reject that bare/key form at the Bedrock API and need the
+    us./global.-prefixed inference-profile id instead (confirmed live,
+    2026-08-27). llm.py must resolve before calling Converse -- if it
+    doesn't, the fake client below would see the raw table key, which is
+    exactly what a real Converse call would reject."""
+    import yaml
+    from src.bedrock.prices import DEFAULT_PRICE_TABLE_PATH
+    with open(DEFAULT_PRICE_TABLE_PATH) as f:
+        price_table = yaml.safe_load(f)
+    table_key = "anthropic.claude-opus-4-5"
+    expected_id = price_table["models"][table_key]["model_id"]
+    assert expected_id != table_key, "fixture assumption broken -- table key now equals model_id?"
+
+    with tempfile.TemporaryDirectory() as data_root, tempfile.TemporaryDirectory() as results_dir:
+        _write_task(data_root, FOLDER, PHASE, n_train=10, n_test=5)
+        fake_client = _FakeConverseClient()
+        cfg = _base_cfg(data_root, results_dir, "L1", table_key, fake_client)
+
+        rec = run_cell(cfg, TASK, PHASE, "llm_probability", seed=42)
+
+        assert rec["status"] == "ok", rec
+        assert fake_client.model_ids_seen, "no calls were made"
+        assert set(fake_client.model_ids_seen) == {expected_id}, (
+            f"expected every Converse call to use the resolved id {expected_id!r}, "
+            f"got {set(fake_client.model_ids_seen)}"
+        )
+        print("resolved model id OK:", table_key, "->", expected_id)
 
 
 def test_p13_10_guard_unregistered_cell_and_model():
@@ -180,6 +214,7 @@ def test_b3_resume_guard_on_arm_mismatch():
 
 if __name__ == "__main__":
     test_llm_probability_smoke_and_meter()
+    test_converse_receives_resolved_model_id_not_table_key()
     test_p13_10_guard_unregistered_cell_and_model()
     test_b3_resume_guard_on_arm_mismatch()
     print("llm_probability e2e tests passed")

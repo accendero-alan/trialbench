@@ -16,10 +16,16 @@
 # table's original guess) via a live `aws bedrock list-foundation-models`
 # call on the EC2 instance. `id_verified: true` reflects that -- it means
 # the id string and region are real, NOT that the price is (`verified`
-# stays false until W1.3's separate console price read happens; a
-# confirmed id says nothing about whether direct on-demand invocation needs
-# an inference-profile ARN instead of the bare id below -- that's a live
-# Converse call, W1.2's own next item, not yet done).
+# stays false until W1.3's separate console price read happens).
+#
+# W1.2's on-demand-vs-inference-profile question is also now resolved by a
+# live Converse call per candidate (deploy/smoke_test_converse.py,
+# 2026-08-27): deepseek.v3-2 and amazon.nova-lite invoke directly on their
+# bare model_id; anthropic.claude-opus-4-5, anthropic.claude-haiku-4-5,
+# meta.llama4-maverick-17b and amazon.nova-pro all reject the bare id
+# ("on-demand throughput isn't supported") and need the `us.`- or
+# `global.`-prefixed inference-profile id instead -- `model_id` below is
+# now that confirmed-working profile id for those four, not the bare one.
 #
 # Router members (Nova Lite/Pro) are priced here too, separately from
 # `routing_fee_per_1k_requests_usd`: the fee is Bedrock's per-request routing
@@ -27,7 +33,7 @@
 
 models:
   anthropic.claude-opus-4-5:
-    model_id: "anthropic.claude-opus-4-5-20251101-v1:0"   # confirmed live, us-west-2, 2026-08-27
+    model_id: "us.anthropic.claude-opus-4-5-20251101-v1:0"   # confirmed WORKING (Converse call, 2026-08-27)
     id_verified: true
     input_per_1m_usd: 5.00
     output_per_1m_usd: 25.00
@@ -35,13 +41,17 @@ models:
     source_url: "https://aws.amazon.com/blogs/machine-learning/claude-opus-4-5-now-in-amazon-bedrock/"
     read_on: "2026-08-26"
     region: "us-west-2"
-    profile: "global"      # W1.2: still open -- direct on-demand vs. an inference-profile ARN requirement,
-                            # and any us./global. price premium, needs a live Converse call to confirm
+    profile: "us"    # global.anthropic.claude-opus-4-5-... exists but this account's Converse call to it
+                     # failed AccessDeniedException (AWS Marketplace subscription not enabled for that
+                     # profile) -- an account-permission gap, not evidence global. doesn't work in
+                     # general. us. is what's actually usable here; the plan's [W1] price-premium
+                     # question for us. vs. global. is therefore moot for this account unless that
+                     # marketplace subscription gets fixed.
     verified: false
     cutoff: "2025-03"      # Bedrock model card "reliable knowledge" cutoff
 
   anthropic.claude-haiku-4-5:
-    model_id: "anthropic.claude-haiku-4-5-20251001-v1:0"   # confirmed live, us-west-2, 2026-08-27
+    model_id: "global.anthropic.claude-haiku-4-5-20251001-v1:0"   # confirmed WORKING (Converse call, 2026-08-27)
     id_verified: true
     input_per_1m_usd: 1.00
     output_per_1m_usd: 5.00
@@ -49,12 +59,18 @@ models:
     source_url: "https://aws.amazon.com/blogs/aws-cloud-financial-management/optimize-llm-costs-on-amazon-bedrock-from-billing-attribution-to-operational-telemetry/"
     read_on: "2026-06-29"
     region: "us-west-2"
-    profile: "global"      # W1.2: still open, see the opus note above
+    profile: "global"    # both us.anthropic.claude-haiku-4-5-... and this global. id are confirmed
+                         # working for this account (unlike Opus, no marketplace block here) --
+                         # global. picked per the plan's suspicion that it's the cheaper of the two on
+                         # Claude 4.5+, but that price difference itself is still [W1] (unconfirmed
+                         # against the console). us.anthropic.claude-haiku-4-5-20251001-v1:0 is a
+                         # confirmed-working fallback if global. turns out not to be cheaper.
     verified: false
     cutoff: "2025-07"      # training-data cutoff; reliable-knowledge cutoff is 2025-02 -- record both, use the later
 
   deepseek.v3-2:
-    model_id: "deepseek.v3.2"    # confirmed live, us-west-2, 2026-08-27 -- corrected from the guessed
+    model_id: "deepseek.v3.2"    # confirmed WORKING on the bare id (Converse call, 2026-08-27) -- no
+                                   # inference profile needed. Corrected from the guessed
                                    # "deepseek.v3-2-v1:0"; the real id has no "-v1:0" suffix. Note
                                    # deepseek.v3-v1:0 ("DeepSeek-V3.1") also exists in this account --
                                    # a different, older model, not this ladder rung.
@@ -70,7 +86,10 @@ models:
     cutoff: "2025-03"       # Bedrock model card only -- no vendor corroboration
 
   meta.llama4-maverick-17b:
-    model_id: "meta.llama4-maverick-17b-instruct-v1:0"   # confirmed live, us-west-2, 2026-08-27
+    model_id: "us.meta.llama4-maverick-17b-instruct-v1:0"   # confirmed WORKING (Converse call, 2026-08-27) --
+                                                              # the bare id rejects with "on-demand throughput
+                                                              # isn't supported"; no global. profile exists for
+                                                              # this model, only us.
     id_verified: true
     input_per_1m_usd: 0.24
     output_per_1m_usd: 0.97
@@ -78,12 +97,13 @@ models:
     source_url: "https://aws.amazon.com/bedrock/pricing/"
     read_on: "2025-08-01"
     region: "us-west-2"
-    profile: null
+    profile: "us"
     verified: false          # [W1] stale -- 2025-08 blog, re-read from console before use
     cutoff: "2024-08"        # vendor-corroborated (Meta model card) -- anchors T29's reading
 
   amazon.nova-lite:
-    model_id: "amazon.nova-lite-v1:0"   # confirmed live, us-west-2, 2026-08-27
+    model_id: "amazon.nova-lite-v1:0"   # confirmed WORKING on the bare id (Converse call, 2026-08-27) --
+                                          # no inference profile needed
     id_verified: true
     input_per_1m_usd: 0.06
     output_per_1m_usd: 0.24
@@ -98,7 +118,9 @@ models:
 
   # Router-only member, not on the five-rung ladder itself.
   amazon.nova-pro:
-    model_id: "amazon.nova-pro-v1:0"   # confirmed live, us-west-2, 2026-08-27
+    model_id: "us.amazon.nova-pro-v1:0"   # confirmed WORKING (Converse call, 2026-08-27) -- the bare id
+                                            # rejects with "on-demand throughput isn't supported"; no
+                                            # global. profile exists for this model, only us.
     id_verified: true
     input_per_1m_usd: 0.80
     output_per_1m_usd: 3.20
@@ -108,7 +130,7 @@ models:
       figure at 750 input + 20 output tokens; consistent with Nova Lite's own published rate)
     read_on: "2026-08-26"
     region: "us-west-2"
-    profile: null
+    profile: "us"
     verified: false            # [W1] not independently confirmed against the console
     cutoff: null                # AWS: Nova does not define a training cutoff
 

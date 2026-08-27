@@ -275,6 +275,12 @@ def run_cell(cfg, task, phase, method_name, seed):
         # model/sample produced it without needing the sweep's own config.
         rec["llm_arm"] = cfg.get("llm_arm")
         rec["llm_model"] = cfg.get("llm_model")
+        # The price-table key above is what was requested/pre-registered; this
+        # is what self.model actually resolved to and was sent to Converse --
+        # several ladder models need a us./global.-prefixed inference-profile
+        # id instead of their bare one (confirmed live, 2026-08-27), so the
+        # two can differ and both are worth having in the record.
+        rec["llm_model_resolved_id"] = getattr(method, "resolved_model_id", None)
         rec["llm_service_tier"] = cfg.get("llm_service_tier", "sync")
         rec["llm_router_arn"] = cfg.get("llm_router_arn")
         rec["primary_elicitation"] = cfg.get("primary_elicitation", "verbalized")
