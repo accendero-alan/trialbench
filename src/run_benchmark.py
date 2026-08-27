@@ -53,6 +53,61 @@ def _expected_view_and_granularity(cfg, method_name):
     return effective_view, granularity
 
 
+def _assert_amendment_resolves(cfg, task, phase, method_name):
+    """P13.10 (wave2-start-plan.md): refuse to instantiate an LLM method
+    unless the pre-registration amendment resolves and matches the
+    requested run. This check sits *here*, in the runner, and runs *before*
+    any billable call -- the analysis scripts (``experiments/t28_*.py``)
+    run after the money is already spent, which is where revision 2 put an
+    equivalent guard and why revision 3 moved it.
+
+    Checks that (``task``, ``phase``) is one of the amendment's pre-
+    registered cells, that ``--llm-model`` is one of its pre-registered
+    models, and that the configured seed count matches its repeats spec for
+    this cell. Does not touch the network or construct a
+    :class:`~src.bedrock.client.BedrockClient` -- a mismatch here must cost
+    nothing.
+    """
+    if method_name != "llm_probability":
+        return
+    path = cfg.get("wave2_amendment_file", os.path.join(ROOT, "configs", "wave2_amendment.yaml"))
+    if not os.path.exists(path):
+        sys.exit(
+            f"ABORT: llm_probability requires a pre-registration amendment at {path} "
+            f"(P13.10, wave2-start-plan.md §6) -- none found. No call was made."
+        )
+    with open(path) as f:
+        amendment = yaml.safe_load(f)
+
+    cells = [(c["task"], c["phase"]) for c in amendment.get("cells", [])]
+    if (task, phase) not in cells:
+        sys.exit(
+            f"ABORT: {task}/{phase} is not a pre-registered cell in {path} (P13.10). "
+            f"Pre-registered cells: {cells}. No call was made."
+        )
+    models = amendment.get("models", [])
+    llm_model = cfg.get("llm_model")
+    if llm_model not in models:
+        sys.exit(
+            f"ABORT: --llm-model {llm_model!r} is not a pre-registered model in {path} "
+            f"(P13.10). Pre-registered models: {models}. No call was made."
+        )
+    default_repeats = amendment.get("default_repeats", 1)
+    cell_repeats = next(
+        (c.get("repeats", default_repeats) for c in amendment.get("cells", [])
+         if c["task"] == task and c["phase"] == phase),
+        default_repeats,
+    )
+    n_seeds = len(cfg.get("seeds", []))
+    if n_seeds != cell_repeats:
+        sys.exit(
+            f"ABORT: {task}/{phase} is pre-registered for {cell_repeats} repeat(s) in {path} "
+            f"(P13.10 / §6.5), but the current config resolves {n_seeds} seed(s) "
+            f"({cfg.get('seeds')}). Fix --seeds to match, or amend {path} before this run, "
+            f"not after seeing results. No call was made."
+        )
+
+
 def _assert_resume_matches(out_path, stem, expected_view, expected_granularity,
                            expected_llm_arm=None, expected_llm_model=None):
     """B3 (wave1-preflight-review.md): the skip-if-exists resume path used to
@@ -111,6 +166,13 @@ def run_cell(cfg, task, phase, method_name, seed):
         max_test_rows=cfg.get("max_test_rows"),
         test_subset_file=cfg.get("test_subset_file"),
     )
+    # P13.10: refuses (no call made) unless the pre-registration amendment
+    # resolves and matches this cell -- checked before MethodCls is even
+    # constructed, since constructing llm_probability with a bad config is
+    # still zero-cost, but the point of this guard is to never get one
+    # config-typo away from a billable call it wasn't pre-registered for.
+    _assert_amendment_resolves(cfg, task, phase, method_name)
+
     MethodCls = get_method(method_name)
     # H2 (wave1-preflight-review.md): every method that parallelizes its own
     # fit (random_forest/extra_trees/knn's n_jobs, xgboost/lightgbm's n_jobs,
@@ -126,9 +188,13 @@ def run_cell(cfg, task, phase, method_name, seed):
                        n_jobs=cfg.get("n_jobs", -1), task=task,
                        llm_arm=cfg.get("llm_arm"), llm_model=cfg.get("llm_model"),
                        llm_temperature=cfg.get("llm_temperature", 0.0),
-                       primary_elicitation=cfg.get("primary_elicitation", "logprob"),
+                       primary_elicitation=cfg.get("primary_elicitation", "verbalized"),
                        llm_max_calls=cfg.get("llm_max_calls"),
-                       llm_base_url=cfg.get("llm_base_url", "http://127.0.0.1:8080"))
+                       results_dir=cfg["results_dir"],
+                       llm_service_tier=cfg.get("llm_service_tier", "sync"),
+                       llm_router_arn=cfg.get("llm_router_arn"),
+                       llm_region=cfg.get("llm_region", "us-east-1"),
+                       llm_boto_client=cfg.get("llm_boto_client"))
 
     # T21 (t21-code-channel-plan.md, P7): a config-level override that swaps
     # the view for any method *declaring* "tabular" -- "raw" methods (e.g.
@@ -209,9 +275,12 @@ def run_cell(cfg, task, phase, method_name, seed):
         # model/sample produced it without needing the sweep's own config.
         rec["llm_arm"] = cfg.get("llm_arm")
         rec["llm_model"] = cfg.get("llm_model")
-        rec["primary_elicitation"] = cfg.get("primary_elicitation", "logprob")
+        rec["llm_service_tier"] = cfg.get("llm_service_tier", "sync")
+        rec["llm_router_arn"] = cfg.get("llm_router_arn")
+        rec["primary_elicitation"] = cfg.get("primary_elicitation", "verbalized")
         rec["test_subset_file"] = cfg.get("test_subset_file")
-        rec["llm_meter"] = method.llm_meter.summary()
+        rec["llm_meter"] = method.llm_meter_summary()
+        rec["llm_refusal_rate"] = round(method.llm_refusal_rate, 4)
         rec["llm_parse_failure_rate"] = round(method.llm_parse_failure_rate, 4)
         if method.llm_parse_failure_rate > 0.02:
             print(f"  WARNING: {task}/{phase}/seed{seed} LLM parse failure rate "
@@ -253,19 +322,29 @@ def main():
     ap.add_argument("--llm-arm", choices=["L0", "L1", "L2", "L3", "L4", "L5", "L6", "L7"],
                     help="P13.1: disease-representation arm for llm_probability (src/data/serialize.py).")
     ap.add_argument("--llm-model",
-                    help="P13.1: model id passed through to the llama-server client, and recorded "
-                         "in the run for the B3 guard/provenance -- not validated against a server "
-                         "here (llm_probability's fit() fails loudly if the server can't be reached).")
+                    help="P13.1: Bedrock model id or inference-profile ARN, passed through to "
+                         "the Converse client and recorded in the run for the B3/P13.10 guards "
+                         "and provenance -- not validated against Bedrock here (llm_probability's "
+                         "predict_proba() fails loudly on the first call if the id is wrong).")
     ap.add_argument("--llm-temperature", type=float, help="P13.3: default 0.0 (deterministic).")
-    ap.add_argument("--llm-primary-elicitation", choices=["verbalized", "logprob"],
-                    help="§3 amendment: which of the two probability paths is primary. "
-                         "Default 'logprob' -- pre-register before the first T28a call, don't "
-                         "pick this after seeing which path gives a cleaner ordering.")
+    ap.add_argument("--llm-primary-elicitation", choices=["verbalized"],
+                    help="§6.3 amendment: which probability elicitation path is primary. "
+                         "'verbalized' is the only implemented path (Bedrock exposes no logprob "
+                         "path for Anthropic/Nova; DeepSeek/Llama 4 are unchecked pending W1.8) -- "
+                         "pre-register before the first T28a call regardless.")
     ap.add_argument("--llm-max-calls", type=int,
                     help="P13.1: hard cap: predict_proba raises rather than silently truncating "
                          "if the sample exceeds this. Use --test-subset-file to size the sample "
                          "instead of relying on this to cut it down.")
-    ap.add_argument("--llm-base-url", help="P13.3: llama-server base URL. Default http://127.0.0.1:8080.")
+    ap.add_argument("--llm-service-tier", choices=["sync", "batch"],
+                    help="P13.4/P13.5/P13.8: which Bedrock service tier serves this cell's calls -- "
+                         "part of the response-cache key and the meter's realized-cost basis. "
+                         "Default 'sync'; batch is 50%% off and the default for ladder arms once "
+                         "P13.8's batch runner is wired into a real submit/poll/reassemble loop.")
+    ap.add_argument("--llm-router-arn",
+                    help="P13.9/T31: route calls through this prompt-router ARN instead of calling "
+                         "--llm-model directly. Synchronous only; forces --llm-service-tier sync.")
+    ap.add_argument("--llm-region", help="P13.1: bedrock-runtime region. Default us-east-1.")
     ap.add_argument("--test-subset-file",
                     help="P13.7: fixed NCT-id sample (src/data/subset.py) applied to the test "
                          "split in file order, instead of --max-test-rows's head-n truncation. "
@@ -292,7 +371,11 @@ def main():
     if args.llm_temperature is not None: cfg["llm_temperature"] = args.llm_temperature
     if args.llm_primary_elicitation: cfg["primary_elicitation"] = args.llm_primary_elicitation
     if args.llm_max_calls is not None: cfg["llm_max_calls"] = args.llm_max_calls
-    if args.llm_base_url: cfg["llm_base_url"] = args.llm_base_url
+    if args.llm_service_tier: cfg["llm_service_tier"] = args.llm_service_tier
+    if args.llm_router_arn:
+        cfg["llm_router_arn"] = args.llm_router_arn
+        cfg["llm_service_tier"] = "sync"  # P13.9: routers cannot be batched
+    if args.llm_region: cfg["llm_region"] = args.llm_region
     if args.test_subset_file: cfg["test_subset_file"] = args.test_subset_file
 
     runs_dir = os.path.join(cfg["results_dir"], "runs")

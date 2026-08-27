@@ -52,9 +52,12 @@ methods:
   # Tier D — multimodal / repo baseline (stubs)
   # - fingerprint_fusion
   # - hint_reference
-  # Tier D — LLM (P13, wave2-start-plan.md). Needs --llm-arm/--llm-model
-  # (or icd_granularity-style config keys) set -- fit() raises otherwise.
-  # Requires a llama-server instance reachable at --llm-base-url.
+  # Tier D — LLM (P13, wave2-start-plan.md). Substrate is Amazon Bedrock.
+  # Needs --llm-arm/--llm-model set (fit() raises otherwise), plus a
+  # matching entry in configs/wave2_amendment.yaml (P13.10 refuses to make
+  # any call otherwise). --llm-service-tier defaults to sync; batch is 50%
+  # off and the intended default for ladder arms. See src/methods/llm.py
+  # and src/bedrock/ for the client/cache/meter/batch/router modules.
   # - llm_probability
 
 seeds: [42]                 # add more for multi-seed variance, e.g. [42, 7, 123]

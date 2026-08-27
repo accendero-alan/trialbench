@@ -12,3 +12,8 @@ xgboost
 lightgbm
 catboost
 pyarrow             # parquet persistence for per-fit predictions (results/predictions/)
+
+# Bedrock harness (Wave 2, P13, wave2-start-plan.md) — only needed to run
+# llm_probability. Imported lazily inside src/bedrock/client.py so no other
+# method requires it installed (CLAUDE.md golden rule 5).
+boto3

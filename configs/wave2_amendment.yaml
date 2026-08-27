@@ -1,0 +1,51 @@
+# Machine-readable mirror of wave2-start-plan.md §6 (the pre-registration
+# amendment) -- specifically §6.2 (the model set), §6.4 (the cells), and
+# §6.5/§6.6 (repeats, the partial-set rule). src/run_benchmark.py's P13.10
+# guard reads this file and refuses to instantiate llm_probability unless
+# the requested (task, phase, --llm-model, seed count) resolves against it.
+#
+# The PROSE amendment lives in ../disease-representation-test-plan.md (a
+# sibling repo/document, not this one) -- that's the document of record for
+# anyone reading the campaign's methodology. This file exists only so the
+# runner has something machine-checkable to refuse against *before* a
+# billable call, per P13.10's framing ("every billable call is issued by
+# run_benchmark.py, which is where the analysis script's equivalent guard
+# would run too late"). If the prose amendment changes, this file needs a
+# matching edit -- they are not automatically kept in sync.
+#
+# Dated 2026-08-26, against wave2-start-plan.md revision 3.
+
+models:
+  - anthropic.claude-opus-4-5
+  - anthropic.claude-haiku-4-5
+  - deepseek.v3-2
+  - meta.llama4-maverick-17b
+  - amazon.nova-lite
+
+# §6.4's table, verbatim. "repeats" defaults to 1 (default_repeats below);
+# only the designated repeat cell overrides it to 3 (§6.5: three repeats on
+# one cell per model, to quantify residual nondeterminism at temperature 0).
+cells:
+  - task: mortality_rate_yn
+    phase: Phase3
+    role: clinical
+    delta_cell: 0.0434
+  - task: serious_adverse_rate_yn
+    phase: Phase2
+    role: clinical
+    delta_cell: 0.0228
+  - task: serious_adverse_rate_yn
+    phase: Phase3
+    role: clinical
+    delta_cell: 0.0298
+  - task: patient_dropout_rate_yn
+    phase: Phase3
+    role: operational_control
+    delta_cell: 0.0156
+    repeats: 3     # §6.5: the designated nondeterminism-repeat cell
+  - task: outcome
+    phase: Phase3
+    role: mixed_reference
+    delta_cell: 0.0454
+
+default_repeats: 1

@@ -5,6 +5,9 @@ persistence, the leaderboard, the pairing convention and the B3 guard all come
 for free, and T28's analysis script reads the same ``results/predictions/``
 layout T22-T24 already read.
 
+Substrate is Amazon Bedrock (revision 3 supersedes revision 1's local-GPU
+design; see P13.0's removal of ``llm_backend.py``'s local-server-backed
+client).
 Zero-shot only, per the plan's design: ``fit`` asserts it wasn't handed any
 few-shot exemplars rather than quietly ignoring a ``llm_fewshot_k`` param
 that would otherwise do nothing.
@@ -13,13 +16,15 @@ from __future__ import annotations
 
 import numpy as np
 
+from ..bedrock.client import BedrockClient, elicit_probability
+from ..bedrock.router import route_call
 from ..data.serialize import ARMS, render_arm
 from .base import BaseMethod
-from .llm_backend import Meter, elicit_probability
 from .registry import register
 
-DEFAULT_BASE_URL = "http://127.0.0.1:8080"
-DEFAULT_PRIMARY_ELICITATION = "logprob"  # per the §3 amendment's recommendation
+DEFAULT_PRIMARY_ELICITATION = "verbalized"  # revision 3 §6.3 -- reverses revision 1/2's "logprob" default
+DEFAULT_REGION = "us-east-1"
+DEFAULT_SERVICE_TIER = "sync"
 
 # Per-task question the trial record is judged against. "outcome" here is
 # TrialBench's trial-approval-forecasting task (loader.py TASKS), not the
@@ -41,15 +46,6 @@ def _build_verbalized_prompt(question: str, trial_text: str) -> str:
     )
 
 
-def _build_logprob_prompt(question: str, trial_text: str) -> str:
-    return (
-        "You are a clinical trial risk assessor. Read the trial record below and answer Yes or No: "
-        f"is it true that {question}?\n\n"
-        f"Trial record:\n{trial_text}\n\n"
-        "Answer (Yes/No):"
-    )
-
-
 @register("llm_probability")
 class LLMProbability(BaseMethod):
     feature_view = "raw"
@@ -62,10 +58,19 @@ class LLMProbability(BaseMethod):
         self.temperature = params.get("llm_temperature", 0.0)
         self.primary_elicitation = params.get("primary_elicitation", DEFAULT_PRIMARY_ELICITATION)
         self.max_calls = params.get("llm_max_calls")
-        self.base_url = params.get("llm_base_url", DEFAULT_BASE_URL)
-        self.llm_meter = Meter()
+        self.results_dir = params.get("results_dir", "results")
+        self.service_tier = params.get("llm_service_tier", DEFAULT_SERVICE_TIER)
+        self.router_arn = params.get("llm_router_arn")
+        self.region = params.get("llm_region", DEFAULT_REGION)
+        # Test-only injection point: a fake object with a `.converse(**kwargs)`
+        # method, passed through so tests never need boto3 installed or a
+        # live AWS account (see BedrockClient's own `boto_client` param).
+        self._injected_boto_client = params.get("llm_boto_client")
+        self._client = None
+        self.llm_meter = None  # constructed lazily in fit(); see the note there
         self.llm_n_scored = 0
         self.llm_n_parse_failures = 0
+        self.llm_n_refusals = 0
 
     def fit(self, X_train, y_train, X_valid=None, y_valid=None):
         if not self.arm or not self.model:
@@ -76,9 +81,14 @@ class LLMProbability(BaseMethod):
             raise ValueError(f"unknown --llm-arm {self.arm!r}, expected one of {ARMS}")
         if self.params.get("llm_fewshot_k"):
             raise NotImplementedError(
-                "llm_probability is zero-shot (verbalized probability / logprob) per the plan's "
-                "design -- llm_fewshot_k exemplars are not implemented, not silently ignored."
+                "llm_probability is zero-shot (verbalized probability) per the plan's design -- "
+                "llm_fewshot_k exemplars are not implemented, not silently ignored."
             )
+        # Imported lazily (bedrock.meter has no heavy deps, but keeping the
+        # construction here rather than at class-import time matches the
+        # pattern the rest of this method already follows for `_client`).
+        from ..bedrock.meter import Meter
+        self.llm_meter = Meter()
         return self
 
     def predict_proba(self, X) -> np.ndarray:
@@ -95,23 +105,84 @@ class LLMProbability(BaseMethod):
             raise NotImplementedError(
                 f"no LLM question template for task {self.task!r}; add one to TASK_QUESTIONS."
             )
+        if self._client is None:
+            self._client = BedrockClient(region=self.region, boto_client=self._injected_boto_client)
 
         probs = []
         for nct_id, row in X.iterrows():
             rendered = render_arm(row, self.arm, str(nct_id))
-            prompt_v = _build_verbalized_prompt(question, rendered.text)
-            prompt_l = _build_logprob_prompt(question, rendered.text)
-            result = elicit_probability(
-                self.base_url, prompt_v, prompt_l, self.model,
-                primary=self.primary_elicitation, temperature=self.temperature,
-                meter=self.llm_meter,
-            )
+            prompt = _build_verbalized_prompt(question, rendered.text)
+
+            if self.router_arn:
+                # T31: routed calls go through the router client directly
+                # (synchronous only, attribution hard-checked there) rather
+                # than through elicit_probability's cache+client wiring,
+                # since a router call's cost/attribution accounting differs
+                # from a direct model call's.
+                from ..bedrock.cache import cache_get, cache_put
+                from ..bedrock.client import _looks_like_refusal, _parse_verbalized
+
+                cached = cache_get(self.results_dir, self.router_arn, prompt, self.temperature, "sync")
+                if cached is not None:
+                    self.llm_meter.record_cache_hit()
+                    text = cached["response"]["text"]
+                    prob = _parse_verbalized(text)
+                    refused = _looks_like_refusal(text)
+                else:
+                    result = route_call(self._client, self.router_arn, prompt, temperature=self.temperature)
+                    self.llm_meter.record_call(result.input_tokens, result.output_tokens,
+                                               result.latency_secs, throttle_count=result.retry_count,
+                                               routed=True)
+                    cache_put(self.results_dir, self.router_arn, prompt, self.temperature, "sync",
+                             {"text": result.text, "input_tokens": result.input_tokens,
+                              "output_tokens": result.output_tokens,
+                              "invoked_model_id": result.invoked_model_id})
+                    prob = _parse_verbalized(result.text)
+                    refused = _looks_like_refusal(result.text)
+                parse_ok = prob is not None
+                primary_prob = prob if prob is not None else 0.5
+            else:
+                result = elicit_probability(
+                    self._client, self.results_dir, self.model, prompt, self.temperature,
+                    self.service_tier, primary=self.primary_elicitation, meter=self.llm_meter,
+                )
+                parse_ok = result.parse_ok
+                refused = result.refused
+                primary_prob = result.primary_prob
+
             self.llm_n_scored += 1
-            if not result.parse_ok:
+            if not parse_ok:
                 self.llm_n_parse_failures += 1
-            probs.append(result.primary_prob)
+            if refused:
+                self.llm_n_refusals += 1
+            probs.append(primary_prob)
         return np.asarray(probs, dtype=float)
 
     @property
     def llm_parse_failure_rate(self) -> float:
         return self.llm_n_parse_failures / self.llm_n_scored if self.llm_n_scored else 0.0
+
+    @property
+    def llm_refusal_rate(self) -> float:
+        return self.llm_n_refusals / self.llm_n_scored if self.llm_n_scored else 0.0
+
+    def llm_meter_summary(self) -> dict:
+        """P13.5: loads P15's pinned price table and reports both the
+        realized and normalized cost bases for this fit's calls.
+
+        Token cost is priced against ``self.model``. A router fit
+        (``self.router_arn`` set) mixes calls across whichever member the
+        router actually invoked per request -- that per-call member isn't
+        tracked here (T31's analysis reconstructs it from ``invoked_model_id``
+        in the cache/raw response instead), so a router-only fit still
+        requires ``--llm-model`` to be set to a priced entry for the token-
+        cost side of this summary; the router's own per-request fee is what
+        ``Meter.summary`` adds on top from ``self.llm_meter.routing_requests``.
+        A missing/unpriced model id fails closed via ``UnpricedModelError``
+        (P15) rather than guessing.
+        """
+        from ..bedrock.prices import is_verified, load_price_table
+        table = load_price_table()
+        summary = self.llm_meter.summary(table, self.model, self.service_tier)
+        summary["price_verified"] = is_verified(self.model, table)
+        return summary
