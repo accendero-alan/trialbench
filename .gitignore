@@ -19,3 +19,6 @@ results/experiments/_snapshots/
 /logs/
 /catboost_info/
 /.env
+
+# Regenerable report output (experiments/make_figures.py) -- not tracked.
+/figures/
