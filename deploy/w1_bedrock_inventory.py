@@ -319,39 +319,68 @@ def check_logprobs(sections: list, region: str) -> None:
 def run_batch_probe(sections: list, region: str, s3_bucket: str, batch_role_arn: str,
                     min_records: int) -> None:
     import boto3
-    from src.bedrock.batch import write_batch_jsonl, submit_batch_job, poll_job
+    from src.bedrock.batch import write_batch_jsonl, submit_batch_job, poll_job, fetch_batch_output_records, reassemble
+    from src.bedrock.batch_formats import build_model_input, extract_text
 
-    lines = [f"### Item 5 -- batch eligibility probe, min_records={min_records} ({_now()})", ""]
+    lines = [f"### Item 5 -- batch eligibility probe, min_records={min_records} ({_now()})", "", (
+        "Uses the real per-provider `modelInput` builder "
+        "(`src/bedrock/batch_formats.py`, wired into `llm_probability` 2026-08-27) -- this is "
+        "therefore also the first live check of that format for each provider, not just of the "
+        "record-count minimum. A FAIL here on a specific model, especially Llama/DeepSeek "
+        "(flagged LOW-confidence/unverified in that module's own docstring), may be the format, "
+        "not the minimum -- read the error text before assuming it's the latter."
+    )]
     ladder = _load_ladder(region)
     s3 = boto3.client("s3", region_name=region)
     control = boto3.client("bedrock", region_name=region)
     prefix = f"wave2-w1-batch-probe/{uuid.uuid4().hex[:8]}"
 
     for key, entry in ladder.items():
+        model_id = entry["model_id"]
         records = [
-            {"recordId": f"probe-{i}",
-             "modelInput": {"messages": [{"role": "user", "content": [{"text": "Reply OK."}]}],
-                            "inferenceConfig": {"temperature": 0.0, "maxTokens": 5}}}
+            {"recordId": f"probe-{i}", "modelInput": build_model_input(model_id, "Reply with only the word OK.", 0.0, 5)}
             for i in range(min_records)
         ]
-        lines.append(f"**{key}** (`{entry['model_id']}`)")
+        lines.append(f"**{key}** (`{model_id}`)")
         try:
             uris = write_batch_jsonl(records, s3, s3_bucket, f"{prefix}/{key}/input")
+            output_uri = f"s3://{s3_bucket}/{prefix}/{key}/output/"
             job_id = submit_batch_job(
                 control, job_name=f"w1-probe-{key}-{uuid.uuid4().hex[:6]}", role_arn=batch_role_arn,
-                model_id=entry["model_id"], input_s3_uri=uris[0],
-                output_s3_uri=f"s3://{s3_bucket}/{prefix}/{key}/output/",
+                model_id=model_id, input_s3_uri=uris[0], output_s3_uri=output_uri,
             )
             lines.append(f"  - job submitted: `{job_id}` -- polling to terminal status "
                          f"(this can take a while; batch job latency is itself a W1 number)...")
             final = poll_job(control, job_id, poll_interval_secs=30.0, timeout_secs=3600)
-            lines.append(f"  - PASS at {min_records} records: final status `{final.get('status')}`")
+            status = final.get("status")
+            lines.append(f"  - job status: `{status}`")
+            if status == "Completed":
+                raw = fetch_batch_output_records(s3, s3_bucket, f"{prefix}/{key}/output")
+                reassembled = reassemble(raw)
+                n_ok = sum(1 for r in reassembled.values() if not r.get("error") and r.get("modelOutput"))
+                sample_text = None
+                for r in reassembled.values():
+                    if not r.get("error") and r.get("modelOutput"):
+                        sample_text = extract_text(model_id, r["modelOutput"])
+                        break
+                lines.append(f"  - PASS at {min_records} records: {n_ok}/{len(reassembled)} records reassembled "
+                             f"with real output. Sample extracted text (via batch_formats.extract_text, "
+                             f"confirms the response shape assumption): {sample_text!r}")
+                if n_ok < len(reassembled):
+                    lines.append(f"    -> {len(reassembled) - n_ok} record(s) failed at the record level -- "
+                                 f"inspect raw output in s3://{s3_bucket}/{prefix}/{key}/output/ before trusting "
+                                 f"this model's batch format for the real grid.")
+            else:
+                lines.append(f"    -> not Completed; inspect the job in the Bedrock console. Raw: {final}")
         except Exception as e:  # noqa: BLE001
             code = getattr(e, "response", {}).get("Error", {}).get("Code", type(e).__name__)
             msg = getattr(e, "response", {}).get("Error", {}).get("Message", str(e))
             lines.append(f"  - FAIL at {min_records} records ({code}): {msg}")
             if "minim" in msg.lower():
                 lines.append(f"    -> error text mentions a minimum; raise --batch-min-records and retry.")
+            else:
+                lines.append(f"    -> does not look like a minimum-record error -- check "
+                             f"src/bedrock/batch_formats.py's modelInput shape for {key} first.")
         lines.append("")
 
     sections.append("\n".join(lines))
