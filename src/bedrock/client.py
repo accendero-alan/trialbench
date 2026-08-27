@@ -193,15 +193,28 @@ class ElicitationResult:
 
 
 def elicit_verbalized_probability(client: BedrockClient, results_dir: str, model_id: str,
-                                  prompt: str, temperature: float, service_tier: str,
+                                  prompt: str, temperature: float,
                                   meter=None) -> ElicitationResult:
-    """The only elicitation path (verbalized 0-100 JSON, temperature 0),
-    per revision 3 §6.3. Cache-checked first (P13.4); a cache hit still
-    re-parses the stored text rather than trusting a stored probability, so
-    a parser fix retroactively reinterprets old cache entries correctly on
-    the next read.
+    """The only *synchronous* elicitation path (verbalized 0-100 JSON,
+    temperature 0), per revision 3 §6.3. Cache-checked first (P13.4); a
+    cache hit still re-parses the stored text rather than trusting a stored
+    probability, so a parser fix retroactively reinterprets old cache
+    entries correctly on the next read.
+
+    Always ``service_tier="sync"`` for both the cache key and the meter --
+    hardcoded, not threaded from a caller, because this function performs a
+    real-time ``Converse`` call every time it actually reaches the network;
+    there is no way for it to be anything else. (Threading a caller-supplied
+    tier through here is exactly the shape of bug found 2026-08-27,
+    wave2-start-plan.md P13.8's status note: a cell configured for "batch"
+    had every one of its calls actually run this function, tagged "batch"
+    anyway. Batch submission is a different code path entirely --
+    :mod:`src.bedrock.batch_formats` / :func:`src.methods.llm.LLMProbability._predict_batch`
+    -- that never calls this function for the rows it successfully
+    batches; it only falls back to this function, honestly, for rows below
+    the per-model batch minimum.)
     """
-    cached = cache_get(results_dir, model_id, prompt, temperature, service_tier)
+    cached = cache_get(results_dir, model_id, prompt, temperature, "sync")
     if cached is not None:
         if meter is not None:
             meter.record_cache_hit()
@@ -218,8 +231,8 @@ def elicit_verbalized_probability(client: BedrockClient, results_dir: str, model
     result = client.converse(model_id, prompt, temperature=temperature)
     if meter is not None:
         meter.record_call(result.input_tokens, result.output_tokens, result.latency_secs,
-                          throttle_count=result.retry_count)
-    cache_put(results_dir, model_id, prompt, temperature, service_tier, {
+                          throttle_count=result.retry_count, service_tier="sync")
+    cache_put(results_dir, model_id, prompt, temperature, "sync", {
         "text": result.text, "input_tokens": result.input_tokens,
         "output_tokens": result.output_tokens, "invoked_model_id": result.invoked_model_id,
     })
@@ -233,7 +246,7 @@ def elicit_verbalized_probability(client: BedrockClient, results_dir: str, model
 
 
 def elicit_probability(client: BedrockClient, results_dir: str, model_id: str, prompt: str,
-                       temperature: float, service_tier: str, primary: str, meter=None) -> ElicitationResult:
+                       temperature: float, primary: str, meter=None) -> ElicitationResult:
     if primary != "verbalized":
         raise NotImplementedError(
             f"primary_elicitation={primary!r} is not available -- Bedrock exposes no logprob "
@@ -241,5 +254,4 @@ def elicit_probability(client: BedrockClient, results_dir: str, model_id: str, p
             f"check) hasn't run. 'verbalized' is the only implemented path; see client.py's "
             f"module docstring and wave2-start-plan.md §6.3."
         )
-    return elicit_verbalized_probability(client, results_dir, model_id, prompt, temperature,
-                                         service_tier, meter=meter)
+    return elicit_verbalized_probability(client, results_dir, model_id, prompt, temperature, meter=meter)

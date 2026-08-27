@@ -194,7 +194,12 @@ def run_cell(cfg, task, phase, method_name, seed):
                        llm_service_tier=cfg.get("llm_service_tier", "sync"),
                        llm_router_arn=cfg.get("llm_router_arn"),
                        llm_region=cfg.get("llm_region", "us-west-2"),
-                       llm_boto_client=cfg.get("llm_boto_client"))
+                       llm_boto_client=cfg.get("llm_boto_client"),
+                       llm_s3_bucket=cfg.get("llm_s3_bucket"),
+                       llm_batch_role_arn=cfg.get("llm_batch_role_arn"),
+                       llm_batch_min_records=cfg.get("llm_batch_min_records"),
+                       llm_boto_s3_client=cfg.get("llm_boto_s3_client"),
+                       llm_boto_bedrock_control_client=cfg.get("llm_boto_bedrock_control_client"))
 
     # T21 (t21-code-channel-plan.md, P7): a config-level override that swaps
     # the view for any method *declaring* "tabular" -- "raw" methods (e.g.
@@ -283,6 +288,7 @@ def run_cell(cfg, task, phase, method_name, seed):
         rec["llm_model_resolved_id"] = getattr(method, "resolved_model_id", None)
         rec["llm_service_tier"] = cfg.get("llm_service_tier", "sync")
         rec["llm_router_arn"] = cfg.get("llm_router_arn")
+        rec["llm_batch_min_records"] = getattr(method, "batch_min_records", None)
         rec["primary_elicitation"] = cfg.get("primary_elicitation", "verbalized")
         rec["test_subset_file"] = cfg.get("test_subset_file")
         rec["llm_meter"] = method.llm_meter_summary()
@@ -345,8 +351,22 @@ def main():
     ap.add_argument("--llm-service-tier", choices=["sync", "batch"],
                     help="P13.4/P13.5/P13.8: which Bedrock service tier serves this cell's calls -- "
                          "part of the response-cache key and the meter's realized-cost basis. "
-                         "Default 'sync'; batch is 50%% off and the default for ladder arms once "
-                         "P13.8's batch runner is wired into a real submit/poll/reassemble loop.")
+                         "Default 'sync'; batch is 50%% off. 'batch' now actually submits a real "
+                         "batch job (wired 2026-08-27) -- requires --llm-s3-bucket and "
+                         "--llm-batch-role-arn, and fit() refuses to run otherwise rather than "
+                         "silently falling back to sync and mislabeling the cost.")
+    ap.add_argument("--llm-s3-bucket",
+                    help="P13.8: S3 bucket batch records are staged in/read back from. Required "
+                         "when --llm-service-tier batch (unless every row is already cached).")
+    ap.add_argument("--llm-batch-role-arn",
+                    help="P13.8: IAM role ARN Bedrock assumes for CreateModelInvocationJob -- "
+                         "needs s3:GetObject/PutObject on --llm-s3-bucket and bedrock:InvokeModel "
+                         "on the target model. Required when --llm-service-tier batch.")
+    ap.add_argument("--llm-batch-min-records", type=int,
+                    help="P13.8: below this many uncached rows, fall back to real synchronous "
+                         "calls instead of submitting a batch job (honestly recorded as "
+                         "service_tier=sync for those rows). Default 100 -- [W1], not yet "
+                         "confirmed against AWS's actual per-model minimum (W1.4).")
     ap.add_argument("--llm-router-arn",
                     help="P13.9/T31: route calls through this prompt-router ARN instead of calling "
                          "--llm-model directly. Synchronous only; forces --llm-service-tier sync.")
@@ -379,6 +399,9 @@ def main():
     if args.llm_primary_elicitation: cfg["primary_elicitation"] = args.llm_primary_elicitation
     if args.llm_max_calls is not None: cfg["llm_max_calls"] = args.llm_max_calls
     if args.llm_service_tier: cfg["llm_service_tier"] = args.llm_service_tier
+    if args.llm_s3_bucket: cfg["llm_s3_bucket"] = args.llm_s3_bucket
+    if args.llm_batch_role_arn: cfg["llm_batch_role_arn"] = args.llm_batch_role_arn
+    if args.llm_batch_min_records is not None: cfg["llm_batch_min_records"] = args.llm_batch_min_records
     if args.llm_router_arn:
         cfg["llm_router_arn"] = args.llm_router_arn
         cfg["llm_service_tier"] = "sync"  # P13.9: routers cannot be batched

@@ -18,8 +18,10 @@
 #   - AWS credentials for an execution role with:
 #       bedrock:InvokeModel, bedrock:CreateModelInvocationJob,
 #       bedrock:GetModelInvocationJob, bedrock:CreatePromptRouter,
-#       s3:GetObject / s3:PutObject -- only actually needed once batch
-#       submission is wired in, see the LLM_SERVICE_TIER note just below
+#       s3:GetObject / s3:PutObject on WAVE2_S3_BUCKET below -- required
+#       for the LLM_SERVICE_TIER=batch default (deploy/w1_permissions_check.py
+#       checks these before you spend anything)
+#   - WAVE2_S3_BUCKET and WAVE2_BATCH_ROLE_ARN set, if using batch (the default)
 #   - configs/wave2_amendment.yaml resolved (P13.10 refuses otherwise, per model/cell)
 #   - Per-cell fixed test subsets (P13.7) -- generated below if missing
 #
@@ -30,20 +32,26 @@
 # in this repo -- S3 here is only Bedrock batch inference's required I/O
 # staging area (src/bedrock/batch.py), separate from where results live.
 #
-# KNOWN GAP, found 2026-08-27 (wave2-start-plan.md P13.8's status note):
-# LLM_SERVICE_TIER=batch is this script's own default below, but
-# src/methods/llm.py -> src/bedrock/client.py never actually submits a batch
-# job -- every call is real-time synchronous regardless of this flag, while
-# the cost meter still reports the batch discount as if it applied. Do not
-# run this for a real billable pass until that's fixed or you've
-# consciously decided to eat the accounting error; --llm-service-tier sync
-# below is at least an HONEST label for what actually happens today.
+# FIXED 2026-08-27 (was: KNOWN GAP -- LLM_SERVICE_TIER=batch was a label
+# nothing enforced; see wave2-start-plan.md P13.8's status note for the
+# history). Batch submission is now wired end to end (src/bedrock/batch.py
+# -> src/methods/llm.py's _predict_batch), and the cost meter tracks the
+# tier each call was *actually* billed at rather than trusting the
+# requested one. **Still unverified against a live account**: the
+# per-provider modelInput format (src/bedrock/batch_formats.py) is
+# HIGH-confidence for Anthropic/Nova, LOW-confidence/UNVERIFIED for Llama/
+# DeepSeek, and the batch-output S3 key layout is a documented-but-unverified
+# guess (src/bedrock/batch.py's fetch_batch_output_records). Run a small
+# smoke pass per model (MODELS=<one> ARMS=L1 below, or
+# deploy/w1_bedrock_inventory.py --run-batch-probe) before trusting this for
+# the real grid -- a wrong format fails per-record (a parse-failure-rate
+# warning), not silently, but you want to know before 1,000 trials, not after.
 #
 # Usage:
 #   ./deploy/run_wave2.sh                      # every model × arm × cell
 #   MODELS="amazon.nova-lite" ./deploy/run_wave2.sh   # one model only (e.g. a smoke pass)
 #   ARMS="L0 L1" ./deploy/run_wave2.sh                # a subset of arms
-#   LLM_SERVICE_TIER=sync ./deploy/run_wave2.sh       # honest label until batch submission is wired in
+#   LLM_SERVICE_TIER=sync ./deploy/run_wave2.sh       # skip batch entirely (no S3/role needed)
 set -euo pipefail
 
 HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
@@ -54,6 +62,17 @@ if [ -x .venv/bin/python ]; then PY=.venv/bin/python; else PY=python3; fi
 RESULTS_DIR="${RESULTS_DIR:-results_wave2}"
 AMENDMENT_FILE="${AMENDMENT_FILE:-configs/wave2_amendment.yaml}"
 LLM_SERVICE_TIER="${LLM_SERVICE_TIER:-batch}"
+WAVE2_S3_BUCKET="${WAVE2_S3_BUCKET:-}"
+WAVE2_BATCH_ROLE_ARN="${WAVE2_BATCH_ROLE_ARN:-}"
+if [ "$LLM_SERVICE_TIER" = "batch" ] && { [ -z "$WAVE2_S3_BUCKET" ] || [ -z "$WAVE2_BATCH_ROLE_ARN" ]; }; then
+  echo "LLM_SERVICE_TIER=batch requires WAVE2_S3_BUCKET and WAVE2_BATCH_ROLE_ARN -- set both, or" >&2
+  echo "run with LLM_SERVICE_TIER=sync if a batch bucket/role isn't set up yet." >&2
+  exit 1
+fi
+BATCH_FLAGS=()
+[ -n "$WAVE2_S3_BUCKET" ] && BATCH_FLAGS+=(--llm-s3-bucket "$WAVE2_S3_BUCKET")
+[ -n "$WAVE2_BATCH_ROLE_ARN" ] && BATCH_FLAGS+=(--llm-batch-role-arn "$WAVE2_BATCH_ROLE_ARN")
+[ -n "${WAVE2_BATCH_MIN_RECORDS:-}" ] && BATCH_FLAGS+=(--llm-batch-min-records "$WAVE2_BATCH_MIN_RECORDS")
 
 # L6 excluded: NotImplementedError until a MONDO/PrimeKG source and scrub
 # list are committed (P13.6) -- not this script's decision to make.
@@ -116,6 +135,7 @@ for model in $MODELS; do
         --seeds $seeds \
         --llm-arm "$arm" --llm-model "$model" \
         --llm-service-tier "$LLM_SERVICE_TIER" \
+        "${BATCH_FLAGS[@]}" \
         --test-subset-file "$subset_file" \
         --results-dir "$RESULTS_DIR"
     done <<< "$CELLS_TSV"

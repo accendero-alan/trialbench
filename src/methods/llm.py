@@ -14,6 +14,8 @@ that would otherwise do nothing.
 """
 from __future__ import annotations
 
+import uuid
+
 import numpy as np
 
 from ..bedrock.client import BedrockClient, elicit_probability
@@ -25,6 +27,15 @@ from .registry import register
 DEFAULT_PRIMARY_ELICITATION = "verbalized"  # revision 3 §6.3 -- reverses revision 1/2's "logprob" default
 DEFAULT_REGION = "us-west-2"  # W1.2, 2026-08-27: confirmed live region for the five-rung ladder + router pair
 DEFAULT_SERVICE_TIER = "sync"
+DEFAULT_MAX_TOKENS = 32  # matches BedrockClient.converse's own default -- the verbalized JSON reply is short
+# [W1] -- P13.8's own text: "Respect the per-model minimum from W1.4" -- W1.4 hasn't run, so this is an
+# unconfirmed placeholder, not a verified AWS figure. Override with --llm-batch-min-records once W1.4 answers it.
+DEFAULT_BATCH_MIN_RECORDS = 100
+
+
+def _safe_s3_component(s: str) -> str:
+    return "".join(c if c.isalnum() or c in "-._" else "_" for c in s)
+
 
 # Per-task question the trial record is judged against. "outcome" here is
 # TrialBench's trial-approval-forecasting task (loader.py TASKS), not the
@@ -62,10 +73,25 @@ class LLMProbability(BaseMethod):
         self.service_tier = params.get("llm_service_tier", DEFAULT_SERVICE_TIER)
         self.router_arn = params.get("llm_router_arn")
         self.region = params.get("llm_region", DEFAULT_REGION)
-        # Test-only injection point: a fake object with a `.converse(**kwargs)`
-        # method, passed through so tests never need boto3 installed or a
-        # live AWS account (see BedrockClient's own `boto_client` param).
+        # P13.8, wired 2026-08-27: real batch submission needs a bucket to
+        # stage records in and a role Bedrock assumes to read/write it --
+        # both required (fit() checks) before service_tier="batch" runs for
+        # real; --llm-service-tier sync needs neither.
+        self.s3_bucket = params.get("llm_s3_bucket")
+        self.batch_role_arn = params.get("llm_batch_role_arn")
+        # `or`, not `.get(key, default)`: run_benchmark.py passes this
+        # through as an explicit `None` keyword when --llm-batch-min-records
+        # wasn't given, which makes the key *present* with value None --
+        # `.get(key, default)` would then return None, not the default,
+        # since the key isn't actually missing.
+        self.batch_min_records = params.get("llm_batch_min_records") or DEFAULT_BATCH_MIN_RECORDS
+        # Test-only injection points: fake objects standing in for
+        # boto3.client("bedrock-runtime")/("s3")/("bedrock") respectively,
+        # so tests never need boto3 installed or a live AWS account (see
+        # BedrockClient's own `boto_client` param, same pattern).
         self._injected_boto_client = params.get("llm_boto_client")
+        self._injected_s3_client = params.get("llm_boto_s3_client")
+        self._injected_bedrock_control_client = params.get("llm_boto_bedrock_control_client")
         self._client = None
         self._resolved_model_id = None  # self.model resolved to a concrete Bedrock id; see predict_proba
         self.llm_meter = None  # constructed lazily in fit(); see the note there
@@ -84,6 +110,13 @@ class LLMProbability(BaseMethod):
             raise NotImplementedError(
                 "llm_probability is zero-shot (verbalized probability) per the plan's design -- "
                 "llm_fewshot_k exemplars are not implemented, not silently ignored."
+            )
+        if self.service_tier == "batch" and not self.router_arn and not (self.s3_bucket and self.batch_role_arn):
+            raise NotImplementedError(
+                "llm_probability service_tier='batch' requires --llm-s3-bucket and "
+                "--llm-batch-role-arn (P13.8) -- both are needed to actually submit a batch job. "
+                "Use --llm-service-tier sync if a batch bucket/role isn't set up yet; a config "
+                "that can't submit must not silently fall back to sync and mislabel the cost."
             )
         # Imported lazily (bedrock.meter has no heavy deps, but keeping the
         # construction here rather than at class-import time matches the
@@ -120,6 +153,15 @@ class LLMProbability(BaseMethod):
             from ..bedrock.prices import load_price_table, resolve_model_id
             self._resolved_model_id = resolve_model_id(self.model, load_price_table())
 
+        # P13.8, wired 2026-08-27: batch is a fundamentally different call
+        # shape (submit everything, poll, collect) from the per-row loop
+        # below, so it's a separate method rather than a branch inside the
+        # loop. Routers force sync at the CLI layer already (P13.9,
+        # run_benchmark.py's `--llm-router-arn` handling), so this never
+        # fires for a routed cell.
+        if self.service_tier == "batch" and not self.router_arn:
+            return self._predict_batch(X, question)
+
         probs = []
         for nct_id, row in X.iterrows():
             rendered = render_arm(row, self.arm, str(nct_id))
@@ -144,7 +186,7 @@ class LLMProbability(BaseMethod):
                     result = route_call(self._client, self.router_arn, prompt, temperature=self.temperature)
                     self.llm_meter.record_call(result.input_tokens, result.output_tokens,
                                                result.latency_secs, throttle_count=result.retry_count,
-                                               routed=True)
+                                               routed=True, service_tier="sync")
                     cache_put(self.results_dir, self.router_arn, prompt, self.temperature, "sync",
                              {"text": result.text, "input_tokens": result.input_tokens,
                               "output_tokens": result.output_tokens,
@@ -156,12 +198,137 @@ class LLMProbability(BaseMethod):
             else:
                 result = elicit_probability(
                     self._client, self.results_dir, self._resolved_model_id, prompt, self.temperature,
-                    self.service_tier, primary=self.primary_elicitation, meter=self.llm_meter,
+                    primary=self.primary_elicitation, meter=self.llm_meter,
                 )
                 parse_ok = result.parse_ok
                 refused = result.refused
                 primary_prob = result.primary_prob
 
+            self.llm_n_scored += 1
+            if not parse_ok:
+                self.llm_n_parse_failures += 1
+            if refused:
+                self.llm_n_refusals += 1
+            probs.append(primary_prob)
+        return np.asarray(probs, dtype=float)
+
+    def _predict_batch(self, X, question: str) -> np.ndarray:
+        """P13.8's submit/poll/reassemble loop, actually wired to the
+        elicitation path (found missing 2026-08-27, wave2-start-plan.md
+        P13.8's status note -- until now, `service_tier="batch"` never
+        submitted anything; every call ran real-time synchronous while the
+        meter reported the batch discount anyway).
+
+        Renders every prompt up front, reuses the response cache exactly
+        like the sync path but keyed "batch", and submits a real Bedrock
+        batch job only for the rows that are neither cached nor below
+        `self.batch_min_records` -- a below-minimum remainder falls back to
+        real synchronous calls via `elicit_probability`, which now always
+        records itself honestly as `service_tier="sync"` regardless of
+        this method's own tier (src/bedrock/client.py), so the meter's
+        realized cost is a correct mix rather than a mislabeled average.
+        """
+        from ..bedrock import batch as batch_mod
+        from ..bedrock import batch_formats
+        from ..bedrock.cache import cache_get, cache_put
+        from ..bedrock.client import _looks_like_refusal, _parse_verbalized
+
+        rows = list(X.iterrows())
+        nct_ids = [str(nct_id) for nct_id, _ in rows]
+        prompts = {str(nct_id): _build_verbalized_prompt(question, render_arm(row, self.arm, str(nct_id)).text)
+                  for nct_id, row in rows}
+
+        outcomes = {}  # nct_id -> (primary_prob, parse_ok, refused)
+
+        def _record_from_text(nct_id, text):
+            prob = _parse_verbalized(text)
+            outcomes[nct_id] = (prob if prob is not None else 0.5, prob is not None, _looks_like_refusal(text))
+
+        to_submit = {}
+        for nct_id, prompt in prompts.items():
+            cached = cache_get(self.results_dir, self._resolved_model_id, prompt, self.temperature, "batch")
+            if cached is not None:
+                self.llm_meter.record_cache_hit()
+                _record_from_text(nct_id, cached["response"].get("text", ""))
+            else:
+                to_submit[nct_id] = prompt
+
+        if to_submit and len(to_submit) < self.batch_min_records:
+            print(f"  llm_probability: {len(to_submit)} uncached row(s) below "
+                 f"--llm-batch-min-records={self.batch_min_records} -- falling back to real "
+                 f"synchronous calls for these rows only, honestly recorded as service_tier=sync "
+                 f"(P13.8's documented per-model-minimum fallback, not a batch call).", flush=True)
+            for nct_id, prompt in to_submit.items():
+                result = elicit_probability(self._client, self.results_dir, self._resolved_model_id,
+                                            prompt, self.temperature, primary=self.primary_elicitation,
+                                            meter=self.llm_meter)
+                outcomes[nct_id] = (result.primary_prob, result.parse_ok, result.refused)
+            to_submit = {}
+
+        if to_submit:
+            s3 = self._injected_s3_client
+            if s3 is None:
+                import boto3
+                s3 = boto3.client("s3", region_name=self.region)
+            control = self._injected_bedrock_control_client
+            if control is None:
+                import boto3
+                control = boto3.client("bedrock", region_name=self.region)
+            run_token = uuid.uuid4().hex[:8]
+            prefix = (f"wave2-batch/{_safe_s3_component(self.task or 'task')}/"
+                     f"{_safe_s3_component(self.arm or 'arm')}/"
+                     f"{_safe_s3_component(self._resolved_model_id)}/{run_token}")
+
+            records = [
+                {"recordId": nct_id,
+                 "modelInput": batch_formats.build_model_input(self._resolved_model_id, prompt,
+                                                                self.temperature, DEFAULT_MAX_TOKENS)}
+                for nct_id, prompt in to_submit.items()
+            ]
+            input_uris = batch_mod.write_batch_jsonl(records, s3, self.s3_bucket, prefix)
+            print(f"  llm_probability: {len(records)} record(s) to submit as {len(input_uris)} "
+                 f"batch job(s) under s3://{self.s3_bucket}/{prefix}/", flush=True)
+
+            all_raw_records = {}
+            for chunk_i, input_uri in enumerate(input_uris):
+                output_uri = input_uri.rstrip("/") + "/output/"
+                job_id = batch_mod.submit_batch_job(
+                    control, job_name=f"wave2-{run_token}-{chunk_i}"[:63], role_arn=self.batch_role_arn,
+                    model_id=self._resolved_model_id, input_s3_uri=input_uri, output_s3_uri=output_uri,
+                )
+                print(f"  llm_probability: submitted batch job {job_id} ({chunk_i + 1}/{len(input_uris)}) "
+                     f"-- polling to completion (this can take a while)...", flush=True)
+                final = batch_mod.poll_job(control, job_id)
+                status = final.get("status")
+                if status != "Completed":
+                    raise RuntimeError(
+                        f"batch job {job_id} finished with status {status!r}, not 'Completed' -- "
+                        f"inspect it in the Bedrock console before retrying. Raw response: {final}"
+                    )
+                output_prefix = output_uri[len(f"s3://{self.s3_bucket}/"):]
+                all_raw_records.update(batch_mod.fetch_batch_output_records(s3, self.s3_bucket, output_prefix))
+
+            reassembled = batch_mod.reassemble(all_raw_records)
+            for nct_id, prompt in to_submit.items():
+                rec = reassembled.get(nct_id)
+                if rec is None or rec.get("error") or rec.get("modelOutput") is None:
+                    # A record-level failure (P13.8: "treat one as a parse failure, not a job
+                    # failure") -- no text was ever produced. (parse_ok=False, refused=False)
+                    # so the counting loop below tallies it as a parse failure, same as any
+                    # other unparseable response.
+                    outcomes[nct_id] = (0.5, False, False)
+                    continue
+                text = batch_formats.extract_text(self._resolved_model_id, rec["modelOutput"])
+                in_tok, out_tok = batch_formats.extract_usage(self._resolved_model_id, rec["modelOutput"])
+                self.llm_meter.record_call(in_tok, out_tok, wall_clock_secs=0.0, service_tier="batch")
+                cache_put(self.results_dir, self._resolved_model_id, prompt, self.temperature, "batch",
+                         {"text": text, "input_tokens": in_tok, "output_tokens": out_tok,
+                          "invoked_model_id": self._resolved_model_id})
+                _record_from_text(nct_id, text)
+
+        probs = []
+        for nct_id in nct_ids:
+            primary_prob, parse_ok, refused = outcomes[nct_id]
             self.llm_n_scored += 1
             if not parse_ok:
                 self.llm_n_parse_failures += 1
