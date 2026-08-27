@@ -28,8 +28,12 @@ DEFAULT_PRIMARY_ELICITATION = "verbalized"  # revision 3 §6.3 -- reverses revis
 DEFAULT_REGION = "us-west-2"  # W1.2, 2026-08-27: confirmed live region for the five-rung ladder + router pair
 DEFAULT_SERVICE_TIER = "sync"
 DEFAULT_MAX_TOKENS = 32  # matches BedrockClient.converse's own default -- the verbalized JSON reply is short
-# [W1] -- P13.8's own text: "Respect the per-model minimum from W1.4" -- W1.4 hasn't run, so this is an
-# unconfirmed placeholder, not a verified AWS figure. Override with --llm-batch-min-records once W1.4 answers it.
+# W1.4 confirmed live, 2026-08-27 (deploy/w1_bedrock_inventory.py --run-batch-probe): a 10-record
+# DeepSeek V3.2 batch job failed with "contains less records (10) than the required minimum of: 100"
+# -- this constant's placeholder value happened to already match. Confirmed for DeepSeek specifically;
+# assumed uniform across providers (the error is a Bedrock-service-level record-count gate, not
+# provider-specific) but not independently confirmed for every ladder model -- override with
+# --llm-batch-min-records if a different model's batch job ever reports a different minimum.
 DEFAULT_BATCH_MIN_RECORDS = 100
 
 
