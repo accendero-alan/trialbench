@@ -23,7 +23,7 @@ from .base import BaseMethod
 from .registry import register
 
 DEFAULT_PRIMARY_ELICITATION = "verbalized"  # revision 3 §6.3 -- reverses revision 1/2's "logprob" default
-DEFAULT_REGION = "us-east-1"
+DEFAULT_REGION = "us-west-2"  # W1.2, 2026-08-27: confirmed live region for the five-rung ladder + router pair
 DEFAULT_SERVICE_TIER = "sync"
 
 # Per-task question the trial record is judged against. "outcome" here is

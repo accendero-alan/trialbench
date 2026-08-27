@@ -193,7 +193,7 @@ def run_cell(cfg, task, phase, method_name, seed):
                        results_dir=cfg["results_dir"],
                        llm_service_tier=cfg.get("llm_service_tier", "sync"),
                        llm_router_arn=cfg.get("llm_router_arn"),
-                       llm_region=cfg.get("llm_region", "us-east-1"),
+                       llm_region=cfg.get("llm_region", "us-west-2"),
                        llm_boto_client=cfg.get("llm_boto_client"))
 
     # T21 (t21-code-channel-plan.md, P7): a config-level override that swaps
@@ -344,7 +344,8 @@ def main():
     ap.add_argument("--llm-router-arn",
                     help="P13.9/T31: route calls through this prompt-router ARN instead of calling "
                          "--llm-model directly. Synchronous only; forces --llm-service-tier sync.")
-    ap.add_argument("--llm-region", help="P13.1: bedrock-runtime region. Default us-east-1.")
+    ap.add_argument("--llm-region", help="P13.1: bedrock-runtime region. Default us-west-2 "
+                    "(W1.2, 2026-08-27: confirmed live region for the ladder + router pair).")
     ap.add_argument("--test-subset-file",
                     help="P13.7: fixed NCT-id sample (src/data/subset.py) applied to the test "
                          "split in file order, instead of --max-test-rows's head-n truncation. "

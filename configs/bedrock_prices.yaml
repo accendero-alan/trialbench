@@ -9,8 +9,17 @@
 # region stated, not the live Bedrock console. W1.3 replaces these with
 # console-read prices before any billable grid call; `read_on` on that row
 # moves forward when it does. `model_id` is Bedrock's on-demand/inference-
-# profile model id; `id_verified: false` rows are this repo's best guess at
-# AWS's naming convention (unconfirmed) -- W1.2 confirms or corrects them.
+# profile model id.
+#
+# W1.2 (model access/ids) done 2026-08-27: all five ladder model ids plus
+# both router members confirmed ACTIVE in **us-west-2** (not us-east-1, this
+# table's original guess) via a live `aws bedrock list-foundation-models`
+# call on the EC2 instance. `id_verified: true` reflects that -- it means
+# the id string and region are real, NOT that the price is (`verified`
+# stays false until W1.3's separate console price read happens; a
+# confirmed id says nothing about whether direct on-demand invocation needs
+# an inference-profile ARN instead of the bare id below -- that's a live
+# Converse call, W1.2's own next item, not yet done).
 #
 # Router members (Nova Lite/Pro) are priced here too, separately from
 # `routing_fee_per_1k_requests_usd`: the fee is Bedrock's per-request routing
@@ -18,66 +27,70 @@
 
 models:
   anthropic.claude-opus-4-5:
-    model_id: "anthropic.claude-opus-4-5-20251101-v1:0"   # W1.2: unverified id
-    id_verified: false
+    model_id: "anthropic.claude-opus-4-5-20251101-v1:0"   # confirmed live, us-west-2, 2026-08-27
+    id_verified: true
     input_per_1m_usd: 5.00
     output_per_1m_usd: 25.00
     batch_multiplier: 0.5
     source_url: "https://aws.amazon.com/blogs/machine-learning/claude-opus-4-5-now-in-amazon-bedrock/"
     read_on: "2026-08-26"
-    region: "us-east-1"
-    profile: "global"      # W1.2: us. geographic profiles reported to carry a premium -- verify
+    region: "us-west-2"
+    profile: "global"      # W1.2: still open -- direct on-demand vs. an inference-profile ARN requirement,
+                            # and any us./global. price premium, needs a live Converse call to confirm
     verified: false
     cutoff: "2025-03"      # Bedrock model card "reliable knowledge" cutoff
 
   anthropic.claude-haiku-4-5:
-    model_id: "anthropic.claude-haiku-4-5-20250715-v1:0"   # W1.2: unverified id
-    id_verified: false
+    model_id: "anthropic.claude-haiku-4-5-20251001-v1:0"   # confirmed live, us-west-2, 2026-08-27
+    id_verified: true
     input_per_1m_usd: 1.00
     output_per_1m_usd: 5.00
     batch_multiplier: 0.5
     source_url: "https://aws.amazon.com/blogs/aws-cloud-financial-management/optimize-llm-costs-on-amazon-bedrock-from-billing-attribution-to-operational-telemetry/"
     read_on: "2026-06-29"
-    region: "us-east-1"
-    profile: "global"
+    region: "us-west-2"
+    profile: "global"      # W1.2: still open, see the opus note above
     verified: false
     cutoff: "2025-07"      # training-data cutoff; reliable-knowledge cutoff is 2025-02 -- record both, use the later
 
   deepseek.v3-2:
-    model_id: "deepseek.v3-2-v1:0"    # W1.2: unverified id -- confirm against the Bedrock console
-    id_verified: false
+    model_id: "deepseek.v3.2"    # confirmed live, us-west-2, 2026-08-27 -- corrected from the guessed
+                                   # "deepseek.v3-2-v1:0"; the real id has no "-v1:0" suffix. Note
+                                   # deepseek.v3-v1:0 ("DeepSeek-V3.1") also exists in this account --
+                                   # a different, older model, not this ladder rung.
+    id_verified: true
     input_per_1m_usd: 0.62
     output_per_1m_usd: 1.85
     batch_multiplier: 0.5
     source_url: "https://aws.amazon.com/bedrock/pricing/"
     read_on: "2026-08-26"
-    region: "us-east-1"
+    region: "us-west-2"
     profile: null
     verified: false         # [W1] pricing page renders client-side; this is a transcribed figure
     cutoff: "2025-03"       # Bedrock model card only -- no vendor corroboration
 
   meta.llama4-maverick-17b:
-    model_id: "meta.llama4-maverick-17b-instruct-v1:0"   # W1.2: unverified id
-    id_verified: false
+    model_id: "meta.llama4-maverick-17b-instruct-v1:0"   # confirmed live, us-west-2, 2026-08-27
+    id_verified: true
     input_per_1m_usd: 0.24
     output_per_1m_usd: 0.97
     batch_multiplier: 0.5
     source_url: "https://aws.amazon.com/bedrock/pricing/"
     read_on: "2025-08-01"
-    region: "us-east-1"
+    region: "us-west-2"
     profile: null
     verified: false          # [W1] stale -- 2025-08 blog, re-read from console before use
     cutoff: "2024-08"        # vendor-corroborated (Meta model card) -- anchors T29's reading
 
   amazon.nova-lite:
-    model_id: "amazon.nova-lite-v1:0"
+    model_id: "amazon.nova-lite-v1:0"   # confirmed live, us-west-2, 2026-08-27
     id_verified: true
     input_per_1m_usd: 0.06
     output_per_1m_usd: 0.24
     batch_multiplier: 0.5
     source_url: "https://aws.amazon.com/bedrock/pricing/"
     read_on: "2025-08-01"
-    region: "us-east-1"
+    region: "us-west-2"
     profile: null
     verified: false           # [W1] stale -- 2025-08 blog, re-read from console before use
     cutoff: "2024-10"         # contradicted by AWS's own Nova service card -- see plan §4; keep the
@@ -85,7 +98,7 @@ models:
 
   # Router-only member, not on the five-rung ladder itself.
   amazon.nova-pro:
-    model_id: "amazon.nova-pro-v1:0"
+    model_id: "amazon.nova-pro-v1:0"   # confirmed live, us-west-2, 2026-08-27
     id_verified: true
     input_per_1m_usd: 0.80
     output_per_1m_usd: 3.20
@@ -94,7 +107,7 @@ models:
       wave2-start-plan.md T31 derivation (back-solved from the stated $0.000664/request
       figure at 750 input + 20 output tokens; consistent with Nova Lite's own published rate)
     read_on: "2026-08-26"
-    region: "us-east-1"
+    region: "us-west-2"
     profile: null
     verified: false            # [W1] not independently confirmed against the console
     cutoff: null                # AWS: Nova does not define a training cutoff

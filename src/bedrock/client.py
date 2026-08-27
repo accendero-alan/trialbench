@@ -71,7 +71,7 @@ class BedrockClient:
     -- golden rule 5, CLAUDE.md.
     """
 
-    def __init__(self, region: str = "us-east-1", boto_client=None,
+    def __init__(self, region: str = "us-west-2", boto_client=None,
                 max_retries: int = 6, backoff_base_secs: float = 1.0,
                 backoff_max_secs: float = 60.0, max_throttle_fraction: float = 0.5):
         if boto_client is not None:
