@@ -6,13 +6,17 @@ model id (no equivalent to ``trace.promptRouter.invokedModelId``), so every
 call in this harness -- routed or not -- goes through Converse for a
 consistent response shape.
 
-Verbalized probability is the only elicitation path implemented here.
-Bedrock does not expose per-token logprobs over user-supplied text for the
-Anthropic or Nova models; DeepSeek V3.2 and Llama 4 Maverick are unchecked
-(W1.8, one Converse call each) and are a one-time upside if they return them
--- not built out speculatively here. ``primary_elicitation="logprob"``
-raises rather than silently falling back, so a caller can't end up scoring a
-model on an elicitation path nobody verified exists for it.
+Verbalized probability is the only elicitation path implemented here, and
+now the only one for every ladder rung: Bedrock does not expose per-token
+logprobs over user-supplied text for the Anthropic or Nova models, and W1.8
+(2026-08-27, live) closed the other two -- Llama 4 Maverick's Converse
+endpoint rejects `additionalModelRequestFields={"logprobs"/"return_logprobs"}`
+outright (`ValidationException`), and DeepSeek V3.2 returns 200 OK on both
+but with no logprob-shaped field anywhere in the response (the key was
+silently ignored, not honored). ``primary_elicitation="logprob"`` raises
+rather than silently falling back, so a caller can't end up scoring a model
+on an elicitation path nobody verified exists for it -- which is now every
+path except verbalized, for every model on the ladder.
 """
 from __future__ import annotations
 
