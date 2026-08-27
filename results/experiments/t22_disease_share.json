@@ -474,6 +474,6 @@
     "primary": "CONFIRMED if pooled disease_share on mortality+SAE exceeds dropout's by more than the pooled CI width, and blind_drop orders the same way. Else SOFTENED to 'disease dominates everywhere' if shares aren't distinguishable. If disease-only recovers <1/3 of full skill on a clinical task, the premise is flagged as weakened regardless of the ordering verdict."
   },
   "verdict": "INCONCLUSIVE on this split (see pooled_per_task and blind_drop_pooled for the raw numbers).",
-  "git_sha": "0f2e177fab1277ee1b3720d126aefa7767210058-dirty",
-  "wall_clock_secs": 64.9
+  "git_sha": "512b89b49ef0aca552d48b4b5a5376fd776080dc",
+  "wall_clock_secs": 96.5
 }
