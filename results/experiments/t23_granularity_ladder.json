@@ -12356,7 +12356,7 @@
   "decision_rule": {
     "primary": "PR-1 SUPPORTED if pooled optimum on mortality/SAE is at char3/ccsr or finer (CI excludes 0 vs char3) while dropout's rungs are indistinguishable from char3. All-tie -> 'granularity doesn't matter above chapter level', reported plainly. Full codes winning anywhere (CI excludes 0) -> PR-1 CUT on that task."
   },
-  "verdict": "PR-1 SUPPORTED: pooled optimum on mortality/SAE is at char3/ccsr or finer with a clearing CI, while dropout's rungs are indistinguishable from char3.",
-  "git_sha": "0f2e177fab1277ee1b3720d126aefa7767210058-dirty",
-  "wall_clock_secs": 65.9
+  "verdict": "PR-1 not cleanly supported or cut; report pooled_best_vs_char3 per task descriptively.",
+  "git_sha": "aac978a620bf720a4b0affc6919b1580336b2fd0",
+  "wall_clock_secs": 91.3
 }
