@@ -11,18 +11,32 @@ needs to build records and parse them back.
 **Confidence varies sharply by provider, and that is stated per function,
 not glossed over:**
 
-- **Anthropic, Amazon Nova -- HIGH.** The Messages API body (Anthropic) and
-  the Converse-mirroring native body (Nova) are long-stable, extensively
-  documented shapes.
-- **Meta Llama, DeepSeek -- LOW, UNVERIFIED.** Llama's raw-prompt chat
-  template is version-sensitive (Llama 4's exact special tokens are not
-  independently confirmed here), and DeepSeek's Bedrock-native wrapper
-  around its OpenAI-compatible API was never checked against a live
-  account. **Do not trust either for a real paid grid pass without first
-  running a tiny live batch smoke test per model** -- extend
-  `deploy/w1_bedrock_inventory.py --run-batch-probe` (already scaffolded
-  for exactly this) or submit a 1-2 record job by hand and inspect the
-  output before trusting a 1,000-trial run.
+- **DeepSeek -- CONFIRMED live 2026-08-27.** `deploy/w1_bedrock_inventory.py
+  --run-batch-probe` ran a real 100-record batch job end to end (submit,
+  poll, S3 output read-back, text extraction) and got 100/100 real
+  responses back, extracted correctly (`'OK'`). The build/extract pair for
+  this provider is verified, not just documented.
+- **Amazon Nova -- format HIGH confidence but UNTESTABLE in `us-west-2`.**
+  The same live probe found `amazon.nova-lite-v1:0` batch inference is not
+  supported in this region at all (`ValidationException: Batch inference is
+  not supported for model amazon.nova-lite-v1:0 in region us-west-2`) --
+  a hard platform constraint, not an IAM or format problem. Nova Pro's job
+  submitted but failed on a permissions error before reaching model
+  invocation (see below), so its format is also still unverified in
+  practice despite the shape itself mirroring Converse closely.
+- **Anthropic, Meta Llama, Nova Pro -- blocked on permissions as of
+  2026-08-27, format unverified.** All three failed before ever reaching
+  model invocation: Anthropic (Opus, Haiku) with an explicit AWS Marketplace
+  subscription error naming the execution role; Llama 4 Maverick and Nova
+  Pro with a vaguer "Customer doesn't have permissions to invokeModel" once
+  the job was already running. The common thread is the **batch execution
+  role** (distinct from the CLI-caller role, which already invokes all of
+  these fine synchronously) lacking `bedrock:InvokeModel` and/or AWS
+  Marketplace grants of its own -- see `wave2-start-plan.md`'s P13.8 status
+  note for the exact IAM additions to try. **Do not trust Llama or Anthropic's
+  modelInput shape for a real paid grid pass until a job actually reaches
+  model invocation and returns real output** -- a permissions failure before
+  invocation proves nothing about the format either way.
 
 A malformed ``modelInput`` fails at the **record level** in Bedrock's batch
 output (or the whole job fails validation at submission, which is loud), not
