@@ -5609,6 +5609,6 @@
     "primary": "PR-2 SUPPORTED if the pooled gain over T23's best single rung clears the pooled CI on the rare half and not the common half. Uniform gains -> hierarchy helps but SOFTENED. No gain anywhere -> flattened GRAM is dead in this data."
   },
   "verdict": "PR-2 SUPPORTED: rare-half gain clears its pooled CI while common-half doesn't, for [('outcome', 'ancestors'), ('serious_adverse_rate_yn', 'ancestors'), ('serious_adverse_rate_yn', 'stack')].",
-  "git_sha": "0f2e177fab1277ee1b3720d126aefa7767210058-dirty",
-  "wall_clock_secs": 82.1
+  "git_sha": "093de186ae9619b2c38d64f0f7cdffe25ab17df7",
+  "wall_clock_secs": 93.9
 }
