@@ -352,7 +352,7 @@ def main():
         return r.get("status") != "no data" and "best_rung" in r
 
     clinical_optimum_finer_or_equal = all(
-        pooled_best_vs_char3.get(t, {}).get("best_rung") in ("char3", "ccsr") or not clears_ci(t)
+        pooled_best_vs_char3.get(t, {}).get("best_rung") in ("char3", "ccsr") and clears_ci(t)
         for t in CLINICAL_TASKS
     )
     dropout_indistinguishable = not clears_ci(OPERATIONAL_TASK)
