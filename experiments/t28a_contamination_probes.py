@@ -798,18 +798,40 @@ def run(data_root="data", results_dir="results", n_trials=40, models=None, seed=
             api_model_id = resolve_model_id(model_id, price_table)
             client = BedrockClient(region=region, boto_client=boto_client)
             meter = Meter()
-            result = _run_one_model(client, results_dir, api_model_id, sample, columns,
-                                    pre_cutoff_label, meter, alpha_corrected=alpha_corrected,
-                                    alpha_title_corrected=alpha_title_corrected,
-                                    run_detectors=run_detectors, seed=seed)
+            # One model's account-level access problem (e.g. no AWS Marketplace
+            # subscription for that model -- confirmed live 2026-08-28, Claude
+            # Opus 4.5 failed on the very first call) must not lose every other
+            # model's results. Same posture as w1_bedrock_inventory.py's
+            # _guarded(): record what happened and move on, never crash the
+            # whole run over one model. Without this, the five-model run has
+            # zero results if the FIRST model in the list is inaccessible, even
+            # though the other four never got a chance to try.
+            try:
+                result = _run_one_model(client, results_dir, api_model_id, sample, columns,
+                                        pre_cutoff_label, meter, alpha_corrected=alpha_corrected,
+                                        alpha_title_corrected=alpha_title_corrected,
+                                        run_detectors=run_detectors, seed=seed)
+                result["skipped"] = False
+                result["skip_reason"] = None
+            except Exception as e:  # noqa: BLE001
+                result = {
+                    "skipped": True,
+                    "skip_reason": f"{type(e).__name__}: {e}",
+                    "branch": None, "branch_reason": None,
+                    "recognition_uninformative": None,
+                    "meter": meter.summary(price_table, api_model_id, "sync"),
+                }
             result["cutoff"] = cutoff
             result["cutoff_note"] = cutoff_note
             result["api_model_id"] = api_model_id
             result["n_trials_with_registration_date"] = int(registration_dates.notna().sum())
             per_model[model_id] = result
-            print(f"  {model_id}: branch={result['branch']} ({result['branch_reason']}), "
-                 f"uninformative={result['recognition_uninformative']}, "
-                 f"dollars_realized={result['meter']['dollars_realized']}", flush=True)
+            if result["skipped"]:
+                print(f"  {model_id}: SKIPPED -- {result['skip_reason']}", flush=True)
+            else:
+                print(f"  {model_id}: branch={result['branch']} ({result['branch_reason']}), "
+                     f"uninformative={result['recognition_uninformative']}, "
+                     f"dollars_realized={result['meter']['dollars_realized']}", flush=True)
 
     artifact = {
         "test_id": "T28a",
@@ -846,6 +868,7 @@ def run(data_root="data", results_dir="results", n_trials=40, models=None, seed=
         },
         "n_trials_sampled": len(sample),
         "per_model": per_model,
+        "models_skipped": {m: r["skip_reason"] for m, r in per_model.items() if r["skipped"]},
         "decision_rule": (
             "Per model, built on title_recall_hit as the discriminator (F1 -- it has no "
             "predictive route, unlike outcome_recall_hit, which a model can satisfy by "

@@ -58,6 +58,26 @@ class _FakeConverseClient:
         }
 
 
+class _FailOneModelConverseClient(_FakeConverseClient):
+    """Like _FakeConverseClient, but raises on every call to one specific
+    resolved model id -- simulates the real 2026-08-28 failure (Claude Opus
+    4.5's AccessDeniedException, AWS Marketplace subscription not granted)
+    that crashed the whole five-model run before any other model got a
+    chance to try."""
+
+    def __init__(self, fail_model_id):
+        super().__init__()
+        self.fail_model_id = fail_model_id
+
+    def converse(self, modelId, messages, inferenceConfig):
+        if modelId == self.fail_model_id:
+            raise RuntimeError(
+                f"AccessDeniedException: Model access is denied due to IAM user or service "
+                f"role is not authorized to perform the required AWS Marketplace actions "
+                f"for {modelId}")
+        return super().converse(modelId, messages, inferenceConfig)
+
+
 def _fake_aact_loader(all_old_dates: bool):
     """Ten synthetic NCT ids (matching tests.test_smoke._write_task's
     "NCT{i:08d}" convention) with registration dates either all before every
@@ -147,6 +167,39 @@ def test_detector_arm_off_by_default_records_a_reason():
         assert m["title_recall_rate"] is not None
         assert artifact["inputs"]["detector_arm_decision"]["this_run_used_detectors"] is False
         print("detector-arm-off-by-default OK:", m["detector_arm_status"][:60] + "...")
+
+
+def test_one_inaccessible_model_does_not_lose_the_others():
+    """Regression test for the real 2026-08-28 failure: Claude Opus 4.5's
+    AWS Marketplace access was denied, and because it was FIRST in
+    --models, the whole run crashed before deepseek/llama/nova-lite got a
+    chance to run at all -- zero results, not four-of-five. run() must
+    catch a per-model failure, record it, and continue."""
+    with tempfile.TemporaryDirectory() as data_root, tempfile.TemporaryDirectory() as results_dir:
+        _write_task(data_root, "mortality-event-prediction", "Phase1", n_train=20, n_test=10)
+
+        # amazon.nova-lite-v1:0 is what resolve_model_id gives for
+        # "amazon.nova-lite" -- the fake fails exactly that resolved id, the
+        # way the real AccessDeniedException hit a specific resolved ARN.
+        fake_client = _FailOneModelConverseClient(fail_model_id="amazon.nova-lite-v1:0")
+        out_path = os.path.join(results_dir, "t28a_probe_gate.json")
+        artifact = run(
+            data_root=data_root, results_dir=results_dir, n_trials=6,
+            models=["amazon.nova-lite", "deepseek.v3-2"], seed=42,
+            boto_client=fake_client, aact_loader=_fake_aact_loader(all_old_dates=False),
+            out_path=out_path,
+        )
+        blocked = artifact["per_model"]["amazon.nova-lite"]
+        assert blocked["skipped"] is True
+        assert "AccessDeniedException" in blocked["skip_reason"]
+        assert blocked["branch"] is None
+
+        survivor = artifact["per_model"]["deepseek.v3-2"]
+        assert survivor["skipped"] is False
+        assert survivor["branch"] in ("SHRINK_TO_UNRECOGNIZED_STRATUM", "STRATIFY", "PROCEED_AS_DESIGNED")
+
+        assert artifact["models_skipped"] == {"amazon.nova-lite": blocked["skip_reason"]}
+        print("one-inaccessible-model OK:", artifact["models_skipped"])
 
 
 def test_auroc_computable_with_mixed_classes():
@@ -299,6 +352,7 @@ def test_per_task_outcome_discrimination_base_rate_invariant():
 if __name__ == "__main__":
     test_artifact_shape_and_auroc_not_computable_with_single_class()
     test_detector_arm_off_by_default_records_a_reason()
+    test_one_inaccessible_model_does_not_lose_the_others()
     test_auroc_computable_with_mixed_classes()
     test_decide_branch_null_input_is_negative()
     test_decide_branch_single_hit_does_not_beat_shuffled_floor()
