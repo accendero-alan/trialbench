@@ -7,9 +7,16 @@ tested against a fake Bedrock client (same DI posture as the harness itself,
 src/bedrock/client.py's `boto_client` param) so it's ready to run for real
 the moment those gates clear.
 
-Four black-box instruments, all run per model, plus a blind (no-model-call)
-baseline and an outcome/title recall probe -- not revision 1's home-made
-probes:
+Four black-box instruments, plus a blind (no-model-call) baseline and an
+outcome/title recall probe -- not revision 1's home-made probes. **F4
+(2026-08-28 decision): instruments 1-4 below are off by default** (pass
+``--detectors`` to run them) -- they're structurally inert on TrialBench
+alone (every trial pre-dates every ladder model's training cutoff, so the
+pre/post-cutoff label they're scored against is single-class), and the
+pooled TrialBench+P14 sample that would make them computable is a separate
+experiment, not bolted onto the gating run. See
+``docs/t28a_fixes_before_full_run.md`` F4. Only the outcome/title recall
+probes run in the default (gating) configuration:
 
 1. N-Gram Coverage Attack (Hallinan et al. 2025, arXiv:2508.09603): prefix a
    trial's own summary text, sample one completion, score = trigram overlap
@@ -89,6 +96,40 @@ BLIND_BASELINE_NOISE_BAND = 0.05
 # corrected across (models x tasks) once the full comparison count is known
 # -- see run()'s alpha_corrected.
 FAMILY_ALPHA = 0.05
+
+# F4 decision (2026-08-28, docs/t28a_fixes_before_full_run.md): the detector
+# arm (n-gram coverage, tabular memorization, guided prompting, blind
+# baseline) is dropped from the five-model gating run and flag-gated behind
+# --detectors (default off), not deleted. Reasons, strongest first: (1) an
+# unvalidated detector score is uninterpretable in either direction without
+# the pre/post-cutoff AUROC to anchor it -- on TrialBench alone that AUROC
+# is structurally None, so an elevated score would be no evidence, not weak
+# evidence, and would sit in the artifact inviting misreading anyway; (2)
+# the gate is a spend decision on T28, and only the recall probes
+# (title_recall_hit, outcome_recall_hit) bear on it -- title_recall_hit
+# already carried the entire finding on the two-model pilot; (3) the
+# TrialBench+P14-pooled version that WOULD make detector AUROC computable
+# would today come back recognition_uninformative, since blind_baseline_auroc
+# reads `phase`, which is 0.0% missing in TrialBench train and 78.1% missing
+# in P14's fresh slice (docs/p14_4_schema_slice.md) -- the blind baseline
+# would separate classes on schema reconstruction, not temporal drift, and
+# would correctly void the run; (4) the tabular memorization suite (4 of 9
+# calls/trial) is the most confounded of the three for the same structural
+# reason. The pooled version is a separate experiment, not bolted onto the
+# gating run -- see docs/t28a_fixes_before_full_run.md F4 for the full
+# writeup and what that separate experiment would need.
+DETECTOR_ARM_DISABLED_REASON = (
+    "TrialBench's pre/post-cutoff label is single-class for all five ladder "
+    "models (every trial registered before 2024-02-16; earliest ladder cutoff "
+    "is llama4-maverick at 2024-08), so detector AUROC and the blind baseline "
+    "would return None regardless of how many trials are sampled -- confirmed "
+    "offline against the pinned AACT snapshot at n=40 and n=200. Dropped from "
+    "the gating run rather than left emitting nulls that read as absent "
+    "evidence; see docs/t28a_fixes_before_full_run.md F4 (decision recorded "
+    "2026-08-28). The TrialBench+P14-pooled version that would make this "
+    "computable is a separate experiment, not bolted onto the gate -- pass "
+    "--detectors to run it anyway (e.g. against a pooled sample)."
+)
 
 PREFIX_SPLIT_FRAC = 0.6
 MIN_SUMMARY_WORDS = 5
@@ -510,17 +551,20 @@ def _decide_branch(title_hits, title_n, title_recall_rate, outcome_recall_rate,
 # Per-model orchestration
 # ----------------------------------------------------------------------------
 def _run_one_model(client, results_dir, model_id, sample, columns, pre_cutoff_label, meter,
-                   alpha_corrected=FAMILY_ALPHA):
+                   alpha_corrected=FAMILY_ALPHA, run_detectors=False):
     per_trial_scores = []
     for _, row in sample.iterrows():
         prefix, true_suffix = _split_prefix_suffix(row.get("brief_summary/textblock"))
 
-        ngram = ngram_coverage_score(client, results_dir, model_id, prefix, true_suffix, meter) \
-            if prefix else None
-        guided_delta = guided_prompting_delta(client, results_dir, model_id, prefix, true_suffix, meter) \
-            if prefix else None
-        tabular = tabular_memorization_score(client, results_dir, model_id, row, prefix, true_suffix,
-                                             columns, meter)
+        if run_detectors:
+            ngram = ngram_coverage_score(client, results_dir, model_id, prefix, true_suffix, meter) \
+                if prefix else None
+            guided_delta = guided_prompting_delta(client, results_dir, model_id, prefix, true_suffix, meter) \
+                if prefix else None
+            tabular = tabular_memorization_score(client, results_dir, model_id, row, prefix, true_suffix,
+                                                 columns, meter)
+        else:
+            ngram, guided_delta, tabular = None, None, None
 
         rendered = render_arm(row, "L7", row["nct_id"])
         outcome_probe = outcome_recall_probe(client, results_dir, model_id, row["task"], rendered.text,
@@ -540,28 +584,38 @@ def _run_one_model(client, results_dir, model_id, sample, columns, pre_cutoff_la
 
     ngram_scores = [t["ngram_score"] for t in per_trial_scores]
     guided_deltas = [t["guided_delta"] for t in per_trial_scores]
-    tabular_scores = [t["tabular"]["combined"] for t in per_trial_scores]
     outcome_hits = [t["outcome_recall_hit"] for t in per_trial_scores if t["outcome_recall_hit"] is not None]
     title_hits = [t["title_recall_hit"] for t in per_trial_scores if t["title_recall_hit"] is not None]
 
-    detector_aurocs = {
-        "ngram_coverage": _safe_auroc([s if s is not None else np.nan for s in ngram_scores], pre_cutoff_label),
-        "guided_prompting_delta": _safe_auroc([s if s is not None else np.nan for s in guided_deltas], pre_cutoff_label),
-        "tabular_memorization": _safe_auroc([s if s is not None else np.nan for s in tabular_scores], pre_cutoff_label),
-    }
-    computable = [v for v in detector_aurocs.values() if v is not None]
-    best_detector_auroc = max(computable) if computable else None
+    if run_detectors:
+        tabular_scores = [t["tabular"]["combined"] for t in per_trial_scores]
+        detector_aurocs = {
+            "ngram_coverage": _safe_auroc([s if s is not None else np.nan for s in ngram_scores], pre_cutoff_label),
+            "guided_prompting_delta": _safe_auroc([s if s is not None else np.nan for s in guided_deltas], pre_cutoff_label),
+            "tabular_memorization": _safe_auroc([s if s is not None else np.nan for s in tabular_scores], pre_cutoff_label),
+        }
+        computable = [v for v in detector_aurocs.values() if v is not None]
+        best_detector_auroc = max(computable) if computable else None
 
-    blind_auroc = blind_baseline_auroc(sample, pre_cutoff_label)
-    # F3: tri-state. The old two-value form read `None`-vs-`None` (control
-    # not computed at all -- true on the real two-model artifact, both
-    # models) as `False` ("ran, and the detectors are citable"), which is a
-    # silent false negative. `None` here means "not computed"; only a real
-    # comparison of two real numbers can say true or false.
-    if best_detector_auroc is None or blind_auroc is None:
-        recognition_uninformative = None
+        blind_auroc = blind_baseline_auroc(sample, pre_cutoff_label)
+        # F3: tri-state. The old two-value form read `None`-vs-`None` (control
+        # not computed at all -- true on the real two-model artifact, both
+        # models) as `False` ("ran, and the detectors are citable"), which is a
+        # silent false negative. `None` here means "not computed"; only a real
+        # comparison of two real numbers can say true or false.
+        if best_detector_auroc is None or blind_auroc is None:
+            recognition_uninformative = None
+        else:
+            recognition_uninformative = abs(best_detector_auroc - blind_auroc) <= BLIND_BASELINE_NOISE_BAND
+        detector_arm_status = "computed"
     else:
-        recognition_uninformative = abs(best_detector_auroc - blind_auroc) <= BLIND_BASELINE_NOISE_BAND
+        # F4: not a bare None. --detectors wasn't passed (the default, per
+        # the 2026-08-28 decision), and the reason is recorded, not implied.
+        tabular_scores = [None] * len(per_trial_scores)
+        detector_aurocs = None
+        blind_auroc = None
+        recognition_uninformative = None
+        detector_arm_status = f"disabled (--detectors not passed): {DETECTOR_ARM_DISABLED_REASON}"
 
     outcome_recall_rate = float(np.mean(outcome_hits)) if outcome_hits else None
     title_recall_rate = float(np.mean(title_hits)) if title_hits else None
@@ -581,18 +635,21 @@ def _run_one_model(client, results_dir, model_id, sample, columns, pre_cutoff_la
 
     # Cross-instrument agreement: pairwise Spearman correlation between the
     # three detector score series (pooled per model, over trials where both
-    # scores exist).
-    series = {"ngram_coverage": pd.Series(ngram_scores, dtype=float),
-             "guided_prompting_delta": pd.Series(guided_deltas, dtype=float),
-             "tabular_memorization": pd.Series(tabular_scores, dtype=float)}
-    names = list(series)
-    agreement = {}
-    for i in range(len(names)):
-        for j in range(i + 1, len(names)):
-            a, b = series[names[i]], series[names[j]]
-            valid = a.notna() & b.notna()
-            corr = float(a[valid].corr(b[valid], method="spearman")) if valid.sum() >= 3 else None
-            agreement[f"{names[i]}_vs_{names[j]}"] = corr
+    # scores exist). Only meaningful when the detector arm actually ran.
+    if run_detectors:
+        series = {"ngram_coverage": pd.Series(ngram_scores, dtype=float),
+                 "guided_prompting_delta": pd.Series(guided_deltas, dtype=float),
+                 "tabular_memorization": pd.Series(tabular_scores, dtype=float)}
+        names = list(series)
+        agreement = {}
+        for i in range(len(names)):
+            for j in range(i + 1, len(names)):
+                a, b = series[names[i]], series[names[j]]
+                valid = a.notna() & b.notna()
+                corr = float(a[valid].corr(b[valid], method="spearman")) if valid.sum() >= 3 else None
+                agreement[f"{names[i]}_vs_{names[j]}"] = corr
+    else:
+        agreement = None
 
     price_table = load_price_table()
     meter_summary = meter.summary(price_table, model_id, "sync")
@@ -611,6 +668,7 @@ def _run_one_model(client, results_dir, model_id, sample, columns, pre_cutoff_la
         "title_recall_ci_95": {"lower": title_recall_ci[0], "upper": title_recall_ci[1]},
         "per_task_outcome_discrimination": per_task_outcome,
         "outcome_significant_tasks": list(outcome_significant_tasks),
+        "detector_arm_status": detector_arm_status,
         "detector_aurocs": detector_aurocs, "blind_baseline_auroc": blind_auroc,
         "recognition_uninformative": recognition_uninformative,
         "cross_instrument_agreement": agreement,
@@ -622,7 +680,8 @@ def _run_one_model(client, results_dir, model_id, sample, columns, pre_cutoff_la
 # Entry point
 # ----------------------------------------------------------------------------
 def run(data_root="data", results_dir="results", n_trials=40, models=None, seed=42,
-       region="us-west-2", boto_client=None, aact_loader=load_aact_table, out_path=OUT_PATH) -> dict:
+       region="us-west-2", boto_client=None, aact_loader=load_aact_table, out_path=OUT_PATH,
+       run_detectors=False) -> dict:
     models = models or _default_models()
     price_table = load_price_table()
 
@@ -661,7 +720,8 @@ def run(data_root="data", results_dir="results", n_trials=40, models=None, seed=
             client = BedrockClient(region=region, boto_client=boto_client)
             meter = Meter()
             result = _run_one_model(client, results_dir, api_model_id, sample, columns,
-                                    pre_cutoff_label, meter, alpha_corrected=alpha_corrected)
+                                    pre_cutoff_label, meter, alpha_corrected=alpha_corrected,
+                                    run_detectors=run_detectors)
             result["cutoff"] = cutoff
             result["cutoff_note"] = cutoff_note
             result["api_model_id"] = api_model_id
@@ -691,6 +751,16 @@ def run(data_root="data", results_dir="results", n_trials=40, models=None, seed=
                 "family_alpha": FAMILY_ALPHA, "n_models": len(models), "n_tasks": n_tasks,
                 "n_comparisons": n_comparisons, "alpha_corrected": alpha_corrected,
             },
+            "run_detectors": run_detectors,
+            "detector_arm_decision": {
+                "date": "2026-08-28",
+                "decision": ("drop the detector arm (n-gram coverage, tabular memorization, "
+                             "guided prompting, blind baseline) for the five-model gating run; "
+                             "the TrialBench+P14-pooled version that would make it computable "
+                             "is a separate experiment, not bolted onto this gate"),
+                "rationale_doc": "docs/t28a_fixes_before_full_run.md#f4",
+                "this_run_used_detectors": run_detectors,
+            },
         },
         "n_trials_sampled": len(sample),
         "per_model": per_model,
@@ -713,7 +783,10 @@ def run(data_root="data", results_dir="results", n_trials=40, models=None, seed=
             "recognition_uninformative=true and that model's detector scores are not "
             "citable as evidence of memorization (temporal drift is the more likely "
             "explanation); recognition_uninformative=null (not the old silent false-negative "
-            "false) when either AUROC wasn't computable at all -- see F3."
+            "false) when either AUROC wasn't computable at all -- see F3. The detector arm "
+            "(and this whole independent check) only runs when --detectors is passed; the "
+            "gating run leaves it off by decision, not by defect -- see F4 and "
+            "per_model.<model_id>.detector_arm_status."
         ),
         "verdict": "descriptive -- see per_model.<model_id>.branch, .branch_reason, and "
                   ".recognition_uninformative; no single pass/fail verdict for this test.",
@@ -740,9 +813,17 @@ def main():
                          "single file holding all models under per_model -- pass a distinct "
                          "path for a partial/scratch run so it can't clobber the tracked "
                          "artifact of a completed one.")
+    ap.add_argument("--detectors", action="store_true",
+                    help="F4 (decision 2026-08-28): run the n-gram coverage / tabular "
+                         "memorization / guided prompting / blind-baseline arm. Off by "
+                         "default for the gating run -- it's structurally inert on "
+                         "TrialBench alone (single-class pre/post-cutoff label). Only pass "
+                         "this against a pooled TrialBench+P14 sample, run as a separate "
+                         "experiment; see docs/t28a_fixes_before_full_run.md F4.")
     args = ap.parse_args()
     run(data_root=args.data_root, results_dir=args.results_dir, n_trials=args.n_trials,
-        models=args.models, seed=args.seed, region=args.region, out_path=args.out_path)
+        models=args.models, seed=args.seed, region=args.region, out_path=args.out_path,
+        run_detectors=args.detectors)
 
 
 if __name__ == "__main__":

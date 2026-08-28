@@ -72,6 +72,9 @@ def _fake_aact_loader(all_old_dates: bool):
 
 
 def test_artifact_shape_and_auroc_not_computable_with_single_class():
+    """--detectors=True (opt in): exercises the detector arm itself. The
+    default (off) path is covered separately by
+    test_detector_arm_off_by_default_records_a_reason."""
     with tempfile.TemporaryDirectory() as data_root, tempfile.TemporaryDirectory() as results_dir:
         _write_task(data_root, "mortality-event-prediction", "Phase1", n_train=20, n_test=10)
         _write_task(data_root, "serious-adverse-event-forecasting", "Phase2", n_train=20, n_test=10)
@@ -81,7 +84,7 @@ def test_artifact_shape_and_auroc_not_computable_with_single_class():
         artifact = run(
             data_root=data_root, results_dir=results_dir, n_trials=6, models=[MODEL], seed=42,
             boto_client=fake_client, aact_loader=_fake_aact_loader(all_old_dates=True),
-            out_path=out_path,
+            out_path=out_path, run_detectors=True,
         )
 
         assert artifact["test_id"] == "T28a"
@@ -112,7 +115,37 @@ def test_artifact_shape_and_auroc_not_computable_with_single_class():
         assert m["meter"]["calls"] == fake_client.calls
 
         assert m["branch"] in ("SHRINK_TO_UNRECOGNIZED_STRATUM", "STRATIFY", "PROCEED_AS_DESIGNED")
+        assert m["detector_arm_status"] == "computed"
         print("shape + not-computable OK:", m["branch"], m["meter"]["dollars_realized"])
+
+
+def test_detector_arm_off_by_default_records_a_reason():
+    """F4 (2026-08-28 decision): the detector arm is off by default for the
+    gating run. Its aggregate fields must be None with an explicit reason
+    recorded, not silently absent or a bare None a reader could mistake for
+    "ran, found nothing"."""
+    with tempfile.TemporaryDirectory() as data_root, tempfile.TemporaryDirectory() as results_dir:
+        _write_task(data_root, "mortality-event-prediction", "Phase1", n_train=20, n_test=10)
+
+        fake_client = _FakeConverseClient()
+        out_path = os.path.join(results_dir, "t28a_probe_gate.json")
+        artifact = run(
+            data_root=data_root, results_dir=results_dir, n_trials=6, models=[MODEL], seed=42,
+            boto_client=fake_client, aact_loader=_fake_aact_loader(all_old_dates=False),
+            out_path=out_path,
+        )
+        m = artifact["per_model"][MODEL]
+        assert m["detector_aurocs"] is None
+        assert m["blind_baseline_auroc"] is None
+        assert m["recognition_uninformative"] is None
+        assert m["cross_instrument_agreement"] is None
+        assert m["detector_arm_status"].startswith("disabled (--detectors not passed):")
+        assert "docs/t28a_fixes_before_full_run.md" in m["detector_arm_status"]
+        # The recall probes still ran -- dropping the detector arm must not
+        # silently drop the two probes the gating decision actually needs.
+        assert m["title_recall_rate"] is not None
+        assert artifact["inputs"]["detector_arm_decision"]["this_run_used_detectors"] is False
+        print("detector-arm-off-by-default OK:", m["detector_arm_status"][:60] + "...")
 
 
 def test_auroc_computable_with_mixed_classes():
@@ -124,7 +157,7 @@ def test_auroc_computable_with_mixed_classes():
         artifact = run(
             data_root=data_root, results_dir=results_dir, n_trials=8, models=[MODEL], seed=42,
             boto_client=fake_client, aact_loader=_fake_aact_loader(all_old_dates=False),
-            out_path=out_path,
+            out_path=out_path, run_detectors=True,
         )
         m = artifact["per_model"][MODEL]
         assert m["cutoff_note"] is None, m["cutoff_note"]  # nova-lite has a real cutoff
@@ -210,6 +243,7 @@ def test_per_task_outcome_discrimination_base_rate_invariant():
 
 if __name__ == "__main__":
     test_artifact_shape_and_auroc_not_computable_with_single_class()
+    test_detector_arm_off_by_default_records_a_reason()
     test_auroc_computable_with_mixed_classes()
     test_decide_branch_null_input_is_negative()
     test_decide_branch_title_recall_significant_shrinks_or_stratifies()

@@ -113,17 +113,58 @@ Confirmed offline against the pinned AACT snapshot: at both n=40 and n=200,
 registration dates span 2003–2021 and all 200 trials are pre-cutoff for all
 five models.
 
-Two options, and the choice is a real one:
+**Decision (2026-08-28): drop the arm for the five-model gating run, behind a
+flag, and treat the pooled-slice version as a separate experiment.**
 
-- **(a) Make it computable.** Pool TrialBench trials (pre-cutoff) with P14's
-  fully post-cutoff slice (105 trials) to get a two-class label. Both sides
-  are already built. This also makes the blind baseline run, which is the
-  temporal-drift trap the plan built it to catch.
-- **(b) Drop it.** Keep only the two recall probes. That cuts the battery
-  from 9 calls per trial to 2, roughly a 78% cost reduction.
+Rationale, strongest first:
 
-Do not leave it as-is emitting nulls that read as absent evidence rather than
-as an uncomputable statistic.
+1. **An unvalidated detector score is uninterpretable in both directions.** A
+   high n-gram coverage score means either the model memorized the trial or
+   the model is good at continuing clinical boilerplate. The pre/post-cutoff
+   AUROC was the only thing separating those readings. Without it an elevated
+   score is not weak evidence, it is no evidence — and it will sit in the
+   artifact inviting interpretation anyway.
+2. **The gate is a spend decision on T28, and only the recall probes bear on
+   it.** `title_recall_hit` needs no cutoff label, has no predictive route,
+   and already carried the entire finding for nova-lite and deepseek.
+3. **The pooled-slice version would come back `recognition_uninformative`
+   today.** `blind_baseline_auroc` reads `enrollment`, `phase`, and
+   `sponsors/lead_sponsor/agency_class`. Per `docs/p14_4_schema_slice.md`,
+   `phase` is 0.0% missing in TrialBench train and **78.1%** missing in the
+   fresh slice (the general AACT population is 63% non-interventional). The
+   blind baseline would separate the classes trivially, on schema
+   reconstruction rather than temporal drift, and would correctly void the
+   run.
+4. **The tabular memorization suite is the most confounded of the three and is
+   4 of the 9 calls.** Header/row/feature completion read the column set
+   directly; with `phase` at 78.1% missing, `responsible_party` at 100%, and
+   `icdcode` at 51% reconstructed, row completion differs between the classes
+   for purely structural reasons.
+
+**Implementation for tomorrow:**
+
+- [ ] Flag-gate the arm (`--detectors`, default off). Do not delete the code.
+- [ ] Emit a **reason string**, never bare `None` — the artifact must
+      distinguish "ran, found nothing" from "could not run." This is F3's
+      tri-state fix generalised, and it is the part that matters:
+      `"not_computed: pre/post-cutoff label is single-class on TrialBench
+      (every trial pre-dates every ladder cutoff)"`.
+- [ ] Record the decision and this rationale in the artifact's `inputs`.
+
+**If the pooled-slice version is built later**, it needs three things beyond
+what exists, and one scope cut:
+
+- the two `docs/p14_4_schema_slice.md` follow-ups: phase-filter the slice, and
+  extract AACT's `responsible_parties` table
+- a blind baseline expanded to include **missingness-pattern** features, so it
+  can catch schema-driven discrimination and not only
+  enrollment/phase/sponsor
+- per-model post-cutoff class from P14.5 slice (b): Opus 208, Haiku 105,
+  DeepSeek 208, Llama 467, Nova 367 — workable for AUROC on a large effect
+- **run only n-gram coverage and guided prompting.** Both read
+  `brief_summary/textblock`, which reconstructs directly from AACT's
+  `brief_summaries.description`. Drop the tabular suite rather than porting
+  it; its confound is structural and no control fixes it.
 
 ### F5 — the artifact overwrites
 
@@ -220,7 +261,11 @@ in single digits.
 
 Expected cost: under $5 for all five including the nova/deepseek re-bill,
 based on $0.37 realized for the two cheapest rungs and the §7 price ladder.
-`price_verified: false` on every model, so treat that as an estimate.
+`price_verified: false` on every model, so treat that as an estimate. That
+$0.37 was under the old 9-calls/trial battery; with the detector arm off by
+default (F4, no `--detectors` flag above), the real invocation is ~2
+calls/trial, so actual cost should land well under this estimate, not
+just under it.
 
 ---
 

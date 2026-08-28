@@ -1,9 +1,14 @@
 # T28a F4 — detector-AUROC arm: pool with P14, or drop it
 
-Open decision, flagged for team discussion 2026-08-28. Not yet resolved;
-F1/F2/F3/F5/F6 do not depend on it and are landing separately. See
-`docs/t28a_fixes_before_full_run.md` F4 for the original writeup this
-summarizes.
+**Resolved 2026-08-28: option (b), drop it for the gating run.** The team's
+decision and full rationale (four reasons, strongest first) are recorded in
+`docs/t28a_fixes_before_full_run.md` F4, not duplicated here. Implemented:
+the detector arm is flag-gated behind `--detectors` (default off) in
+`experiments/t28a_contamination_probes.py`; the pooled TrialBench+P14
+version is a separate experiment, not built as part of this pass.
+
+This document is kept as a record of the two options as originally framed,
+below, for anyone who lands on this file first.
 
 ## The problem
 
