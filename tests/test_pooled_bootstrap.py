@@ -14,7 +14,11 @@ import numpy as np
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from src.eval.pooled_bootstrap import two_sample_cluster_bootstrap  # noqa: E402
+from src.eval.pooled_bootstrap import (  # noqa: E402
+    diff_in_diff_bootstrap,
+    one_sample_cluster_bootstrap,
+    two_sample_cluster_bootstrap,
+)
 
 
 def _synthetic_arm(n, discriminates, seed):
@@ -68,8 +72,68 @@ def test_single_class_draws_are_skipped_not_fabricated():
     print("single-class-skip OK:", r["n_resamples_used"], "/", r["n_resamples_requested"])
 
 
+def _synthetic_arm_pair(n, method_good, ref_good, seed):
+    """One arm, two scorers (method + ref) on the SAME rows -- the shape
+    diff_in_diff_bootstrap actually needs (unlike two_sample_cluster_bootstrap's
+    two independent arms)."""
+    rng = np.random.default_rng(seed)
+    y = rng.integers(0, 2, n)
+    def score(good):
+        return np.clip(y * 0.5 + rng.normal(0, 0.15, n) + (0.25 if good else 0.0), 0, 1)
+    nct_id = np.array([f"N{seed}_{i:04d}" for i in range(n)])
+    return nct_id, y, score(method_good), score(ref_good)
+
+
+def test_diff_in_diff_detects_when_method_drops_more_than_reference():
+    """docs/t28b_reanalysis_plan.md R2: testing each arm's drop for
+    significance separately cannot tell you whether the two drops differ
+    from each other (Gelman-Stern). diff_in_diff_bootstrap must actually
+    answer that question directly."""
+    nct_a, y_a, method_a, ref_a = _synthetic_arm_pair(250, method_good=True, ref_good=True, seed=1)
+    nct_b, y_b, method_b, ref_b = _synthetic_arm_pair(250, method_good=False, ref_good=True, seed=2)
+    r = diff_in_diff_bootstrap(nct_a, y_a, method_a, ref_a, nct_b, y_b, method_b, ref_b,
+                               metric="balanced_accuracy", n_resamples=500, seed=1)
+    assert r["lo"] > 0, r  # method's drop significantly exceeds the reference's
+    assert r["mean_delta_method"] > r["mean_delta_ref"]
+    print("diff-in-diff real-difference OK:", r["mean_diff"], "CI=[", r["lo"], r["hi"], "]")
+
+
+def test_diff_in_diff_null_when_both_drop_comparably():
+    """The actual motivating failure mode: both a real method and a
+    reference dropping by a similar amount must NOT read as
+    'method-specific recall' just because the method's own drop happened
+    to individually clear a significance threshold."""
+    nct_a, y_a, method_a, ref_a = _synthetic_arm_pair(250, method_good=True, ref_good=True, seed=3)
+    nct_b, y_b, method_b, ref_b = _synthetic_arm_pair(250, method_good=False, ref_good=False, seed=4)
+    r = diff_in_diff_bootstrap(nct_a, y_a, method_a, ref_a, nct_b, y_b, method_b, ref_b,
+                               metric="balanced_accuracy", n_resamples=500, seed=1)
+    assert r["lo"] <= 0 <= r["hi"], r
+    print("diff-in-diff null-when-comparable OK:", r["mean_diff"], "CI=[", r["lo"], r["hi"], "]")
+
+
+def test_diff_in_diff_reports_observed_not_assumed_correlation():
+    nct_a, y_a, method_a, ref_a = _synthetic_arm_pair(250, method_good=True, ref_good=True, seed=5)
+    nct_b, y_b, method_b, ref_b = _synthetic_arm_pair(250, method_good=True, ref_good=True, seed=6)
+    r = diff_in_diff_bootstrap(nct_a, y_a, method_a, ref_a, nct_b, y_b, method_b, ref_b,
+                               metric="balanced_accuracy", n_resamples=300, seed=1)
+    assert r["rho"] is not None and -1.0 <= r["rho"] <= 1.0
+    print("diff-in-diff rho OK:", r["rho"])
+
+
+def test_one_sample_cluster_bootstrap_ci_contains_point_estimate():
+    nct_id, y, proba = _synthetic_arm(250, discriminates=True, seed=7)
+    r = one_sample_cluster_bootstrap(nct_id, y, proba, metric="balanced_accuracy", n_resamples=500, seed=1)
+    assert r["lo"] <= r["point"] <= r["hi"], r
+    assert r["n_rows"] == 250 and r["n_clusters"] == 250
+    print("one-sample CI OK:", r["point"], "CI=[", r["lo"], r["hi"], "]")
+
+
 if __name__ == "__main__":
     test_detects_real_gap_between_independent_arms()
     test_no_gap_when_arms_are_equally_uninformative()
     test_single_class_draws_are_skipped_not_fabricated()
+    test_diff_in_diff_detects_when_method_drops_more_than_reference()
+    test_diff_in_diff_null_when_both_drop_comparably()
+    test_diff_in_diff_reports_observed_not_assumed_correlation()
+    test_one_sample_cluster_bootstrap_ci_contains_point_estimate()
     print("pooled_bootstrap tests passed")

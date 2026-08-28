@@ -202,3 +202,110 @@ def two_sample_cluster_bootstrap(nct_id_x, y_true_x, proba_x, nct_id_y, y_true_y
         "n_rows_x": int(len(y_true_x)), "n_rows_y": int(len(y_true_y)),
         "n_clusters_x": int(len(np.unique(nct_id_x))), "n_clusters_y": int(len(np.unique(nct_id_y))),
     }
+
+
+def one_sample_cluster_bootstrap(nct_id, y_true, proba, metric: str = "balanced_accuracy",
+                                 n_resamples: int = 1000, ci: float = 0.95, seed: int = 0) -> dict:
+    """A CI on a single arm's own metric -- e.g. one endpoint's balanced
+    accuracy at its own n, for comparing a point estimate (T28a's per-task
+    figures) against a later run's interval rather than just its mean.
+    Not a contrast between two arms or two methods; just this one score,
+    cluster-bootstrapped over ``nct_id``."""
+    nct_id = np.asarray(nct_id)
+    y_true = np.asarray(y_true)
+    proba = np.asarray(proba, dtype=float)
+    if not (len(nct_id) == len(y_true) == len(proba)):
+        raise ValueError(f"length mismatch: nct_id={len(nct_id)}, y_true={len(y_true)}, proba={len(proba)}")
+    fn = _METRIC_FNS[metric]
+    vals = []
+    for idx in cluster_bootstrap_indices(nct_id, n_resamples, seed=seed):
+        yt = y_true[idx]
+        if len(np.unique(yt)) < 2:
+            continue
+        vals.append(fn(yt, proba[idx]))
+    vals_arr = np.asarray(vals, dtype=float)
+    lo_q, hi_q = (1 - ci) / 2 * 100, (1 + ci) / 2 * 100
+    has = len(vals_arr) > 0
+    point = float(fn(y_true, proba)) if len(np.unique(y_true)) >= 2 else float("nan")
+    return {
+        "point": point,
+        "mean": float(np.mean(vals_arr)) if has else float("nan"),
+        "lo": float(np.percentile(vals_arr, lo_q)) if has else float("nan"),
+        "hi": float(np.percentile(vals_arr, hi_q)) if has else float("nan"),
+        "std": float(np.std(vals_arr)) if has else float("nan"),
+        "n_resamples_used": int(len(vals_arr)), "n_resamples_requested": n_resamples,
+        "n_rows": int(len(y_true)), "n_clusters": int(len(np.unique(nct_id))),
+    }
+
+
+def diff_in_diff_bootstrap(nct_id_a, y_true_a, proba_method_a, proba_ref_a,
+                           nct_id_b, y_true_b, proba_method_b, proba_ref_b,
+                           metric: str = "balanced_accuracy", n_resamples: int = 1000,
+                           ci: float = 0.95, seed: int = 0) -> dict:
+    """Whether METHOD's own A-vs-B drop differs from REF's own A-vs-B drop --
+    the actual claim a "recall demonstrated" verdict needs, and the one
+    thing testing each drop's significance *separately*
+    (``two_sample_cluster_bootstrap`` run twice, once per method) cannot
+    answer: two independently-significant deltas do not imply the deltas
+    differ from each other, and two individually-insignificant deltas do
+    not imply they don't (the Gelman-Stern "difference between significant
+    and not significant is not itself significant" fallacy).
+
+    method and ref are scored on the IDENTICAL rows within each arm (both
+    read the same sampled trials), so this shares one resampled index per
+    arm between them on every draw -- ``idx_a`` drawn once from arm A's
+    nct_ids, ``idx_b`` once from arm B's, and METHOD/REF are both scored on
+    that same draw. The empirical joint distribution of
+    (Delta_method, Delta_ref) this produces already reflects however
+    correlated the two methods' errors actually are; nothing needs to be
+    assumed or estimated separately (contrast the hand-computed
+    "assume rho, propagate the SE" approach in
+    ``docs/t28b_reanalysis_plan.md`` R2, which needed a guess rho couldn't
+    supply -- this function does not need one).
+
+    Returns ``{mean_delta_method, mean_delta_ref, mean_diff, lo, hi, std,
+    rho, n_resamples_used, n_resamples_requested}``. ``diff`` =
+    Delta_method - Delta_ref; a CI excluding 0 is the actual "recall
+    demonstrated" criterion. ``rho`` is the observed (not assumed)
+    correlation between the two delta series across resamples, reported
+    for transparency.
+    """
+    nct_id_a, nct_id_b = np.asarray(nct_id_a), np.asarray(nct_id_b)
+    y_true_a, y_true_b = np.asarray(y_true_a), np.asarray(y_true_b)
+    proba_method_a, proba_ref_a = np.asarray(proba_method_a, dtype=float), np.asarray(proba_ref_a, dtype=float)
+    proba_method_b, proba_ref_b = np.asarray(proba_method_b, dtype=float), np.asarray(proba_ref_b, dtype=float)
+    fn = _METRIC_FNS[metric]
+
+    a_gen = cluster_bootstrap_indices(nct_id_a, n_resamples, seed=seed)
+    b_gen = cluster_bootstrap_indices(nct_id_b, n_resamples, seed=seed + 1)
+    method_deltas, ref_deltas, diffs = [], [], []
+    for idx_a, idx_b in zip(a_gen, b_gen):
+        yt_a, yt_b = y_true_a[idx_a], y_true_b[idx_b]
+        if len(np.unique(yt_a)) < 2 or len(np.unique(yt_b)) < 2:
+            continue
+        method_a_val = fn(yt_a, proba_method_a[idx_a])
+        method_b_val = fn(yt_b, proba_method_b[idx_b])
+        ref_a_val = fn(yt_a, proba_ref_a[idx_a])
+        ref_b_val = fn(yt_b, proba_ref_b[idx_b])
+        d_method = method_a_val - method_b_val
+        d_ref = ref_a_val - ref_b_val
+        method_deltas.append(d_method)
+        ref_deltas.append(d_ref)
+        diffs.append(d_method - d_ref)
+
+    method_arr, ref_arr, diffs_arr = (np.asarray(method_deltas, dtype=float),
+                                      np.asarray(ref_deltas, dtype=float), np.asarray(diffs, dtype=float))
+    lo_q, hi_q = (1 - ci) / 2 * 100, (1 + ci) / 2 * 100
+    has = len(diffs_arr) > 0
+    rho = (float(np.corrcoef(method_arr, ref_arr)[0, 1])
+          if has and len(method_arr) > 1 and np.std(method_arr) > 0 and np.std(ref_arr) > 0 else None)
+    return {
+        "mean_delta_method": float(np.mean(method_arr)) if has else float("nan"),
+        "mean_delta_ref": float(np.mean(ref_arr)) if has else float("nan"),
+        "mean_diff": float(np.mean(diffs_arr)) if has else float("nan"),
+        "lo": float(np.percentile(diffs_arr, lo_q)) if has else float("nan"),
+        "hi": float(np.percentile(diffs_arr, hi_q)) if has else float("nan"),
+        "std": float(np.std(diffs_arr)) if has else float("nan"),
+        "rho": rho,
+        "n_resamples_used": int(len(diffs_arr)), "n_resamples_requested": n_resamples,
+    }
