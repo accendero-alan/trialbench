@@ -1,0 +1,202 @@
+{
+  "test_id": "T28b",
+  "claim_at_stake": "whether Opus 4.5's T28a predictive signal on TrialBench (mortality, SAE) survives removal of outcome knowledge, holding trial identity knowledge constant -- recall vs genuine reading",
+  "inputs": {
+    "model_key": "anthropic.claude-opus-4-5",
+    "api_model_id": "us.anthropic.claude-opus-4-5-20251101-v1:0",
+    "cutoff": "2025-03",
+    "n_arm_a": 6,
+    "n_arm_b": 6,
+    "n_swap_requested": 2,
+    "seed": 42,
+    "data_root": "data",
+    "r1_text_cols": [
+      "condition",
+      "brief_summary/textblock",
+      "eligibility/criteria/textblock"
+    ],
+    "r2_text_cols": [
+      "condition"
+    ],
+    "n_resamples": 1000
+  },
+  "preflight": {
+    "text_identity": {
+      "n_checked": 50,
+      "n_identical": 47,
+      "example_mismatches": [
+        "NCT01248455",
+        "NCT00640159",
+        "NCT01844765"
+      ]
+    },
+    "n_and_label_balance": {
+      "arm_a": {
+        "n": 6,
+        "mortality_rate_yn": {
+          "n": 3,
+          "positive_rate": 0.3333333333333333
+        },
+        "serious_adverse_rate_yn": {
+          "n": 3,
+          "positive_rate": 0.6666666666666666
+        }
+      },
+      "arm_b": {
+        "n": 6,
+        "mortality_rate_yn": {
+          "n": 3,
+          "positive_rate": 0.3333333333333333
+        },
+        "serious_adverse_rate_yn": {
+          "n": 3,
+          "positive_rate": 0.3333333333333333
+        }
+      },
+      "arm_c": {
+        "n": 4,
+        "mortality_rate_yn": {
+          "n": 2,
+          "positive_rate": 0.0
+        },
+        "serious_adverse_rate_yn": {
+          "n": 2,
+          "positive_rate": 0.0
+        }
+      }
+    },
+    "covariates": {
+      "arm_a": {
+        "summary_token_len_median": 113.0,
+        "phase_distribution": {
+          "Phase2": 0.5,
+          "Phase3": 0.333,
+          "Phase1": 0.167
+        },
+        "enrollment_median": 124.5
+      },
+      "arm_b": {
+        "summary_token_len_median": 75.0,
+        "phase_distribution": {
+          "PHASE3": 0.5,
+          "PHASE1/PHASE2": 0.25,
+          "PHASE2": 0.25
+        },
+        "enrollment_median": 123.0
+      },
+      "arm_c": {
+        "summary_token_len_median": 155.5,
+        "phase_distribution": {
+          "PHASE1": 1.0
+        },
+        "enrollment_median": 69.0
+      }
+    },
+    "power": {
+      "detectable_drop_frac_relabelled": 0.02,
+      "n_arm_a": 6,
+      "n_arm_b": 6
+    },
+    "slice_sizes": {
+      "a": 9046,
+      "b": 208
+    }
+  },
+  "n_sampled": {
+    "arm_a": 6,
+    "arm_b": 6,
+    "arm_c": 4,
+    "swap": 2
+  },
+  "primary_a_vs_b": {
+    "opus": {
+      "mean_x": 0.5,
+      "mean_y": 0.5,
+      "mean_delta": 0.0,
+      "lo": 0.0,
+      "hi": 0.0,
+      "std": 0.0,
+      "n_resamples_used": 889,
+      "n_resamples_requested": 1000,
+      "n_rows_x": 6,
+      "n_rows_y": 6,
+      "n_clusters_x": 6,
+      "n_clusters_y": 6
+    },
+    "reference": {
+      "mean_x": 0.4917510311211099,
+      "mean_y": 0.6195725534308211,
+      "mean_delta": -0.1278215223097113,
+      "lo": -0.7066666666666664,
+      "hi": 0.49333333333333174,
+      "std": 0.3054011008701191,
+      "n_resamples_used": 889,
+      "n_resamples_requested": 1000,
+      "n_rows_x": 6,
+      "n_rows_y": 6,
+      "n_clusters_x": 6,
+      "n_clusters_y": 6
+    }
+  },
+  "secondary_a_vs_c": {
+    "opus": {
+      "mean_x": NaN,
+      "mean_y": NaN,
+      "mean_delta": NaN,
+      "lo": NaN,
+      "hi": NaN,
+      "std": NaN,
+      "n_resamples_used": 0,
+      "n_resamples_requested": 1000,
+      "n_rows_x": 6,
+      "n_rows_y": 4,
+      "n_clusters_x": 6,
+      "n_clusters_y": 4
+    },
+    "reference": {
+      "mean_x": NaN,
+      "mean_y": NaN,
+      "mean_delta": NaN,
+      "lo": NaN,
+      "hi": NaN,
+      "std": NaN,
+      "n_resamples_used": 0,
+      "n_resamples_requested": 1000,
+      "n_rows_x": 6,
+      "n_rows_y": 4,
+      "n_clusters_x": 6,
+      "n_clusters_y": 4
+    }
+  },
+  "disease_swap": {
+    "n": 2,
+    "opus_insensitivity_rate": 0.5,
+    "reference_insensitivity_rate": 0.0,
+    "quarantine_ordering": true,
+    "note": "T22 came back INCONCLUSIVE on disease share, so low sensitivity is not recall on its own -- only interpretable against the reference's sensitivity on the same rows (docs/t28b_opus_recall_spec.md)."
+  },
+  "branch": "NO_OUTCOME_RECALL_DETECTED",
+  "branch_reason": "Neither drops (Opus CI=[0.000, 0.000], reference CI=[-0.707, 0.493]) -- Opus's signal is reading, not recall. T28 proceeds with Opus as rung 1 as designed.",
+  "meter": {
+    "calls": 18,
+    "cache_hits": 0,
+    "cache_hit_rate": 0.0,
+    "input_tokens": 24687,
+    "output_tokens": 162,
+    "wall_clock_secs": 32.22,
+    "throttle_count": 0,
+    "service_tier": "sync",
+    "tokens_by_tier": {
+      "sync": {
+        "input_tokens": 24687,
+        "output_tokens": 162
+      }
+    },
+    "mixed_tier": false,
+    "dollars_realized": 0.127485,
+    "dollars_normalized": 0.127485,
+    "routing_fee_usd": 0.0
+  },
+  "git_sha": "c9e5fe2ba2422c1bfe79d530ff368559c51cdd05",
+  "wall_clock_secs": 178.6
+}
