@@ -402,12 +402,65 @@ def outcome_recall_probe(client, results_dir, model_id, task, trial_text, true_l
     return {"raw_response": text, "parsed_answer": answer, "hit": hit}
 
 
-def title_recall_hit(client, results_dir, model_id, nct_id, true_title, meter):
+def title_recall_probe(client, results_dir, model_id, nct_id, true_title, meter):
+    """NCT ID alone -> official title. Returns the raw response and whether
+    it hits the trial's OWN true title (>0.5 token overlap). The raw
+    response is kept (mirroring F7) so title_recall_shuffled_control() can
+    reuse it against a DIFFERENT trial's title with no extra model calls --
+    the LLM_CONTAMINATION_PLAN.md §4 shuffled-ID control, which a raw hit
+    count can't substitute for: the token-overlap threshold can fire on
+    templated trial-title boilerplate ("A Study of X in Patients With Y")
+    with no recall involved, and a hit count alone can't tell that apart
+    from real recall."""
     if not true_title or not str(true_title).strip():
-        return None
+        return {"raw_response": None, "hit": None}
     prompt = f"What is the official title of the ClinicalTrials.gov trial {nct_id}? State only the title."
     text = _converse_cached(client, results_dir, model_id, prompt, meter, max_tokens=60)
-    return _token_overlap(text, true_title) > 0.5
+    return {"raw_response": text, "hit": _token_overlap(text, true_title) > 0.5}
+
+
+def title_recall_shuffled_control(per_trial_scores, seed):
+    """LLM_CONTAMINATION_PLAN.md §4's shuffled-ID control, applied to title
+    recall: does a model's guessed title for trial A also happen to "hit"
+    (>0.5 token overlap) trial B's REAL title, for B != A? Reuses the
+    already-generated guesses, no extra calls. Establishes the token-
+    overlap metric's own false-positive floor from generic/templated title
+    phrasing, which title_recall_hit's raw hit count cannot distinguish
+    from real recall on its own -- e.g. a single real-ID hit at n=200 is
+    inside this floor, not evidence of anything, if the shuffled rate is
+    comparable.
+
+    A fixed derangement (every trial compared against a different one, no
+    trial compared against itself) built from `seed` so results are
+    reproducible against the cache. Returns None fields, not a fabricated
+    p-value, when there's too little data (n<2) to shuffle meaningfully."""
+    rows = [t for t in per_trial_scores if t.get("title_raw_response") and t.get("title_true")]
+    n = len(rows)
+    if n < 2:
+        return {"n": n, "real_hits": None, "real_rate": None,
+                "shuffled_hits": None, "shuffled_rate": None, "fisher_p_real_vs_shuffled": None}
+
+    rng = np.random.default_rng(seed)
+    perm = rng.permutation(n)
+    tries = 0
+    while np.any(perm == np.arange(n)) and tries < 100:
+        perm = rng.permutation(n)
+        tries += 1
+
+    true_titles = [r["title_true"] for r in rows]
+    real_hits = [bool(r["title_recall_hit"]) for r in rows]
+    shuffled_hits = [
+        _token_overlap(rows[i]["title_raw_response"], true_titles[perm[i]]) > 0.5
+        for i in range(n)
+    ]
+    table = [[sum(real_hits), n - sum(real_hits)], [sum(shuffled_hits), n - sum(shuffled_hits)]]
+    _, fisher_p = fisher_exact(table)
+    return {
+        "n": n,
+        "real_hits": int(sum(real_hits)), "real_rate": float(np.mean(real_hits)),
+        "shuffled_hits": int(sum(shuffled_hits)), "shuffled_rate": float(np.mean(shuffled_hits)),
+        "fisher_p_real_vs_shuffled": float(fisher_p),
+    }
 
 
 # ----------------------------------------------------------------------------
@@ -493,42 +546,60 @@ def per_task_outcome_discrimination(per_trial_scores):
 # outcome_recall_hit (which a model can satisfy by prediction as much as by
 # recall -- deepseek/mortality in the two-model pilot is exactly this case).
 # ----------------------------------------------------------------------------
-def _decide_branch(title_hits, title_n, title_recall_rate, outcome_recall_rate,
-                    outcome_significant_tasks):
+def _decide_branch(title_control, title_recall_rate, outcome_recall_rate,
+                    outcome_significant_tasks, alpha_title_corrected=FAMILY_ALPHA):
     """title_recall_hit has no predictive route: nothing about a trial's
     clinical content lets you infer its registered title from an opaque
     NCT ID alone (same logic as LLM_CONTAMINATION_PLAN.md E1's ID-only
-    design). So "title recall significantly above zero" is tested as a
-    literal point-null test (H0: p=0) -- if p really were exactly 0, a hit
-    would be impossible with certainty, so any confirmed hit (Clopper-
-    Pearson lower bound > 0, i.e. hits >= 1) is exact evidence p > 0, not
-    an approximation. The CI is still carried on every result (F9) so a
-    reviewer can see how thin that evidence is when n is small: a single
-    hit at n=200 has a lower bound near 0.0003, which is real evidence of
-    *something* but not the same weight as a high rate.
+    design). But a raw hit count can't be read against a literal zero,
+    because the >0.5 token-overlap threshold has its own nonzero false-
+    positive rate against templated trial-title boilerplate ("A Study of X
+    in Patients With Y") -- a metric-soundness problem a count-based floor
+    (e.g. "require >=2 hits") does not fix, it just moves the same
+    unvalidated threshold. Amendment 2026-08-28 (see
+    docs/t28a_fixes_before_full_run.md): title recall is tested against
+    its own shuffled-ID control instead (LLM_CONTAMINATION_PLAN.md §4) --
+    does the SAME guessed title also "hit" (>0.5 overlap) a DIFFERENT
+    trial's true title, at a rate the real-ID hit rate must significantly
+    exceed (Fisher exact, one model-level test per model, Bonferroni-
+    corrected across models by the caller). A single real hit that's
+    indistinguishable from the shuffled floor is not "significantly above
+    zero" -- it's inside the metric's own noise, not evidence.
 
     Three outcomes, matching F1:
-      - title recall significant -> recall demonstrated -> SHRINK/STRATIFY
-        per the existing pre-registered thresholds.
-      - title recall null, outcome discrimination significant on >=1 task
-        (Bonferroni-corrected, caller's job) -> predictive signal, not
-        recall -> PROCEED_AS_DESIGNED, effect size recorded in the reason.
+      - title recall beats its shuffled-ID floor -> recall demonstrated ->
+        SHRINK/STRATIFY per the existing pre-registered thresholds.
+      - title recall doesn't beat the floor (or isn't computable), outcome
+        discrimination significant on >=1 task (Bonferroni-corrected,
+        caller's job) -> predictive signal, not recall -> PROCEED_AS_DESIGNED,
+        effect size recorded in the reason.
       - neither -> no signal -> PROCEED_AS_DESIGNED.
     """
-    title_lower, _ = _clopper_pearson_ci(title_hits or 0, title_n or 0)
-    title_significant = bool(title_n) and bool(title_hits) and title_lower is not None and title_lower > 0.0
+    fisher_p = title_control.get("fisher_p_real_vs_shuffled")
+    real_rate = title_control.get("real_rate")
+    shuffled_rate = title_control.get("shuffled_rate")
+    title_significant = (
+        fisher_p is not None and fisher_p < alpha_title_corrected
+        and real_rate is not None and shuffled_rate is not None and real_rate > shuffled_rate
+    )
+
+    def _title_desc():
+        if fisher_p is None:
+            return f"title recall not computable (n={title_control.get('n', 0)}, too little data to shuffle)"
+        return (f"title recall real-ID rate {real_rate:.4f} vs. shuffled-ID control "
+                f"{shuffled_rate:.4f} (Fisher exact p={fisher_p:.4g} vs. "
+                f"alpha_corrected={alpha_title_corrected:.4g})")
 
     if title_significant:
         if outcome_recall_rate is not None and outcome_recall_rate > OUTCOME_RECALL_SHRINK_THRESHOLD:
             return ("SHRINK_TO_UNRECOGNIZED_STRATUM",
-                    f"title recall demonstrated ({title_hits}/{title_n} hits, 95% CI lower bound "
-                    f"{title_lower:.4f} > 0) and outcome_recall_rate {outcome_recall_rate:.3f} > "
+                    f"title recall demonstrated ({_title_desc()}, beats its own shuffled-ID "
+                    f"floor) and outcome_recall_rate {outcome_recall_rate:.3f} > "
                     f"{OUTCOME_RECALL_SHRINK_THRESHOLD} baseline -- shrink to the unrecognized "
                     "stratum, primary role hands to T29")
         return ("STRATIFY",
-                f"title recall demonstrated ({title_hits}/{title_n} hits, 95% CI lower bound "
-                f"{title_lower:.4f} > 0) -- recall shown regardless of outcome_recall_rate, "
-                "stratify and report both strata")
+                f"title recall demonstrated ({_title_desc()}, beats its own shuffled-ID floor) "
+                "-- recall shown regardless of outcome_recall_rate, stratify and report both strata")
 
     if outcome_significant_tasks:
         tasks_desc = "; ".join(
@@ -537,12 +608,12 @@ def _decide_branch(title_hits, title_n, title_recall_rate, outcome_recall_rate,
             for task, s in sorted(outcome_significant_tasks.items())
         )
         return ("PROCEED_AS_DESIGNED",
-                f"no title recall ({title_hits or 0}/{title_n or 0} hits) but predictive signal on "
+                f"{_title_desc()} (doesn't beat its shuffled-ID floor) but predictive signal on "
                 f"{len(outcome_significant_tasks)} task(s) surviving Bonferroni correction: "
                 f"{tasks_desc} -- proceed as designed, not read as contamination")
 
     return ("PROCEED_AS_DESIGNED",
-            f"no title recall ({title_hits or 0}/{title_n or 0} hits) and no task's outcome "
+            f"{_title_desc()} (doesn't beat its shuffled-ID floor) and no task's outcome "
             "discrimination clears the Bonferroni-corrected significance threshold vs. the 0.500 "
             "chance baseline -- no signal detected on either probe")
 
@@ -551,7 +622,8 @@ def _decide_branch(title_hits, title_n, title_recall_rate, outcome_recall_rate,
 # Per-model orchestration
 # ----------------------------------------------------------------------------
 def _run_one_model(client, results_dir, model_id, sample, columns, pre_cutoff_label, meter,
-                   alpha_corrected=FAMILY_ALPHA, run_detectors=False):
+                   alpha_corrected=FAMILY_ALPHA, alpha_title_corrected=FAMILY_ALPHA,
+                   run_detectors=False, seed=42):
     per_trial_scores = []
     for _, row in sample.iterrows():
         prefix, true_suffix = _split_prefix_suffix(row.get("brief_summary/textblock"))
@@ -569,8 +641,8 @@ def _run_one_model(client, results_dir, model_id, sample, columns, pre_cutoff_la
         rendered = render_arm(row, "L7", row["nct_id"])
         outcome_probe = outcome_recall_probe(client, results_dir, model_id, row["task"], rendered.text,
                                              row["y"], meter)
-        title_hit = title_recall_hit(client, results_dir, model_id, row["nct_id"],
-                                     row.get("brief_title"), meter)
+        title_probe = title_recall_probe(client, results_dir, model_id, row["nct_id"],
+                                         row.get("brief_title"), meter)
 
         per_trial_scores.append({
             "nct_id": row["nct_id"], "task": row["task"], "ngram_score": ngram,
@@ -579,7 +651,9 @@ def _run_one_model(client, results_dir, model_id, sample, columns, pre_cutoff_la
             "outcome_raw_response": outcome_probe["raw_response"],
             "outcome_parsed_answer": outcome_probe["parsed_answer"],
             "outcome_recall_hit": outcome_probe["hit"],
-            "title_recall_hit": title_hit,
+            "title_true": row.get("brief_title"),
+            "title_raw_response": title_probe["raw_response"],
+            "title_recall_hit": title_probe["hit"],
         })
 
     ngram_scores = [t["ngram_score"] for t in per_trial_scores]
@@ -621,6 +695,7 @@ def _run_one_model(client, results_dir, model_id, sample, columns, pre_cutoff_la
     title_recall_rate = float(np.mean(title_hits)) if title_hits else None
     title_hit_count = int(np.sum(title_hits)) if title_hits else 0
     title_recall_ci = _clopper_pearson_ci(title_hit_count, len(title_hits))
+    title_control = title_recall_shuffled_control(per_trial_scores, seed)
 
     per_task_outcome = per_task_outcome_discrimination(per_trial_scores)
     outcome_significant_tasks = {
@@ -629,8 +704,8 @@ def _run_one_model(client, results_dir, model_id, sample, columns, pre_cutoff_la
         and stats["balanced_accuracy"] is not None and stats["balanced_accuracy"] > 0.5
     }
     branch, branch_reason = _decide_branch(
-        title_hit_count, len(title_hits), title_recall_rate, outcome_recall_rate,
-        outcome_significant_tasks,
+        title_control, title_recall_rate, outcome_recall_rate,
+        outcome_significant_tasks, alpha_title_corrected=alpha_title_corrected,
     )
 
     # Cross-instrument agreement: pairwise Spearman correlation between the
@@ -666,6 +741,7 @@ def _run_one_model(client, results_dir, model_id, sample, columns, pre_cutoff_la
         ),
         "title_recall_rate": title_recall_rate,
         "title_recall_ci_95": {"lower": title_recall_ci[0], "upper": title_recall_ci[1]},
+        "title_recall_shuffled_control": title_control,
         "per_task_outcome_discrimination": per_task_outcome,
         "outcome_significant_tasks": list(outcome_significant_tasks),
         "detector_arm_status": detector_arm_status,
@@ -697,6 +773,9 @@ def run(data_root="data", results_dir="results", n_trials=40, models=None, seed=
         n_tasks = int(sample["task"].nunique())
         n_comparisons = max(1, len(models) * n_tasks)
         alpha_corrected = FAMILY_ALPHA / n_comparisons
+        # Amendment 2026-08-28: title recall's shuffled-ID test runs once per
+        # model (not per task), so its own family is just the model count.
+        alpha_title_corrected = FAMILY_ALPHA / max(1, len(models))
 
         per_model = {}
         for model_id in models:
@@ -721,7 +800,8 @@ def run(data_root="data", results_dir="results", n_trials=40, models=None, seed=
             meter = Meter()
             result = _run_one_model(client, results_dir, api_model_id, sample, columns,
                                     pre_cutoff_label, meter, alpha_corrected=alpha_corrected,
-                                    run_detectors=run_detectors)
+                                    alpha_title_corrected=alpha_title_corrected,
+                                    run_detectors=run_detectors, seed=seed)
             result["cutoff"] = cutoff
             result["cutoff_note"] = cutoff_note
             result["api_model_id"] = api_model_id
@@ -742,14 +822,16 @@ def run(data_root="data", results_dir="results", n_trials=40, models=None, seed=
             "title_recall_stratify_threshold": TITLE_RECALL_STRATIFY_THRESHOLD,
             "title_recall_stratify_threshold_note": (
                 "recorded for provenance, no longer gates STRATIFY directly since F1: "
-                "STRATIFY now fires whenever title recall is statistically significant "
-                "(any magnitude), not only above this raw-rate threshold."
+                "STRATIFY now fires when title recall's real-ID rate significantly beats its "
+                "own shuffled-ID control (any magnitude, amendment 2026-08-28), not when the "
+                "raw rate clears this fixed threshold."
             ),
             "blind_baseline_noise_band": BLIND_BASELINE_NOISE_BAND,
             "registration_date_source": "AACT snapshot (src/data/aact.py load_table('studies'))",
             "bonferroni_correction": {
                 "family_alpha": FAMILY_ALPHA, "n_models": len(models), "n_tasks": n_tasks,
                 "n_comparisons": n_comparisons, "alpha_corrected": alpha_corrected,
+                "title_recall_n_comparisons": len(models), "title_recall_alpha_corrected": alpha_title_corrected,
             },
             "run_detectors": run_detectors,
             "detector_arm_decision": {
@@ -767,11 +849,19 @@ def run(data_root="data", results_dir="results", n_trials=40, models=None, seed=
         "decision_rule": (
             "Per model, built on title_recall_hit as the discriminator (F1 -- it has no "
             "predictive route, unlike outcome_recall_hit, which a model can satisfy by "
-            "prediction as well as by recall): if title recall is significantly above zero "
-            "(Clopper-Pearson 95% CI lower bound > 0 vs. the 0.0 point-null baseline), recall "
-            "is demonstrated -> SHRINK_TO_UNRECOGNIZED_STRATUM if outcome_recall_rate > "
+            "prediction as well as by recall): title recall is tested against its own "
+            "shuffled-ID control (amendment 2026-08-28, LLM_CONTAMINATION_PLAN.md Sec4 -- "
+            "does the same guessed title also 'hit' >0.5 token overlap on a DIFFERENT trial's "
+            "true title, at a rate the real-ID rate must significantly beat, Fisher exact, "
+            "Bonferroni-corrected across models; alpha_corrected in "
+            "inputs.bonferroni_correction.title_recall_alpha_corrected). A raw hit count vs. a "
+            "literal-zero baseline was rejected: the >0.5 token-overlap threshold has a "
+            "nonzero false-positive rate against templated trial-title boilerplate, so a lone "
+            "hit is not distinguishable from that noise floor without the control. If title "
+            "recall beats the shuffled-ID floor, recall is demonstrated -> "
+            "SHRINK_TO_UNRECOGNIZED_STRATUM if outcome_recall_rate > "
             f"{OUTCOME_RECALL_SHRINK_THRESHOLD} (baseline: that raw rate), else STRATIFY. If "
-            "title recall is null: outcome discrimination is tested per task via balanced "
+            "title recall doesn't beat the floor: outcome discrimination is tested per task via balanced "
             "accuracy vs. the 0.500 chance baseline, significance by Fisher exact on that "
             "task's true-vs-predicted 2x2, Bonferroni-corrected across the full "
             "(models x tasks) family (alpha_corrected recorded in inputs.bonferroni_correction) "

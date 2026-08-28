@@ -242,6 +242,23 @@ Record the amendment dated, before the run, with the two-model numbers
 attached as the motivating evidence, and note that nova and deepseek were
 scored under both the original and corrected rules.
 
+**Landed 2026-08-28.** `wave2-start-plan.md` §6b and
+`disease-representation-test-plan.md`'s "Amendment, dated 2026-08-28"
+section (both one directory above this repo, not under git). Also folds in
+a fourth defect found while writing the amendment: title recall's raw hit
+count (0/200 nova, 1/200 deepseek) can't be read against a literal zero,
+because the >0.5 token-overlap threshold has its own false-positive rate
+against templated trial-title language -- a single hit at n=200 is
+indistinguishable from that noise on count alone, and a fixed minimum-count
+floor doesn't fix it, it just moves the same unvalidated threshold. Title
+recall is now tested against a shuffled-ID control instead
+(`LLM_CONTAMINATION_PLAN.md` §4, restoring prior art again) --
+`title_recall_shuffled_control()` in `t28a_contamination_probes.py`. This
+could not be re-scored on the two-model pilot (raw title-guess text wasn't
+retained; the response cache didn't survive the EC2 tarball), so the
+pilot's title-recall reading is recorded as undetermined under the
+corrected rule rather than forced to a verdict either way -- see §6b.3.
+
 ---
 
 ## Recommended invocation

@@ -20,6 +20,7 @@ from experiments.t28a_contamination_probes import (  # noqa: E402
     _decide_branch,
     per_task_outcome_discrimination,
     run,
+    title_recall_shuffled_control,
 )
 from tests.test_smoke import _write_task  # noqa: E402
 
@@ -168,13 +169,20 @@ def test_auroc_computable_with_mixed_classes():
         print("mixed-class AUROC OK:", m["detector_aurocs"])
 
 
+_NULL_TITLE_CONTROL = {"n": 200, "real_hits": 0, "real_rate": 0.0,
+                       "shuffled_hits": 0, "shuffled_rate": 0.0, "fisher_p_real_vs_shuffled": 1.0}
+_SIGNIFICANT_TITLE_CONTROL = {"n": 200, "real_hits": 40, "real_rate": 0.20,
+                              "shuffled_hits": 2, "shuffled_rate": 0.01,
+                              "fisher_p_real_vs_shuffled": 1e-12}
+
+
 def test_decide_branch_null_input_is_negative():
     """A4's house rule: feed the verdict function a null / no-effect input
     and the verdict must come back negative -- here, PROCEED_AS_DESIGNED
     with no signal claimed on either probe. Guards against a repeat of
     F1's bug (a threshold that fires on a model that merely answers)."""
     branch, reason = _decide_branch(
-        title_hits=0, title_n=200, title_recall_rate=0.0,
+        title_control=_NULL_TITLE_CONTROL, title_recall_rate=0.0,
         outcome_recall_rate=OUTCOME_RECALL_SHRINK_THRESHOLD + 0.315,  # base rate itself -- must NOT trigger SHRINK alone
         outcome_significant_tasks={},
     )
@@ -183,15 +191,34 @@ def test_decide_branch_null_input_is_negative():
     print("null-input branch OK:", branch)
 
 
+def test_decide_branch_single_hit_does_not_beat_shuffled_floor():
+    """The motivating case (amendment 2026-08-28): a single title-recall
+    hit at n=200 that is statistically indistinguishable from the
+    shuffled-ID control's own false-positive rate must NOT trigger
+    SHRINK/STRATIFY -- the earlier point-null rule (any hit >= 1) got this
+    wrong on the real deepseek pilot data (1/200 hits, but the shuffled
+    control wasn't computed at all for that run since it's new)."""
+    thin_control = {"n": 200, "real_hits": 1, "real_rate": 0.005,
+                    "shuffled_hits": 1, "shuffled_rate": 0.005,  # same rate as real -- no signal
+                    "fisher_p_real_vs_shuffled": 1.0}
+    branch, reason = _decide_branch(
+        title_control=thin_control, title_recall_rate=0.005,
+        outcome_recall_rate=0.62,  # deepseek's real pooled rate -- must not drive SHRINK alone
+        outcome_significant_tasks={},
+    )
+    assert branch == "PROCEED_AS_DESIGNED", (branch, reason)
+    print("single-hit-vs-shuffled-floor OK:", branch)
+
+
 def test_decide_branch_title_recall_significant_shrinks_or_stratifies():
     branch_high, _ = _decide_branch(
-        title_hits=5, title_n=200, title_recall_rate=0.025,
+        title_control=_SIGNIFICANT_TITLE_CONTROL, title_recall_rate=0.20,
         outcome_recall_rate=OUTCOME_RECALL_SHRINK_THRESHOLD + 0.01, outcome_significant_tasks={},
     )
     assert branch_high == "SHRINK_TO_UNRECOGNIZED_STRATUM", branch_high
 
     branch_low, _ = _decide_branch(
-        title_hits=5, title_n=200, title_recall_rate=0.025,
+        title_control=_SIGNIFICANT_TITLE_CONTROL, title_recall_rate=0.20,
         outcome_recall_rate=OUTCOME_RECALL_SHRINK_THRESHOLD - 0.01, outcome_significant_tasks={},
     )
     assert branch_low == "STRATIFY", branch_low
@@ -202,7 +229,7 @@ def test_decide_branch_outcome_significant_task_is_proceed_not_shrink():
     """F1's core fix: a real predictive signal (no title recall) must never
     read as contamination."""
     branch, reason = _decide_branch(
-        title_hits=0, title_n=200, title_recall_rate=0.0,
+        title_control=_NULL_TITLE_CONTROL, title_recall_rate=0.0,
         outcome_recall_rate=0.62,
         outcome_significant_tasks={
             "mortality_rate_yn": {"n": 34, "balanced_accuracy": 0.792,
@@ -212,6 +239,34 @@ def test_decide_branch_outcome_significant_task_is_proceed_not_shrink():
     assert branch == "PROCEED_AS_DESIGNED", branch
     assert "mortality_rate_yn" in reason and "0.792" in reason
     print("outcome-significant branch OK:", branch)
+
+
+def test_title_recall_shuffled_control_no_signal_when_indistinguishable():
+    """If the model's guessed titles hit their OWN trial's title exactly as
+    often as they hit a randomly reassigned trial's title, the metric is
+    reading boilerplate, not recall -- fisher_p should be large (not
+    significant), not small."""
+    # 20 trials, identical generic guess each time, true titles share no
+    # words with the guess or each other beyond a common stopword -- no
+    # real recall possible, and none should register on either arm.
+    per_trial = [
+        {"title_raw_response": "the trial continued as expected",
+         "title_true": f"study of condition {i}", "title_recall_hit": False}
+        for i in range(20)
+    ]
+    ctrl = title_recall_shuffled_control(per_trial, seed=42)
+    assert ctrl["n"] == 20
+    assert ctrl["real_rate"] == 0.0
+    assert ctrl["fisher_p_real_vs_shuffled"] == 1.0
+    print("shuffled-control no-signal OK:", ctrl)
+
+
+def test_title_recall_shuffled_control_too_little_data_is_none_not_fabricated():
+    ctrl = title_recall_shuffled_control([{"title_raw_response": "x", "title_true": "y",
+                                           "title_recall_hit": False}], seed=42)
+    assert ctrl["n"] == 1
+    assert ctrl["fisher_p_real_vs_shuffled"] is None
+    print("shuffled-control n<2 OK:", ctrl)
 
 
 def test_clopper_pearson_ci_single_hit_is_thin_but_positive():
@@ -246,8 +301,11 @@ if __name__ == "__main__":
     test_detector_arm_off_by_default_records_a_reason()
     test_auroc_computable_with_mixed_classes()
     test_decide_branch_null_input_is_negative()
+    test_decide_branch_single_hit_does_not_beat_shuffled_floor()
     test_decide_branch_title_recall_significant_shrinks_or_stratifies()
     test_decide_branch_outcome_significant_task_is_proceed_not_shrink()
+    test_title_recall_shuffled_control_no_signal_when_indistinguishable()
+    test_title_recall_shuffled_control_too_little_data_is_none_not_fabricated()
     test_clopper_pearson_ci_single_hit_is_thin_but_positive()
     test_per_task_outcome_discrimination_base_rate_invariant()
     print("t28a contamination probe tests passed")
