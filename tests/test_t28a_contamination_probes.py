@@ -14,7 +14,13 @@ import pandas as pd
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from experiments.t28a_contamination_probes import run  # noqa: E402
+from experiments.t28a_contamination_probes import (  # noqa: E402
+    OUTCOME_RECALL_SHRINK_THRESHOLD,
+    _clopper_pearson_ci,
+    _decide_branch,
+    per_task_outcome_discrimination,
+    run,
+)
 from tests.test_smoke import _write_task  # noqa: E402
 
 # amazon.nova-lite: a real priced entry in configs/bedrock_prices.yaml with a
@@ -129,7 +135,85 @@ def test_auroc_computable_with_mixed_classes():
         print("mixed-class AUROC OK:", m["detector_aurocs"])
 
 
+def test_decide_branch_null_input_is_negative():
+    """A4's house rule: feed the verdict function a null / no-effect input
+    and the verdict must come back negative -- here, PROCEED_AS_DESIGNED
+    with no signal claimed on either probe. Guards against a repeat of
+    F1's bug (a threshold that fires on a model that merely answers)."""
+    branch, reason = _decide_branch(
+        title_hits=0, title_n=200, title_recall_rate=0.0,
+        outcome_recall_rate=OUTCOME_RECALL_SHRINK_THRESHOLD + 0.315,  # base rate itself -- must NOT trigger SHRINK alone
+        outcome_significant_tasks={},
+    )
+    assert branch == "PROCEED_AS_DESIGNED", (branch, reason)
+    assert "no signal" in reason
+    print("null-input branch OK:", branch)
+
+
+def test_decide_branch_title_recall_significant_shrinks_or_stratifies():
+    branch_high, _ = _decide_branch(
+        title_hits=5, title_n=200, title_recall_rate=0.025,
+        outcome_recall_rate=OUTCOME_RECALL_SHRINK_THRESHOLD + 0.01, outcome_significant_tasks={},
+    )
+    assert branch_high == "SHRINK_TO_UNRECOGNIZED_STRATUM", branch_high
+
+    branch_low, _ = _decide_branch(
+        title_hits=5, title_n=200, title_recall_rate=0.025,
+        outcome_recall_rate=OUTCOME_RECALL_SHRINK_THRESHOLD - 0.01, outcome_significant_tasks={},
+    )
+    assert branch_low == "STRATIFY", branch_low
+    print("title-significant branch OK:", branch_high, branch_low)
+
+
+def test_decide_branch_outcome_significant_task_is_proceed_not_shrink():
+    """F1's core fix: a real predictive signal (no title recall) must never
+    read as contamination."""
+    branch, reason = _decide_branch(
+        title_hits=0, title_n=200, title_recall_rate=0.0,
+        outcome_recall_rate=0.62,
+        outcome_significant_tasks={
+            "mortality_rate_yn": {"n": 34, "balanced_accuracy": 0.792,
+                                  "fisher_exact_p": 0.002, "majority_class_rate": 0.6},
+        },
+    )
+    assert branch == "PROCEED_AS_DESIGNED", branch
+    assert "mortality_rate_yn" in reason and "0.792" in reason
+    print("outcome-significant branch OK:", branch)
+
+
+def test_clopper_pearson_ci_single_hit_is_thin_but_positive():
+    lower, upper = _clopper_pearson_ci(1, 200)
+    assert lower is not None and 0.0 < lower < 0.01
+    assert upper is not None and upper < 0.05
+
+    lower0, upper0 = _clopper_pearson_ci(0, 200)
+    assert lower0 == 0.0
+    assert upper0 is not None and upper0 < 0.02  # rule-of-three: ~3/200
+    print("Clopper-Pearson CI OK:", (lower, upper), (lower0, upper0))
+
+
+def test_per_task_outcome_discrimination_base_rate_invariant():
+    """Regression guard for the Simpson's-paradox bug F2 fixes: a model
+    that always answers the majority class must NOT show as discriminating
+    once scored per task, even though pooled raw accuracy would look high."""
+    per_trial = []
+    # task A: 90% positive, model always says positive -> "accuracy" 0.9 but
+    # balanced accuracy 0.5 (no discrimination).
+    for i in range(20):
+        label = 1 if i < 18 else 0
+        per_trial.append({"task": "task_a", "outcome_true_label": label, "outcome_parsed_answer": 1})
+    stats = per_task_outcome_discrimination(per_trial)
+    assert stats["task_a"]["n"] == 20
+    assert stats["task_a"]["balanced_accuracy"] == 0.5
+    print("per-task balanced accuracy OK:", stats)
+
+
 if __name__ == "__main__":
     test_artifact_shape_and_auroc_not_computable_with_single_class()
     test_auroc_computable_with_mixed_classes()
+    test_decide_branch_null_input_is_negative()
+    test_decide_branch_title_recall_significant_shrinks_or_stratifies()
+    test_decide_branch_outcome_significant_task_is_proceed_not_shrink()
+    test_clopper_pearson_ci_single_hit_is_thin_but_positive()
+    test_per_task_outcome_discrimination_base_rate_invariant()
     print("t28a contamination probe tests passed")

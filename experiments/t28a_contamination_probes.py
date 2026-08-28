@@ -54,8 +54,9 @@ import re
 import numpy as np
 import pandas as pd
 import yaml
+from scipy.stats import binomtest, fisher_exact
 from sklearn.linear_model import LogisticRegression
-from sklearn.metrics import roc_auc_score
+from sklearn.metrics import balanced_accuracy_score, confusion_matrix, roc_auc_score
 from sklearn.model_selection import StratifiedKFold, cross_val_predict
 
 from experiments._common import Timer, git_sha, write_artifact
@@ -84,9 +85,25 @@ TITLE_RECALL_STRATIFY_THRESHOLD = 0.60
 # numerically by the plan, so fixed here, before any run, at a value smaller
 # than what would itself be an interesting detector-vs-blind gap.
 BLIND_BASELINE_NOISE_BAND = 0.05
+# Family-wise error rate for the per-task outcome-discrimination test (F2),
+# corrected across (models x tasks) once the full comparison count is known
+# -- see run()'s alpha_corrected.
+FAMILY_ALPHA = 0.05
 
 PREFIX_SPLIT_FRAC = 0.6
 MIN_SUMMARY_WORDS = 5
+
+
+def _clopper_pearson_ci(hits: int, n: int, confidence: float = 0.95):
+    """Exact (Clopper-Pearson) CI on a hit rate. None/None if there's
+    nothing to score (F9: report the interval, not just the point
+    estimate -- a rate of 0/200 and 1/200 look identical as point
+    estimates but the interval makes the weakness of the evidence visible
+    either way)."""
+    if n <= 0:
+        return None, None
+    ci = binomtest(hits, n).proportion_ci(confidence_level=confidence, method="exact")
+    return float(ci.low), float(ci.high)
 
 
 def _default_models() -> list:
@@ -321,10 +338,14 @@ def tabular_memorization_score(client, results_dir, model_id, row, prefix, true_
     return sub
 
 
-def outcome_recall_hit(client, results_dir, model_id, task, trial_text, true_label, meter):
-    """Full serialized trial, recall framing. Returns True/False (correct
-    recall of the actual reported label) or None if the response didn't
-    parse as a clear Yes/No -- unparseable is not counted as a hit."""
+def outcome_recall_probe(client, results_dir, model_id, task, trial_text, true_label, meter):
+    """Full serialized trial, recall framing. Returns the raw response text,
+    the parsed Yes/No answer (as 0/1, or None if the response didn't parse
+    as a clear Yes/No -- unparseable is never counted as a hit), and
+    whether the parsed answer matches the true label. Stored disaggregated
+    (F7) rather than as a bare hit bool so the true-vs-predicted 2x2 needed
+    for F2's per-task balanced accuracy / Fisher exact is readable directly
+    from the artifact instead of reconstructed as hit XOR label."""
     question = TASK_QUESTIONS[task]
     prompt = ("This clinical trial has already completed and its results have been reported. "
              f"Based on what you know about this specific trial, state whether {question}. "
@@ -333,9 +354,11 @@ def outcome_recall_hit(client, results_dir, model_id, task, trial_text, true_lab
     lowered = text.lower()
     has_yes, has_no = "yes" in lowered, "no" in lowered
     if has_yes == has_no:  # both or neither present -> unparseable
-        return None
-    answer = 1 if has_yes else 0
-    return bool(answer == int(true_label))
+        answer = None
+    else:
+        answer = 1 if has_yes else 0
+    hit = None if answer is None else bool(answer == int(true_label))
+    return {"raw_response": text, "parsed_answer": answer, "hit": hit}
 
 
 def title_recall_hit(client, results_dir, model_id, nct_id, true_title, meter):
@@ -383,9 +406,111 @@ def _safe_auroc(scores, labels):
 
 
 # ----------------------------------------------------------------------------
+# F2 -- per-task, base-rate-invariant outcome discrimination
+# ----------------------------------------------------------------------------
+def per_task_outcome_discrimination(per_trial_scores):
+    """Balanced accuracy + Fisher exact on the true-vs-predicted 2x2, one
+    cell per task, from parseable outcome-recall answers only.
+
+    Replaces raw pooled accuracy against a single 0.30 threshold: on the
+    real two-model pilot, pooling produced a "significant" result for a
+    model (nova) that had no signal on any individual task -- four tasks
+    with base rates from 0.525 to 0.836 pooled into one 2x2 is Simpson's
+    paradox, not evidence. Per-task balanced accuracy is invariant to each
+    task's own base rate; the Fisher exact p-value on the same 2x2 is the
+    significance test (Bonferroni-corrected across (models x tasks) by the
+    caller, once every model's task set is known -- see run()).
+    """
+    by_task = {}
+    for t in per_trial_scores:
+        if t["outcome_parsed_answer"] is None:
+            continue
+        by_task.setdefault(t["task"], []).append((t["outcome_true_label"], t["outcome_parsed_answer"]))
+
+    out = {}
+    for task, pairs in sorted(by_task.items()):
+        y_true = np.array([p[0] for p in pairs])
+        y_pred = np.array([p[1] for p in pairs])
+        n = len(pairs)
+        majority_class_rate = float(max(np.mean(y_true), 1.0 - np.mean(y_true)))
+        table = confusion_matrix(y_true, y_pred, labels=[0, 1])
+        _, fisher_p = fisher_exact(table)
+        balanced_acc = (
+            float(balanced_accuracy_score(y_true, y_pred)) if len(np.unique(y_true)) >= 2 else None
+        )
+        out[task] = {
+            "n": n,
+            "majority_class_rate": majority_class_rate,
+            "balanced_accuracy": balanced_acc,
+            "fisher_exact_p": float(fisher_p),
+        }
+    return out
+
+
+# ----------------------------------------------------------------------------
+# F1 -- branch decision built on title_recall (the discriminator), not on
+# outcome_recall_hit (which a model can satisfy by prediction as much as by
+# recall -- deepseek/mortality in the two-model pilot is exactly this case).
+# ----------------------------------------------------------------------------
+def _decide_branch(title_hits, title_n, title_recall_rate, outcome_recall_rate,
+                    outcome_significant_tasks):
+    """title_recall_hit has no predictive route: nothing about a trial's
+    clinical content lets you infer its registered title from an opaque
+    NCT ID alone (same logic as LLM_CONTAMINATION_PLAN.md E1's ID-only
+    design). So "title recall significantly above zero" is tested as a
+    literal point-null test (H0: p=0) -- if p really were exactly 0, a hit
+    would be impossible with certainty, so any confirmed hit (Clopper-
+    Pearson lower bound > 0, i.e. hits >= 1) is exact evidence p > 0, not
+    an approximation. The CI is still carried on every result (F9) so a
+    reviewer can see how thin that evidence is when n is small: a single
+    hit at n=200 has a lower bound near 0.0003, which is real evidence of
+    *something* but not the same weight as a high rate.
+
+    Three outcomes, matching F1:
+      - title recall significant -> recall demonstrated -> SHRINK/STRATIFY
+        per the existing pre-registered thresholds.
+      - title recall null, outcome discrimination significant on >=1 task
+        (Bonferroni-corrected, caller's job) -> predictive signal, not
+        recall -> PROCEED_AS_DESIGNED, effect size recorded in the reason.
+      - neither -> no signal -> PROCEED_AS_DESIGNED.
+    """
+    title_lower, _ = _clopper_pearson_ci(title_hits or 0, title_n or 0)
+    title_significant = bool(title_n) and bool(title_hits) and title_lower is not None and title_lower > 0.0
+
+    if title_significant:
+        if outcome_recall_rate is not None and outcome_recall_rate > OUTCOME_RECALL_SHRINK_THRESHOLD:
+            return ("SHRINK_TO_UNRECOGNIZED_STRATUM",
+                    f"title recall demonstrated ({title_hits}/{title_n} hits, 95% CI lower bound "
+                    f"{title_lower:.4f} > 0) and outcome_recall_rate {outcome_recall_rate:.3f} > "
+                    f"{OUTCOME_RECALL_SHRINK_THRESHOLD} baseline -- shrink to the unrecognized "
+                    "stratum, primary role hands to T29")
+        return ("STRATIFY",
+                f"title recall demonstrated ({title_hits}/{title_n} hits, 95% CI lower bound "
+                f"{title_lower:.4f} > 0) -- recall shown regardless of outcome_recall_rate, "
+                "stratify and report both strata")
+
+    if outcome_significant_tasks:
+        tasks_desc = "; ".join(
+            f"{task}: balanced_accuracy={s['balanced_accuracy']:.3f} vs 0.500 chance baseline "
+            f"(Fisher exact p={s['fisher_exact_p']:.4g}, n={s['n']})"
+            for task, s in sorted(outcome_significant_tasks.items())
+        )
+        return ("PROCEED_AS_DESIGNED",
+                f"no title recall ({title_hits or 0}/{title_n or 0} hits) but predictive signal on "
+                f"{len(outcome_significant_tasks)} task(s) surviving Bonferroni correction: "
+                f"{tasks_desc} -- proceed as designed, not read as contamination")
+
+    return ("PROCEED_AS_DESIGNED",
+            f"no title recall ({title_hits or 0}/{title_n or 0} hits) and no task's outcome "
+            "discrimination clears the Bonferroni-corrected significance threshold vs. the 0.500 "
+            "chance baseline -- no signal detected on either probe")
+
+
+# ----------------------------------------------------------------------------
 # Per-model orchestration
 # ----------------------------------------------------------------------------
-def _run_one_model(client, results_dir, model_id, sample, columns, pre_cutoff_label, meter):
+def _run_one_model(client, results_dir, model_id, sample, columns, pre_cutoff_label, meter,
+                   alpha_corrected=FAMILY_ALPHA):
     per_trial_scores = []
     for _, row in sample.iterrows():
         prefix, true_suffix = _split_prefix_suffix(row.get("brief_summary/textblock"))
@@ -398,14 +523,19 @@ def _run_one_model(client, results_dir, model_id, sample, columns, pre_cutoff_la
                                              columns, meter)
 
         rendered = render_arm(row, "L7", row["nct_id"])
-        outcome_hit = outcome_recall_hit(client, results_dir, model_id, row["task"], rendered.text,
-                                         row["y"], meter)
+        outcome_probe = outcome_recall_probe(client, results_dir, model_id, row["task"], rendered.text,
+                                             row["y"], meter)
         title_hit = title_recall_hit(client, results_dir, model_id, row["nct_id"],
                                      row.get("brief_title"), meter)
 
         per_trial_scores.append({
-            "nct_id": row["nct_id"], "ngram_score": ngram, "guided_delta": guided_delta,
-            "tabular": tabular, "outcome_recall_hit": outcome_hit, "title_recall_hit": title_hit,
+            "nct_id": row["nct_id"], "task": row["task"], "ngram_score": ngram,
+            "guided_delta": guided_delta, "tabular": tabular,
+            "outcome_true_label": int(row["y"]),
+            "outcome_raw_response": outcome_probe["raw_response"],
+            "outcome_parsed_answer": outcome_probe["parsed_answer"],
+            "outcome_recall_hit": outcome_probe["hit"],
+            "title_recall_hit": title_hit,
         })
 
     ngram_scores = [t["ngram_score"] for t in per_trial_scores]
@@ -423,21 +553,31 @@ def _run_one_model(client, results_dir, model_id, sample, columns, pre_cutoff_la
     best_detector_auroc = max(computable) if computable else None
 
     blind_auroc = blind_baseline_auroc(sample, pre_cutoff_label)
-    recognition_uninformative = (
-        best_detector_auroc is not None and blind_auroc is not None
-        and abs(best_detector_auroc - blind_auroc) <= BLIND_BASELINE_NOISE_BAND
-    )
+    # F3: tri-state. The old two-value form read `None`-vs-`None` (control
+    # not computed at all -- true on the real two-model artifact, both
+    # models) as `False` ("ran, and the detectors are citable"), which is a
+    # silent false negative. `None` here means "not computed"; only a real
+    # comparison of two real numbers can say true or false.
+    if best_detector_auroc is None or blind_auroc is None:
+        recognition_uninformative = None
+    else:
+        recognition_uninformative = abs(best_detector_auroc - blind_auroc) <= BLIND_BASELINE_NOISE_BAND
 
     outcome_recall_rate = float(np.mean(outcome_hits)) if outcome_hits else None
     title_recall_rate = float(np.mean(title_hits)) if title_hits else None
+    title_hit_count = int(np.sum(title_hits)) if title_hits else 0
+    title_recall_ci = _clopper_pearson_ci(title_hit_count, len(title_hits))
 
-    if outcome_recall_rate is not None and outcome_recall_rate > OUTCOME_RECALL_SHRINK_THRESHOLD:
-        branch = "SHRINK_TO_UNRECOGNIZED_STRATUM"
-    elif (title_recall_rate is not None and title_recall_rate > TITLE_RECALL_STRATIFY_THRESHOLD
-          and (outcome_recall_rate is None or outcome_recall_rate < OUTCOME_RECALL_SHRINK_THRESHOLD)):
-        branch = "STRATIFY"
-    else:
-        branch = "PROCEED_AS_DESIGNED"
+    per_task_outcome = per_task_outcome_discrimination(per_trial_scores)
+    outcome_significant_tasks = {
+        task: stats for task, stats in per_task_outcome.items()
+        if stats["fisher_exact_p"] is not None and stats["fisher_exact_p"] < alpha_corrected
+        and stats["balanced_accuracy"] is not None and stats["balanced_accuracy"] > 0.5
+    }
+    branch, branch_reason = _decide_branch(
+        title_hit_count, len(title_hits), title_recall_rate, outcome_recall_rate,
+        outcome_significant_tasks,
+    )
 
     # Cross-instrument agreement: pairwise Spearman correlation between the
     # three detector score series (pooled per model, over trials where both
@@ -460,11 +600,21 @@ def _run_one_model(client, results_dir, model_id, sample, columns, pre_cutoff_la
 
     return {
         "per_trial": per_trial_scores,
-        "outcome_recall_rate": outcome_recall_rate, "title_recall_rate": title_recall_rate,
+        "outcome_recall_rate": outcome_recall_rate,
+        "outcome_recall_rate_note": (
+            "descriptive only -- raw pooled accuracy, inflated by task prevalence "
+            "(pooled base rate was 0.615 on the two-model pilot). Not used for the branch "
+            "decision; see per_task_outcome_discrimination for the base-rate-invariant "
+            "per-task figures the decision is actually made from."
+        ),
+        "title_recall_rate": title_recall_rate,
+        "title_recall_ci_95": {"lower": title_recall_ci[0], "upper": title_recall_ci[1]},
+        "per_task_outcome_discrimination": per_task_outcome,
+        "outcome_significant_tasks": list(outcome_significant_tasks),
         "detector_aurocs": detector_aurocs, "blind_baseline_auroc": blind_auroc,
         "recognition_uninformative": recognition_uninformative,
         "cross_instrument_agreement": agreement,
-        "branch": branch, "meter": meter_summary,
+        "branch": branch, "branch_reason": branch_reason, "meter": meter_summary,
     }
 
 
@@ -480,6 +630,14 @@ def run(data_root="data", results_dir="results", n_trials=40, models=None, seed=
         sample = _pool_trials(data_root, n_trials, seed)
         columns = [c for c in sample.columns if c not in ("nct_id", "task", "phase", "y")]
         registration_dates = _join_registration_dates(sample, aact_loader)
+
+        # F2: Bonferroni correction across the full (models x tasks) family,
+        # computed once up front so every model's per-task significance test
+        # uses the same corrected alpha -- not each model's own task count,
+        # which would under-correct as more models are added.
+        n_tasks = int(sample["task"].nunique())
+        n_comparisons = max(1, len(models) * n_tasks)
+        alpha_corrected = FAMILY_ALPHA / n_comparisons
 
         per_model = {}
         for model_id in models:
@@ -503,14 +661,14 @@ def run(data_root="data", results_dir="results", n_trials=40, models=None, seed=
             client = BedrockClient(region=region, boto_client=boto_client)
             meter = Meter()
             result = _run_one_model(client, results_dir, api_model_id, sample, columns,
-                                    pre_cutoff_label, meter)
+                                    pre_cutoff_label, meter, alpha_corrected=alpha_corrected)
             result["cutoff"] = cutoff
             result["cutoff_note"] = cutoff_note
             result["api_model_id"] = api_model_id
             result["n_trials_with_registration_date"] = int(registration_dates.notna().sum())
             per_model[model_id] = result
-            print(f"  {model_id}: outcome_recall={result['outcome_recall_rate']}, "
-                 f"branch={result['branch']}, uninformative={result['recognition_uninformative']}, "
+            print(f"  {model_id}: branch={result['branch']} ({result['branch_reason']}), "
+                 f"uninformative={result['recognition_uninformative']}, "
                  f"dollars_realized={result['meter']['dollars_realized']}", flush=True)
 
     artifact = {
@@ -522,23 +680,42 @@ def run(data_root="data", results_dir="results", n_trials=40, models=None, seed=
             "n_trials": n_trials, "models": models, "seed": seed, "data_root": data_root,
             "outcome_recall_shrink_threshold": OUTCOME_RECALL_SHRINK_THRESHOLD,
             "title_recall_stratify_threshold": TITLE_RECALL_STRATIFY_THRESHOLD,
+            "title_recall_stratify_threshold_note": (
+                "recorded for provenance, no longer gates STRATIFY directly since F1: "
+                "STRATIFY now fires whenever title recall is statistically significant "
+                "(any magnitude), not only above this raw-rate threshold."
+            ),
             "blind_baseline_noise_band": BLIND_BASELINE_NOISE_BAND,
             "registration_date_source": "AACT snapshot (src/data/aact.py load_table('studies'))",
+            "bonferroni_correction": {
+                "family_alpha": FAMILY_ALPHA, "n_models": len(models), "n_tasks": n_tasks,
+                "n_comparisons": n_comparisons, "alpha_corrected": alpha_corrected,
+            },
         },
         "n_trials_sampled": len(sample),
         "per_model": per_model,
         "decision_rule": (
-            "Per model: outcome_recall_rate > 0.30 -> SHRINK_TO_UNRECOGNIZED_STRATUM "
-            "(that model's T28 grid shrinks to the unrecognized stratum, primary role "
-            "hands to T29). Elif title_recall_rate > 0.60 and outcome_recall_rate < 0.30 "
-            "-> STRATIFY (proceed, report both strata). Else PROCEED_AS_DESIGNED. "
+            "Per model, built on title_recall_hit as the discriminator (F1 -- it has no "
+            "predictive route, unlike outcome_recall_hit, which a model can satisfy by "
+            "prediction as well as by recall): if title recall is significantly above zero "
+            "(Clopper-Pearson 95% CI lower bound > 0 vs. the 0.0 point-null baseline), recall "
+            "is demonstrated -> SHRINK_TO_UNRECOGNIZED_STRATUM if outcome_recall_rate > "
+            f"{OUTCOME_RECALL_SHRINK_THRESHOLD} (baseline: that raw rate), else STRATIFY. If "
+            "title recall is null: outcome discrimination is tested per task via balanced "
+            "accuracy vs. the 0.500 chance baseline, significance by Fisher exact on that "
+            "task's true-vs-predicted 2x2, Bonferroni-corrected across the full "
+            "(models x tasks) family (alpha_corrected recorded in inputs.bonferroni_correction) "
+            "-- any task clearing that bar is a predictive signal, not contamination -> "
+            "PROCEED_AS_DESIGNED with the effect size recorded in branch_reason. No task "
+            "clearing it -> PROCEED_AS_DESIGNED, no signal on either probe. "
             "Independently: if the blind baseline's AUROC is within "
             f"{BLIND_BASELINE_NOISE_BAND} of the best detector's AUROC on a model, "
             "recognition_uninformative=true and that model's detector scores are not "
             "citable as evidence of memorization (temporal drift is the more likely "
-            "explanation)."
+            "explanation); recognition_uninformative=null (not the old silent false-negative "
+            "false) when either AUROC wasn't computable at all -- see F3."
         ),
-        "verdict": "descriptive -- see per_model.<model_id>.branch and "
+        "verdict": "descriptive -- see per_model.<model_id>.branch, .branch_reason, and "
                   ".recognition_uninformative; no single pass/fail verdict for this test.",
         "git_sha": git_sha(),
         "wall_clock_secs": round(t.secs, 1),
@@ -558,9 +735,14 @@ def main():
                          "five pre-registered models.")
     ap.add_argument("--seed", type=int, default=42)
     ap.add_argument("--region", default="us-west-2")
+    ap.add_argument("--out-path", default=OUT_PATH,
+                    help=f"artifact output path (default {OUT_PATH!r}). F5: the default is a "
+                         "single file holding all models under per_model -- pass a distinct "
+                         "path for a partial/scratch run so it can't clobber the tracked "
+                         "artifact of a completed one.")
     args = ap.parse_args()
     run(data_root=args.data_root, results_dir=args.results_dir, n_trials=args.n_trials,
-        models=args.models, seed=args.seed, region=args.region)
+        models=args.models, seed=args.seed, region=args.region, out_path=args.out_path)
 
 
 if __name__ == "__main__":
