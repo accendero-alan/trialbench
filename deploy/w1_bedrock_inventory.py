@@ -125,8 +125,17 @@ def check_account_and_role(sections: list, region: str) -> None:
     lines.append("")
     lines.append("Required per P13.11: `bedrock:InvokeModel`, `bedrock:CreateModelInvocationJob`, "
                  "`bedrock:GetModelInvocationJob`, `bedrock:CreatePromptRouter`, `s3:GetObject`/"
-                 "`s3:PutObject` on the batch bucket, nothing else. Diff the policy above against "
-                 "this list by hand.")
+                 "`s3:PutObject` on the batch bucket -- **plus, confirmed live 2026-08-28 "
+                 "(Claude Opus 4.5's first synchronous Converse call from this exact role failed "
+                 "AccessDeniedException), `aws-marketplace:ViewSubscriptions`, "
+                 "`aws-marketplace:Subscribe`, `aws-marketplace:Unsubscribe`** -- every "
+                 "third-party model needs these on first invocation per account (AWS's own "
+                 "'automatic model access' subscription flow), not just the batch execution role "
+                 "P13.8's probe found this on originally. Two more per-account prerequisites this "
+                 "role's policy cannot fix: Anthropic models specifically require completing the "
+                 "'First Time Use' (FTU) form once per account before first invocation (Bedrock "
+                 "console, separate from IAM), and the account needs a valid AWS Marketplace "
+                 "payment method on file. Diff the policy above against this full list by hand.")
     sections.append("\n".join(lines))
 
 
