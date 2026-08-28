@@ -267,6 +267,29 @@ def render_arm(row: pd.Series, arm: str, nct_id: str) -> Rendered:
     return Rendered(nct_id=nct_id, arm=arm, text=text, disease=disease)
 
 
+def render_arm_with_disease_override(row: pd.Series, arm: str, nct_id: str,
+                                     slot_row: pd.Series) -> Rendered:
+    """Like :func:`render_arm`, but the disease SLOT's content comes from
+    ``slot_row`` while the shared body -- and critically, `_render_body`'s
+    scrubbing -- still uses ``row``'s own ``condition``/
+    ``condition_browse/mesh_term``.
+
+    Needed for a disease-*swap* probe (docs/t28b_l0_implementation_plan.md
+    P2): swapping ``row["condition"]`` to a donor disease and rendering
+    that single swapped row with plain :func:`render_arm` scrubs the
+    *donor's* terms from ``_SCRUB_COLS`` (which appear nowhere in this
+    trial's real eligibility criteria) while leaving the REAL disease's
+    mentions there unredacted -- silently leaking the original disease
+    back into what was supposed to be a swapped prompt. Passing the
+    ORIGINAL row for scrubbing and a separate ``slot_row`` (a copy with
+    only the disease fields swapped) for the slot fixes this: the body is
+    scrubbed against what could actually leak, the slot shows the donor.
+    """
+    disease = _disease_filler(slot_row, arm)
+    text = _render_body(row).replace(_DISEASE_SLOT, disease)
+    return Rendered(nct_id=nct_id, arm=arm, text=text, disease=disease)
+
+
 def assert_body_identical(df: pd.DataFrame, arms=ARMS) -> None:
     """Standing rule 9, as an assertion: for every row in ``df``, render
     every arm (except L6, not yet implemented), strip that arm's own disease

@@ -383,8 +383,9 @@
     "reference_insensitivity_rate": 0.135,
     "reference_insensitivity_rate_discretized_to_opus_resolution": 0.125,
     "n": 200,
-    "quarantine_ordering": true,
-    "note": "T22 came back INCONCLUSIVE on disease share, so low sensitivity is not recall on its own -- only interpretable against the reference's sensitivity on the same rows (docs/t28b_opus_recall_spec.md). reference_insensitivity_rate_discretized_to_opus_resolution snaps the reference's continuous score to Opus's own observed value set before recomputing -- if quarantine_ordering only holds against the undiscretized reference, the gap is (at least partly) a resolution mismatch, not differential memorisation (docs/t28b_reanalysis_plan.md R3)."
+    "quarantine_ordering": null,
+    "note": "T22 came back INCONCLUSIVE on disease share, so low sensitivity is not recall on its own -- only interpretable against the reference's sensitivity on the same rows (docs/t28b_opus_recall_spec.md). reference_insensitivity_rate_discretized_to_opus_resolution snaps the reference's continuous score to Opus's own observed value set before recomputing -- if quarantine_ordering only holds against the undiscretized reference, the gap is (at least partly) a resolution mismatch, not differential memorisation (docs/t28b_reanalysis_plan.md R3).",
+    "quarantine_ordering_withdrawn_reason": "Withdrawn, not deleted -- quarantine_ordering: true was computed from a rendering bug, not evidence of memorisation. elicit_row hardcoded render_arm(row, \"L7\", ...) for every arm including this swap; swap_disease only replaced row[\"condition\"], and L7's filler concatenates the condition with the trial's own UNSWAPPED brief_summary/textblock, which still named the real disease verbatim. The prompt contradicted itself and the summary won. A second, subtler leak: _render_body's scrubber derives mask terms from the (already-swapped) row[\"condition\"], so it masked the donor's terms while leaving the original disease unredacted in eligibility criteria (which names the trial's condition in 45-61% of trials before scrubbing, per src/data/serialize.py). See docs/t28b_l0_implementation_plan.md for the root-cause analysis and results/experiments/t28b_l0_null.json for the corrected, from-scratch disease-sensitivity probe (arm-parameterised elicit_row/score_arm, a scrub-source/slot-source split via render_arm_with_disease_override, and a pre-call assert_no_disease_leak gate) -- this field is superseded by that artifact's reading, not by a fix to the numbers already collected here."
   },
   "branch": "INCONCLUSIVE",
   "branch_reason": "R1: Opus's auroc drops significantly (delta=0.047, CI=[0.000, 0.093]). R2: that drop does not significantly exceed the reference's own drop on the identical rows (diff=0.009, CI=[-0.039, 0.056], observed correlation rho=0.41809258112501035) -- underpowered to separate Opus's drop from the reference's. Report both drops and the difference with its CI; do not read this as recall demonstrated or as cleared.",
@@ -25864,5 +25865,6 @@
     "routing_fee_usd": 0.0
   },
   "git_sha": "a38744ea9488abaf3fac68e2d60b6b3e12253ec7",
-  "wall_clock_secs": 178.8
+  "wall_clock_secs": 178.8,
+  "disease_swap_note": "The disease_swap block above is left in place as the historical record of what was actually collected and analyzed, not deleted -- but quarantine_ordering was withdrawn (see disease_swap.quarantine_ordering_withdrawn_reason) after docs/t28b_l0_implementation_plan.md found the swap arm was rendered via a hardcoded L7, so the \"swapped\" prompt still named the real disease. Do not cite quarantine_ordering from this file as evidence for or against memorisation; see results/experiments/t28b_l0_null.json."
 }
