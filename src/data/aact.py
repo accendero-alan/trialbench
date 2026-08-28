@@ -142,3 +142,28 @@ def dropout_yn(snapshot_dir: str = SNAPSHOT_DIR) -> pd.Series:
     pivot = overall.groupby(["nct_id", "title"])["count"].sum().unstack(fill_value=0)
     not_completed = pivot.get("NOT COMPLETED", pd.Series(0, index=pivot.index, dtype=float))
     return (not_completed > 0).astype(int).rename("dropout_yn")
+
+
+def results_posted_date(snapshot_dir: str = SNAPSHOT_DIR) -> pd.Series:
+    """``results_first_posted_date`` per nct_id, parsed to datetime, from the
+    pinned AACT snapshot -- null (``NaT``) for any trial with no results
+    posted yet, never a fabricated date.
+
+    Distinct from ``study_first_posted_date`` (registration date, what
+    ``experiments/t28a_contamination_probes.py``'s
+    ``_join_registration_dates`` reads): that field says when a trial's
+    *existence* became public, this one says when its *results* did. A
+    model's training cutoff can only have seen a reported outcome if the
+    results-posting date precedes the cutoff -- registration date alone
+    only bounds whether the model could have seen the trial exists,
+    which is a different and weaker claim
+    (docs/t28b_opus_recall_spec.md's Arm A/B/C partition turns on this
+    distinction; ``docs/p14_5_n_gate.md``'s option 1 framing is the same
+    idea applied as a slice-selection rule rather than an instrument).
+
+    Deduplicated by nct_id before parsing (matching
+    ``_join_registration_dates``'s defensive pattern) since AACT does not
+    itself guarantee one row per trial in every export."""
+    studies = load_table("studies", snapshot_dir)[["nct_id", "results_first_posted_date"]]
+    studies = studies.drop_duplicates("nct_id").set_index("nct_id")["results_first_posted_date"]
+    return pd.to_datetime(studies, errors="coerce").rename("results_posted_date")
