@@ -41,12 +41,15 @@ models:
     source_url: "https://aws.amazon.com/blogs/machine-learning/claude-opus-4-5-now-in-amazon-bedrock/"
     read_on: "2026-08-26"
     region: "us-west-2"
-    profile: "us"    # global.anthropic.claude-opus-4-5-... exists but this account's Converse call to it
-                     # failed AccessDeniedException (AWS Marketplace subscription not enabled for that
-                     # profile) -- an account-permission gap, not evidence global. doesn't work in
-                     # general. us. is what's actually usable here; the plan's [W1] price-premium
-                     # question for us. vs. global. is therefore moot for this account unless that
-                     # marketplace subscription gets fixed.
+    profile: "us"    # As of 2026-08-27, this account's Converse call to the us. profile itself failed
+                     # AccessDeniedException (AWS Marketplace subscription not enabled) -- an
+                     # account-permission gap, not an id/profile problem. Fixed 2026-08-28: IAM role
+                     # granted aws-marketplace:ViewSubscriptions/Subscribe/Unsubscribe (see
+                     # wave2-start-plan.md P13.8) plus Anthropic's console-side "First Time Use" form.
+                     # us.anthropic.claude-opus-4-5-20251101-v1:0 reconfirmed PASS live
+                     # (deploy/smoke_test_converse.py) after the fix. global. was not re-tested this
+                     # pass (us. is what's configured and used) -- the plan's [W1] price-premium
+                     # question for us. vs. global. is a separate, still-open item.
     verified: false
     cutoff: "2025-03"      # Bedrock model card "reliable knowledge" cutoff
 
@@ -59,12 +62,16 @@ models:
     source_url: "https://aws.amazon.com/blogs/aws-cloud-financial-management/optimize-llm-costs-on-amazon-bedrock-from-billing-attribution-to-operational-telemetry/"
     read_on: "2026-06-29"
     region: "us-west-2"
-    profile: "global"    # both us.anthropic.claude-haiku-4-5-... and this global. id are confirmed
-                         # working for this account (unlike Opus, no marketplace block here) --
-                         # global. picked per the plan's suspicion that it's the cheaper of the two on
-                         # Claude 4.5+, but that price difference itself is still [W1] (unconfirmed
-                         # against the console). us.anthropic.claude-haiku-4-5-20251001-v1:0 is a
-                         # confirmed-working fallback if global. turns out not to be cheaper.
+    profile: "global"    # Corrected 2026-08-28: this entry previously claimed "unlike Opus, no
+                         # marketplace block here" -- wrong. Haiku hit the identical
+                         # AccessDeniedException (AWS Marketplace subscription) as Opus on the
+                         # 2026-08-28 live run; same account-level fix (IAM marketplace actions +
+                         # Anthropic's FTU form) covers both models, not Opus alone. This global.
+                         # profile reconfirmed PASS live (deploy/smoke_test_converse.py) after the
+                         # fix. global. picked per the plan's suspicion that it's the cheaper of the
+                         # two on Claude 4.5+, but that price difference itself is still [W1]
+                         # (unconfirmed against the console). us.anthropic.claude-haiku-4-5-20251001-v1:0
+                         # is a confirmed-working fallback if global. turns out not to be cheaper.
     verified: false
     cutoff: "2025-07"      # training-data cutoff; reliable-knowledge cutoff is 2025-02 -- record both, use the later
 
