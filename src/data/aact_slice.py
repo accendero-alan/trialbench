@@ -43,7 +43,7 @@ import urllib.request
 
 import pandas as pd
 
-from .aact import load_table, results_posted_date
+from .aact import load_table_columns, load_table_rows, results_posted_date
 
 NLM_ICD10CM_SEARCH_URL = "https://clinicaltables.nlm.nih.gov/api/icd10cm/v3/search"
 
@@ -156,7 +156,7 @@ def slice_ab_nct_ids(cutoff: "pd.Timestamp | str", snapshot_dir: str = None) -> 
     """
     cutoff = pd.Timestamp(cutoff)
     kw = {} if snapshot_dir is None else {"snapshot_dir": snapshot_dir}
-    studies = load_table("studies", **kw)[["nct_id", "study_first_posted_date"]]
+    studies = load_table_columns("studies", ["nct_id", "study_first_posted_date"], **kw)
     studies = studies.drop_duplicates("nct_id").set_index("nct_id")["study_first_posted_date"]
     registration = pd.to_datetime(studies, errors="coerce")
     results = results_posted_date(**kw)
@@ -178,7 +178,22 @@ def emit_trialbench_schema(nct_ids: list, snapshot_dir: str = None, do_icdcode: 
     idx = pd.Index(nct_ids, name="nct_id")
     out = pd.DataFrame(index=idx)
 
-    studies = load_table("studies", **kw).set_index("nct_id").reindex(idx)
+    # load_table_rows throughout, not load_table's/load_table_columns's
+    # full-table read -- confirmed live (T28b's OOM, 2026-08-28): reading
+    # every row of eligibilities (900MB on disk, includes the large
+    # free-text `criteria` column), brief_summaries (421MB, `description`),
+    # facilities (389MB), interventions (217MB) and the rest, THEN
+    # filtering down to a handful of nct_ids after the fact, still means
+    # holding the whole table in memory first regardless of how few
+    # columns are requested -- column-narrowing alone only got a 3.78GB
+    # kill down to ~4GB peak, not a fix. Row-filtering during a chunked
+    # read (load_table_rows) bounds peak memory to one chunk at a time
+    # instead of the whole table, which is what this function actually
+    # needs: it only ever wants a handful of trials.
+    studies_cols = ["nct_id", "brief_title", "enrollment", "number_of_arms", "phase", "study_type",
+                    "has_expanded_access", "has_dmc", "is_fda_regulated_device",
+                    "is_fda_regulated_drug", "plan_to_share_ipd"]
+    studies = load_table_rows("studies", nct_ids, studies_cols, **kw).set_index("nct_id").reindex(idx)
     out["brief_title"] = studies["brief_title"] if "brief_title" in studies else pd.NA
     out["enrollment"] = studies.get("enrollment")
     out["number_of_arms"] = studies.get("number_of_arms")
@@ -190,18 +205,24 @@ def emit_trialbench_schema(nct_ids: list, snapshot_dir: str = None, do_icdcode: 
     out["oversight_info/is_fda_regulated_drug"] = studies.get("is_fda_regulated_drug").map(_YESNO)
     out["patient_data/sharing_ipd"] = studies.get("plan_to_share_ipd").map(
         {"YES": "Yes", "NO": "No", "UNDECIDED": "Undecided"})
+    del studies
 
-    bs = load_table("brief_summaries", **kw).set_index("nct_id")
+    bs = load_table_rows("brief_summaries", nct_ids, ["nct_id", "description"], **kw).set_index("nct_id")
     out["brief_summary/textblock"] = bs["description"].reindex(idx) if "description" in bs else pd.NA
+    del bs
 
-    elig = load_table("eligibilities", **kw).set_index("nct_id").reindex(idx)
+    elig_cols = ["nct_id", "criteria", "gender", "healthy_volunteers", "minimum_age", "maximum_age"]
+    elig = load_table_rows("eligibilities", nct_ids, elig_cols, **kw).set_index("nct_id").reindex(idx)
     out["eligibility/criteria/textblock"] = elig.get("criteria")
     out["eligibility/gender"] = elig.get("gender")
     out["eligibility/healthy_volunteers"] = elig.get("healthy_volunteers")
     out["eligibility/minimum_age"] = elig.get("minimum_age")
     out["eligibility/maximum_age"] = elig.get("maximum_age")
+    del elig
 
-    designs = load_table("designs", **kw).set_index("nct_id").reindex(idx)
+    designs_cols = ["nct_id", "allocation", "intervention_model", "intervention_model_description",
+                    "masking", "masking_description", "primary_purpose", *_MASKING_ROLE_COLS]
+    designs = load_table_rows("designs", nct_ids, designs_cols, **kw).set_index("nct_id").reindex(idx)
     out["study_design_info/allocation"] = designs.get("allocation")
     out["study_design_info/intervention_model"] = designs.get("intervention_model")
     out["study_design_info/intervention_model_description"] = designs.get("intervention_model_description")
@@ -212,19 +233,20 @@ def emit_trialbench_schema(nct_ids: list, snapshot_dir: str = None, do_icdcode: 
     out["study_design_info/masking_num"] = n_masked_roles if isinstance(n_masked_roles, pd.Series) else pd.NA
     for role, col in _MASKING_ROLE_COLS.items():
         out[col] = (designs[role] == "t").astype(float) if role in designs else pd.NA
+    del designs
 
-    sponsors = load_table("sponsors", **kw)
+    sponsors = load_table_rows("sponsors", nct_ids, ["nct_id", "lead_or_collaborator", "agency_class"], **kw)
     lead = sponsors[sponsors["lead_or_collaborator"] == "lead"].drop_duplicates("nct_id").set_index("nct_id")
     out["sponsors/lead_sponsor/agency_class"] = lead["agency_class"].reindex(idx)
+    del sponsors, lead
 
-    dg = load_table("design_groups", **kw)
-    dg = dg[dg["nct_id"].isin(idx)]
+    dg = load_table_rows("design_groups", nct_ids, ["nct_id", "group_type"], **kw)
     arm_counts = dg.groupby(["nct_id", "group_type"]).size().unstack(fill_value=0)
     for group_type, col in _ARM_TYPE_COLS.items():
         out[col] = arm_counts[group_type].reindex(idx).fillna(0) if group_type in arm_counts else 0.0
+    del dg, arm_counts
 
-    iv = load_table("interventions", **kw)
-    iv = iv[iv["nct_id"].isin(idx)]
+    iv = load_table_rows("interventions", nct_ids, ["nct_id", "intervention_type", "name", "description"], **kw)
     iv_counts = iv.groupby(["nct_id", "intervention_type"]).size().unstack(fill_value=0)
     for itype, col in _INTERVENTION_TYPE_COLS.items():
         out[col] = iv_counts[itype].reindex(idx).fillna(0) if itype in iv_counts else 0.0
@@ -232,25 +254,26 @@ def emit_trialbench_schema(nct_ids: list, snapshot_dir: str = None, do_icdcode: 
                                         "description": lambda s: "; ".join(sorted(set(s.dropna())))})
     out["intervention/intervention_name"] = iv_join["name"].reindex(idx)
     out["intervention/description"] = iv_join["description"].reindex(idx)
+    del iv, iv_counts, iv_join
 
-    kwds = load_table("keywords", **kw)
-    kwds = kwds[kwds["nct_id"].isin(idx)]
+    kwds = load_table_rows("keywords", nct_ids, ["nct_id", "name"], **kw)
     out["keyword"] = kwds.groupby("nct_id")["name"].apply(lambda s: "; ".join(sorted(set(s.dropna())))).reindex(idx)
+    del kwds
 
-    fac = load_table("facilities", **kw)
-    fac = fac[fac["nct_id"].isin(idx)].sort_values("city")
+    fac = load_table_rows("facilities", nct_ids, ["nct_id", "city"], **kw).sort_values("city")
     out["location/facility/address/city"] = fac.drop_duplicates("nct_id").set_index("nct_id")["city"].reindex(idx)
+    del fac
 
-    cond = load_table("conditions", **kw)
-    cond = cond[cond["nct_id"].isin(idx)]
+    cond = load_table_rows("conditions", nct_ids, ["nct_id", "name"], **kw)
     cond_lists = cond.groupby("nct_id")["name"].apply(list).reindex(idx).apply(
         lambda v: v if isinstance(v, list) else [])
     out["condition"] = cond_lists.apply(lambda v: repr(v) if v else None)
+    del cond
 
-    bcond = load_table("browse_conditions", **kw)
-    bcond = bcond[bcond["nct_id"].isin(idx)]
+    bcond = load_table_rows("browse_conditions", nct_ids, ["nct_id", "mesh_term"], **kw)
     out["condition_browse/mesh_term"] = bcond.groupby("nct_id")["mesh_term"].apply(
         lambda s: "; ".join(sorted(set(s.dropna())))).reindex(idx)
+    del bcond
 
     if do_icdcode:
         out["icdcode"] = reproduce_icdcode_column(cond_lists)

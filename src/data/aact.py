@@ -101,6 +101,80 @@ def load_table(name: str, snapshot_dir: str = SNAPSHOT_DIR) -> pd.DataFrame:
     return df
 
 
+def load_table_columns(name: str, columns, snapshot_dir: str = SNAPSHOT_DIR) -> pd.DataFrame:
+    """Like :func:`load_table`, but reads only ``columns`` from disk --
+    for the tables where a full read is a real memory problem, not just
+    wasteful. Confirmed live (T28b's OOM, 2026-08-28): ``eligibilities.txt``
+    is 900MB on disk with dozens of columns this repo never reads;
+    ``brief_summaries.txt`` 421MB, ``studies.txt`` 407MB, and
+    :func:`src.data.aact_slice.emit_trialbench_schema` loads several more
+    full-width tables the same way -- loading all of them in full, and
+    ``load_table``'s ``lru_cache`` keeping every one resident for the rest
+    of the process, is what pushed a single ``python3`` process to 3.78GB
+    resident and into the kernel OOM killer on a modest instance, before
+    any model call.
+
+    Verifies the on-disk schema first via a cheap header-only read
+    (``nrows=0``), the same guarantee ``load_table`` gives, so a column
+    this module expects going missing from a future snapshot is still
+    caught -- narrowing ``usecols`` must not also narrow that check.
+
+    Deliberately **not** cached: a caller that needs the same narrow slice
+    repeatedly should hold onto the returned DataFrame itself. Caching every
+    distinct ``columns`` tuple here would reproduce exactly the unbounded-
+    retention problem this function exists to avoid.
+    """
+    path = os.path.join(snapshot_dir, f"{name}.txt")
+    if not os.path.exists(path):
+        raise FileNotFoundError(
+            f"{path} not found. Download {SNAPSHOT_ZIP} from {SNAPSHOT_URL} (verify sha256 "
+            f"{SNAPSHOT_ZIP_SHA256}), then extract {name}.txt into {snapshot_dir}."
+        )
+    header = pd.read_csv(path, sep="|", nrows=0).columns.tolist()
+    _verify_schema(name, header)
+    columns = list(columns)
+    missing = [c for c in columns if c not in header]
+    if missing:
+        raise ValueError(f"requested column(s) {missing} not in {name}'s on-disk header: {header}")
+    return pd.read_csv(path, sep="|", usecols=columns, low_memory=False)
+
+
+def load_table_rows(name: str, nct_ids, columns, snapshot_dir: str = SNAPSHOT_DIR,
+                    chunksize: int = 50_000) -> pd.DataFrame:
+    """Like :func:`load_table_columns`, but also filters to a small set of
+    ``nct_ids`` while reading, via chunked reads -- for a lookup against a
+    handful of trials out of a huge table (e.g. 50 ids out of
+    ``brief_summaries``' ~600k rows, confirmed the dominant remaining
+    contributor to T28b's OOM after narrowing columns everywhere else:
+    even 2-3 columns of free-text ``description`` for 600k rows is real
+    memory, and this function's whole job is to never hold more than
+    ``chunksize`` rows of it at once). ``columns`` must include
+    ``"nct_id"``.
+    """
+    if "nct_id" not in columns:
+        raise ValueError("load_table_rows requires 'nct_id' in columns")
+    path = os.path.join(snapshot_dir, f"{name}.txt")
+    if not os.path.exists(path):
+        raise FileNotFoundError(
+            f"{path} not found. Download {SNAPSHOT_ZIP} from {SNAPSHOT_URL} (verify sha256 "
+            f"{SNAPSHOT_ZIP_SHA256}), then extract {name}.txt into {snapshot_dir}."
+        )
+    header = pd.read_csv(path, sep="|", nrows=0).columns.tolist()
+    _verify_schema(name, header)
+    columns = list(columns)
+    missing = [c for c in columns if c not in header]
+    if missing:
+        raise ValueError(f"requested column(s) {missing} not in {name}'s on-disk header: {header}")
+
+    wanted = set(nct_ids)
+    matches = []
+    for chunk in pd.read_csv(path, sep="|", usecols=columns, chunksize=chunksize, low_memory=False):
+        hit = chunk[chunk["nct_id"].isin(wanted)]
+        if len(hit):
+            matches.append(hit)
+    return pd.concat(matches, ignore_index=True) if matches else pd.DataFrame(columns=columns)
+
+
 # ----------------------------------------------------------------------------
 # P14.2 label recomputation -- docs/aact_label_rule.md
 # ----------------------------------------------------------------------------
@@ -109,7 +183,9 @@ def _pooled_event_rate(event_type: str, snapshot_dir: str = SNAPSHOT_DIR) -> pd.
     subjects_affected / subjects_at_risk across every ctgov_group_code (arm)
     per trial, filtered to ``event_type``. Returns a DataFrame indexed by
     nct_id with ``subjects_affected``, ``subjects_at_risk``, ``rate`` columns."""
-    ret = load_table("reported_event_totals", snapshot_dir)
+    ret = load_table_columns("reported_event_totals",
+                             ["nct_id", "ctgov_group_code", "event_type", "subjects_affected", "subjects_at_risk"],
+                             snapshot_dir)
     ret = ret[ret["event_type"] == event_type]
     pooled = ret.groupby("nct_id")[["subjects_affected", "subjects_at_risk"]].sum()
     pooled["rate"] = pooled["subjects_affected"] / pooled["subjects_at_risk"].replace(0, pd.NA)
@@ -137,7 +213,7 @@ def dropout_yn(snapshot_dir: str = SNAPSHOT_DIR) -> pd.Series:
     NOT COMPLETED (period='Overall Study'), pooled across arms. Measured
     99.96% agreement with TrialBench's patient_dropout_rate_yn Y/N on the
     32,050-trial overlap."""
-    mil = load_table("milestones", snapshot_dir)
+    mil = load_table_columns("milestones", ["nct_id", "result_group_id", "title", "period", "count"], snapshot_dir)
     overall = mil[mil["period"] == "Overall Study"]
     pivot = overall.groupby(["nct_id", "title"])["count"].sum().unstack(fill_value=0)
     not_completed = pivot.get("NOT COMPLETED", pd.Series(0, index=pivot.index, dtype=float))
@@ -164,6 +240,6 @@ def results_posted_date(snapshot_dir: str = SNAPSHOT_DIR) -> pd.Series:
     Deduplicated by nct_id before parsing (matching
     ``_join_registration_dates``'s defensive pattern) since AACT does not
     itself guarantee one row per trial in every export."""
-    studies = load_table("studies", snapshot_dir)[["nct_id", "results_first_posted_date"]]
+    studies = load_table_columns("studies", ["nct_id", "results_first_posted_date"], snapshot_dir)
     studies = studies.drop_duplicates("nct_id").set_index("nct_id")["results_first_posted_date"]
     return pd.to_datetime(studies, errors="coerce").rename("results_posted_date")

@@ -44,7 +44,7 @@ from experiments._common import Timer, git_sha, write_artifact
 from src.bedrock.client import BedrockClient, elicit_probability
 from src.bedrock.meter import Meter
 from src.bedrock.prices import is_verified, load_price_table, resolve_model_id
-from src.data.aact import load_table, mortality_yn, sae_yn
+from src.data.aact import load_table_rows, mortality_yn, sae_yn
 from src.data.aact_slice import emit_trialbench_schema, slice_ab_nct_ids
 from src.data.features import _recursive_parse_terms, concat_text
 from src.data.icd10_hierarchy import icd10_chapter
@@ -276,7 +276,13 @@ def preflight_text_identity(n_check: int = 50, data_root: str = "data", seed: in
     sample_ids = rng.choice(tb["nct_id"].values, size=min(n_check, len(tb)), replace=False) if len(tb) else []
 
     kw = {} if snapshot_dir is None else {"snapshot_dir": snapshot_dir}
-    bs = load_table("brief_summaries", **kw).set_index("nct_id")["description"]
+    # load_table_rows, not a full load: brief_summaries is 600k rows of free
+    # text (~421MB on disk) for a lookup against ~50 ids -- confirmed the
+    # dominant remaining contributor to T28b's OOM (2026-08-28) even after
+    # narrowing every other table's columns; a full read here, cached
+    # forever by load_table's lru_cache, pinned ~4.2GB resident on its own.
+    bs = load_table_rows("brief_summaries", sample_ids, ["nct_id", "description"], **kw)
+    bs = bs.set_index("nct_id")["description"]
     tb_indexed = tb.set_index("nct_id")["brief_summary/textblock"]
 
     def _normalize(text) -> str:
