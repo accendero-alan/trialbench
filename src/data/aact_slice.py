@@ -43,7 +43,7 @@ import urllib.request
 
 import pandas as pd
 
-from .aact import load_table
+from .aact import load_table, results_posted_date
 
 NLM_ICD10CM_SEARCH_URL = "https://clinicaltables.nlm.nih.gov/api/icd10cm/v3/search"
 
@@ -130,6 +130,41 @@ def reproduce_icdcode_column(condition_lists: pd.Series, cache: dict = None,
                 per_condition_lists.append(repr(codes))
         out.append(repr(per_condition_lists) if per_condition_lists else None)
     return pd.Series(out, index=condition_lists.index)
+
+
+def slice_ab_nct_ids(cutoff: "pd.Timestamp | str", snapshot_dir: str = None) -> dict:
+    """P14.5's slice (a)/(b) partition (`docs/p14_5_n_gate.md`), for an
+    arbitrary cutoff -- previously only ever run ad-hoc, output never
+    checked in (that document's own Data section says so;
+    `docs/t28b_opus_recall_spec.md` flagged the gap this closes).
+
+    - **(a)** registered pre-cutoff, results posted post-cutoff:
+      `study_first_posted_date < cutoff` and `results_first_posted_date >
+      cutoff` -- trial identity known, outcome not memorisable.
+    - **(b)** fully post-cutoff, both dates after cutoff -- trial unknown.
+
+    `cutoff` should already be a resolved month-end timestamp (e.g.
+    `experiments/t28a_contamination_probes.py`'s `_cutoff_to_date`,
+    `pd.Period("2025-03", freq="M").end_time`), not a `"YYYY-MM"` string,
+    to match p14_5's own reading exactly -- passed through
+    `pd.Timestamp(cutoff)` either way so a raw string still works, just
+    without the month-end rounding.
+
+    Returns `{"a": [nct_id, ...], "b": [nct_id, ...]}` -- nct_id lists,
+    not rows. Feed either list into `emit_trialbench_schema` for
+    TrialBench-shaped columns.
+    """
+    cutoff = pd.Timestamp(cutoff)
+    kw = {} if snapshot_dir is None else {"snapshot_dir": snapshot_dir}
+    studies = load_table("studies", **kw)[["nct_id", "study_first_posted_date"]]
+    studies = studies.drop_duplicates("nct_id").set_index("nct_id")["study_first_posted_date"]
+    registration = pd.to_datetime(studies, errors="coerce")
+    results = results_posted_date(**kw)
+
+    both = pd.DataFrame({"reg": registration, "res": results})
+    slice_a = both.index[(both["reg"] < cutoff) & (both["res"] > cutoff)].tolist()
+    slice_b = both.index[(both["reg"] > cutoff) & (both["res"] > cutoff)].tolist()
+    return {"a": sorted(slice_a), "b": sorted(slice_b)}
 
 
 def emit_trialbench_schema(nct_ids: list, snapshot_dir: str = None, do_icdcode: bool = True) -> pd.DataFrame:

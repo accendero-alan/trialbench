@@ -17,6 +17,7 @@ import pandas as pd
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from src.data.aact import SNAPSHOT_DIR, load_table, results_posted_date  # noqa: E402
+from src.data.aact_slice import slice_ab_nct_ids  # noqa: E402
 
 _SNAPSHOT_PRESENT = os.path.exists(os.path.join(SNAPSHOT_DIR, "studies.txt"))
 
@@ -81,6 +82,21 @@ def test_dedup_by_nct_id():
     print("dedup OK: no duplicate nct_id in the result")
 
 
+def test_slice_ab_matches_p14_5_n_gate():
+    """docs/p14_5_n_gate.md's own documented counts for Claude Opus 4.5's
+    2025-03 cutoff: slice (a) = 9,046, slice (b) = 208. That document's own
+    numbers came from an ad-hoc script never checked in -- this is the
+    first committed, reproducible version, so matching those exact counts
+    (not just "close") is the test."""
+    cutoff = pd.Period("2025-03", freq="M").end_time
+    s = slice_ab_nct_ids(cutoff)
+    assert len(s["a"]) == 9046, f"slice (a): expected 9046, got {len(s['a'])}"
+    assert len(s["b"]) == 208, f"slice (b): expected 208, got {len(s['b'])}"
+    assert len(set(s["a"]) & set(s["b"])) == 0, "slice (a) and (b) must be disjoint by construction"
+    assert s["a"] == sorted(s["a"]) and s["b"] == sorted(s["b"]), "both slices should be sorted, deterministic"
+    print(f"slice_ab OK: |a|={len(s['a'])}, |b|={len(s['b'])}, disjoint")
+
+
 if __name__ == "__main__":
     if not _SNAPSHOT_PRESENT:
         print(f"SKIPPED: {SNAPSHOT_DIR}/studies.txt not present locally -- "
@@ -91,4 +107,5 @@ if __name__ == "__main__":
         test_null_safe_not_fabricated()
         test_distinct_from_registration_date()
         test_dedup_by_nct_id()
+        test_slice_ab_matches_p14_5_n_gate()
         print("aact tests passed")
