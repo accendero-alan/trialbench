@@ -1,27 +1,27 @@
 # Bedrock inventory (W1, wave2-start-plan.md)
 
-Generated 2026-08-28 15:41 UTC by `deploy/w1_bedrock_inventory.py --region us-west-2`. Every section below is independently dated -- re-run any subset to refresh just that section without invalidating the rest.
+Generated 2026-08-28 16:41 UTC by `deploy/w1_bedrock_inventory.py --region us-west-2`. Every section below is independently dated -- re-run any subset to refresh just that section without invalidating the rest.
 
 ---
 
-### Item 1 -- account, region, execution role (2026-08-28 15:41 UTC)
+### Item 1 -- account, region, execution role (2026-08-28 16:41 UTC)
 
 - Account: `199751540033`
 - Caller ARN: `arn:aws:sts::199751540033:assumed-role/BedrockCliAccessRole/i-0b3ac76e78e5cf1c2`
 - Region checked: `us-west-2`
-- SKIPPED role policy introspection (likely missing `iam:List*` on the execution role itself): An error occurred (AccessDenied) when calling the ListAttachedRolePolicies operation: User: arn:aws:sts::199751540033:assumed-role/BedrockCliAccessRole/i-0b3ac76e78e5cf1c2 is not authorized to perform: iam:ListAttachedRolePolicies on resource: role BedrockCliAccessRole because no identity-based policy allows the iam:ListAttachedRolePolicies action. Go to https://us-east-1.console.aws.amazon.com/iam/home?region=us-east-1#/authorization-details/9fwl8rk7s35sljltb3mkkdi7f for complete details, or call the GetRequestAuthorizationDetails API with the following authorization id: 9fwl8rk7s35sljltb3mkkdi7f
+- SKIPPED role policy introspection (likely missing `iam:List*` on the execution role itself): An error occurred (AccessDenied) when calling the ListAttachedRolePolicies operation: User: arn:aws:sts::199751540033:assumed-role/BedrockCliAccessRole/i-0b3ac76e78e5cf1c2 is not authorized to perform: iam:ListAttachedRolePolicies on resource: role BedrockCliAccessRole because no identity-based policy allows the iam:ListAttachedRolePolicies action. Go to https://us-east-1.console.aws.amazon.com/iam/home?region=us-east-1#/authorization-details/ejsk06qtimkkubln9lbjmt1h for complete details, or call the GetRequestAuthorizationDetails API with the following authorization id: ejsk06qtimkkubln9lbjmt1h
 
-Required per P13.11: `bedrock:InvokeModel`, `bedrock:CreateModelInvocationJob`, `bedrock:GetModelInvocationJob`, `bedrock:CreatePromptRouter`, `s3:GetObject`/`s3:PutObject` on the batch bucket, nothing else. Diff the policy above against this list by hand.
+Required per P13.11: `bedrock:InvokeModel`, `bedrock:CreateModelInvocationJob`, `bedrock:GetModelInvocationJob`, `bedrock:CreatePromptRouter`, `s3:GetObject`/`s3:PutObject` on the batch bucket -- **plus, confirmed live 2026-08-28 (Claude Opus 4.5's first synchronous Converse call from this exact role failed AccessDeniedException), `aws-marketplace:ViewSubscriptions`, `aws-marketplace:Subscribe`, `aws-marketplace:Unsubscribe`** -- every third-party model needs these on first invocation per account (AWS's own 'automatic model access' subscription flow), not just the batch execution role P13.8's probe found this on originally. Two more per-account prerequisites this role's policy cannot fix: Anthropic models specifically require completing the 'First Time Use' (FTU) form once per account before first invocation (Bedrock console, separate from IAM), and the account needs a valid AWS Marketplace payment method on file. Diff the policy above against this full list by hand.
 
 ---
 
-### Item 4 -- quotas (RPM / TPM, on-demand and batch) (2026-08-28 15:41 UTC)
+### Item 4 -- quotas (RPM / TPM, on-demand and batch) (2026-08-28 16:41 UTC)
 
 SKIPPED: An error occurred (AccessDeniedException) when calling the ListAWSDefaultServiceQuotas operation: User: arn:aws:sts::199751540033:assumed-role/BedrockCliAccessRole/i-0b3ac76e78e5cf1c2 is not authorized to perform: servicequotas:ListAWSDefaultServiceQuotas because no identity-based policy allows the servicequotas:ListAWSDefaultServiceQuotas action
 
 ---
 
-### Item 6 -- router feasibility, item 7 (partial) -- one real routed call (2026-08-28 15:41 UTC)
+### Item 6 -- router feasibility, item 7 (partial) -- one real routed call (2026-08-28 16:41 UTC)
 
 **wave2-nova-lite-pro-v1** (members=['amazon.nova-lite-v1:0', 'amazon.nova-pro-v1:0'], responseQualityDifference=0.5)
   - FAIL (AccessDeniedException): User: arn:aws:sts::199751540033:assumed-role/BedrockCliAccessRole/i-0b3ac76e78e5cf1c2 is not authorized to perform: bedrock:CreatePromptRouter on resource: arn:aws:bedrock:us-west-2::foundation-model/amazon.nova-lite-v1:0 because no identity-based policy allows the bedrock:CreatePromptRouter action
@@ -33,16 +33,16 @@ No router spec succeeded -- item 7's live-run half cannot proceed until one does
 
 ---
 
-### Item 8 -- logprob availability, DeepSeek V3.2 / Llama 4 Maverick (2026-08-28 15:41 UTC)
+### Item 8 -- logprob availability, DeepSeek V3.2 / Llama 4 Maverick (2026-08-28 16:41 UTC)
 
 **deepseek.v3-2** (`deepseek.v3.2`)
   - call with additionalModelRequestFields={'logprobs': True} succeeded. Full response (inspect for any logprob-shaped field):
     ```
-    {'ResponseMetadata': {'RequestId': '9d9f136d-af04-4a9f-a921-607705bcc29c', 'HTTPStatusCode': 200, 'HTTPHeaders': {'date': 'Fri, 28 Aug 2026 15:41:04 GMT', 'content-type': 'application/json', 'content-length': '203', 'connection': 'keep-alive', 'x-amzn-requestid': '9d9f136d-af04-4a9f-a921-607705bcc29c'}, 'RetryAttempts': 0}, 'output': {'message': {'role': 'assistant', 'content': [{'text': 'OK'}]}}, 'stopReason': 'end_turn', 'usage': {'inputTokens': 11, 'outputTokens': 2, 'totalTokens': 13}, 'metrics': {'latencyMs': 175}}
+    {'ResponseMetadata': {'RequestId': 'ba9252fe-b4e3-43e3-9169-8aa42c1a808c', 'HTTPStatusCode': 200, 'HTTPHeaders': {'date': 'Fri, 28 Aug 2026 16:41:19 GMT', 'content-type': 'application/json', 'content-length': '203', 'connection': 'keep-alive', 'x-amzn-requestid': 'ba9252fe-b4e3-43e3-9169-8aa42c1a808c'}, 'RetryAttempts': 0}, 'output': {'message': {'role': 'assistant', 'content': [{'text': 'OK'}]}}, 'stopReason': 'end_turn', 'usage': {'inputTokens': 11, 'outputTokens': 2, 'totalTokens': 13}, 'metrics': {'latencyMs': 166}}
     ```
   - call with additionalModelRequestFields={'return_logprobs': True} succeeded. Full response (inspect for any logprob-shaped field):
     ```
-    {'ResponseMetadata': {'RequestId': '46f039a8-cc2d-4048-afe8-51f53403bd13', 'HTTPStatusCode': 200, 'HTTPHeaders': {'date': 'Fri, 28 Aug 2026 15:41:04 GMT', 'content-type': 'application/json', 'content-length': '203', 'connection': 'keep-alive', 'x-amzn-requestid': '46f039a8-cc2d-4048-afe8-51f53403bd13'}, 'RetryAttempts': 0}, 'output': {'message': {'role': 'assistant', 'content': [{'text': 'OK'}]}}, 'stopReason': 'end_turn', 'usage': {'inputTokens': 11, 'outputTokens': 2, 'totalTokens': 13}, 'metrics': {'latencyMs': 171}}
+    {'ResponseMetadata': {'RequestId': '3d08a002-c949-45f4-92a1-903d65cf315c', 'HTTPStatusCode': 200, 'HTTPHeaders': {'date': 'Fri, 28 Aug 2026 16:41:19 GMT', 'content-type': 'application/json', 'content-length': '203', 'connection': 'keep-alive', 'x-amzn-requestid': '3d08a002-c949-45f4-92a1-903d65cf315c'}, 'RetryAttempts': 0}, 'output': {'message': {'role': 'assistant', 'content': [{'text': 'OK'}]}}, 'stopReason': 'end_turn', 'usage': {'inputTokens': 11, 'outputTokens': 2, 'totalTokens': 13}, 'metrics': {'latencyMs': 239}}
     ```
 
 **meta.llama4-maverick-17b** (`us.meta.llama4-maverick-17b-instruct-v1:0`)
@@ -51,11 +51,9 @@ No router spec succeeded -- item 7's live-run half cannot proceed until one does
 
 Record the answer either way in `src/bedrock/client.py`'s module docstring and `wave2-start-plan.md` -- a clean fail on both guessed keys is still an answer ("no logprob path found"), not a blocker; do not leave this re-run indefinitely chasing parameter names without checking each provider's own Bedrock API reference first.
 
-**Read on this run (not from the script's own text above): DeepSeek's two calls returned `200 OK` with no logprob-shaped field anywhere in the response -- the unknown `additionalModelRequestFields` key was silently accepted and ignored, not validated and rejected the way Llama's was. That is a silent no-op, not a confirmed rejection and not confirmed support -- a different symptom from Llama's hard ValidationException, but the same underlying answer: no logprob path found on either model. Consistent with the already-committed W1.8 finding (`78920dd`, 2026-08-27); this run is corroborating live evidence via a slightly different mechanism, not a new result.**
-
 ---
 
-### Item 3 -- live console prices (MANUAL, not automatable) (2026-08-28 15:41 UTC)
+### Item 3 -- live console prices (MANUAL, not automatable) (2026-08-28 16:41 UTC)
 
 The public pricing page (https://aws.amazon.com/bedrock/pricing/) renders its tables client-side and cannot be fetched by a script or an API call. Do this by hand, once, right before P15 is closed out:
 
@@ -66,7 +64,7 @@ The public pricing page (https://aws.amazon.com/bedrock/pricing/) renders its ta
 
 ---
 
-### Item 7 -- routing fee, remaining manual half (2026-08-28 15:41 UTC)
+### Item 7 -- routing fee, remaining manual half (2026-08-28 16:41 UTC)
 
 The automated half (item 6, above) issues one real routed call so a genuine fee line exists in the bill. To close item 7 out:
 
@@ -74,10 +72,8 @@ The automated half (item 6, above) issues one real routed call so a genuine fee 
 2. 24h+ after the probe call above, check Cost Explorer for the routing-fee line item and confirm it matches `routing_fee_per_1k_requests_usd` in `configs/bedrock_prices.yaml` (currently $1.00/1k, unverified).
 3. Set `routing_fee_verified: true` once confirmed by either channel.
 
-**Blocked on item 6's AccessDeniedException above: no router exists, so no routed call was ever issued, so there is no fee line to reconcile yet. This item cannot proceed until `bedrock:CreatePromptRouter` is granted and item 6 is re-run.**
-
 ---
 
-### Item 5 -- batch eligibility (2026-08-28 15:41 UTC)
+### Item 5 -- batch eligibility (2026-08-28 16:41 UTC)
 
 Not run this pass -- pass `--run-batch-probe --s3-bucket <bucket> --batch-role-arn <arn>` once the batch bucket and execution role exist. Do this after item 4's quota check, not before (a probe below the true minimum fails for the wrong reason).
