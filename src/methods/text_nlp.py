@@ -21,14 +21,15 @@ from .registry import register
 _ENCODER_CACHE = {}
 
 
-def _get_encoder(model_name: str, revision: str = None):
-    key = (model_name, revision)
+def _get_encoder(model_name: str, revision: str = None, device: str = "cpu"):
+    key = (model_name, revision, device)
     if key not in _ENCODER_CACHE:
         from transformers import AutoModel, AutoTokenizer
 
         tok = AutoTokenizer.from_pretrained(model_name, revision=revision)
         model = AutoModel.from_pretrained(model_name, revision=revision)
         model.eval()
+        model.to(device)
         _ENCODER_CACHE[key] = (tok, model)
     return _ENCODER_CACHE[key]
 
@@ -193,8 +194,11 @@ class SapBERTEncoder:
     (not per row-set like ``ClinicalEmbeddings`` -- condition strings repeat
     heavily across trials, and T25/T26 both need vectors for individual
     strings, not a fixed row-aligned matrix) under
-    ``results/cache/sapbert/``. GPU (T25's budget note); falls back to CPU if
-    none is available. Not a ``BaseMethod`` -- T25 composes this encoder's
+    ``results/cache/sapbert/``. GPU (T25's budget note) when available (real
+    device placement, checked with ``torch.cuda.is_available()`` -- fixed
+    2026-08-27, wave1-preflight-review.md L1: this used to be CPU-only
+    despite the docstring's claim, with no ``.to(device)`` anywhere and a
+    bare ``.numpy()`` that would have raised on a CUDA tensor). Not a ``BaseMethod`` -- T25 composes this encoder's
     output with other blocks (multi-hot, MeSH graph embeddings) in ways that
     vary per arm, so it's a featurizer, built once here and wired up when
     T25 actually runs.
@@ -208,6 +212,12 @@ class SapBERTEncoder:
     BATCH_SIZE = 64
     CACHE_DIR = os.path.join("results", "cache", "sapbert")
     POOLING = "mean"
+
+    def __init__(self, device: str = None):
+        if device is None:
+            import torch
+            device = "cuda" if torch.cuda.is_available() else "cpu"
+        self.device = device
 
     def _cache_path(self, text: str) -> str:
         key_src = "|".join([self.MODEL_NAME, self.REVISION, str(self.MAX_LENGTH), self.POOLING, text])
@@ -232,14 +242,15 @@ class SapBERTEncoder:
         if to_encode:
             import torch
 
-            tok, model = _get_encoder(self.MODEL_NAME, revision=self.REVISION)
+            tok, model = _get_encoder(self.MODEL_NAME, revision=self.REVISION, device=self.device)
             with torch.no_grad():
                 for i in range(0, len(to_encode), self.BATCH_SIZE):
                     batch = to_encode[i:i + self.BATCH_SIZE]
                     enc = tok(batch, padding=True, truncation=True,
                               max_length=self.MAX_LENGTH, return_tensors="pt")
+                    enc = {k: v.to(self.device) for k, v in enc.items()}
                     out_t = model(**enc)
-                    pooled = _mean_pool(out_t.last_hidden_state, enc["attention_mask"]).numpy()
+                    pooled = _mean_pool(out_t.last_hidden_state, enc["attention_mask"]).cpu().numpy()
                     for t, vec in zip(batch, pooled):
                         vec = vec.astype(np.float32)
                         out[t] = vec
@@ -249,11 +260,14 @@ class SapBERTEncoder:
                         os.replace(tmp_path + ".npy", paths[t])
         return out
 
-    def trial_vectors(self, condition_lists) -> np.ndarray:
+    def trial_vectors(self, condition_lists, pool: str = "mean") -> np.ndarray:
         """``condition_lists``: one list of condition strings per trial ->
-        ``(n, 768)``, each row the mean of that trial's condition-string
+        ``(n, 768)``, each row the pooled (mean, or ``pool="max"`` for T25's
+        recorded variant) combination of that trial's condition-string
         vectors (all-zero if the trial has none -- pair with a
         ``has_condition`` presence control, per the T21 pattern)."""
+        if pool not in ("mean", "max"):
+            raise ValueError(f"unknown pool {pool!r}, expected 'mean' or 'max'")
         all_strings = [s for terms in condition_lists for s in terms]
         vecs = self.encode_strings(all_strings)
         dim = next(iter(vecs.values())).shape[0] if vecs else 768
@@ -261,5 +275,5 @@ class SapBERTEncoder:
         for i, terms in enumerate(condition_lists):
             rows = [vecs[t] for t in terms if t in vecs]
             if rows:
-                out[i] = np.mean(rows, axis=0)
+                out[i] = np.max(rows, axis=0) if pool == "max" else np.mean(rows, axis=0)
         return out

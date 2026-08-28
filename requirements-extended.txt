@@ -4,9 +4,18 @@
 # --- Tier B: deep tabular ---
 # torch needs a separate install first:
 #   pip install torch --index-url https://download.pytorch.org/whl/cpu   (CPU, the repo default)
-#   pip install torch                                                    (GPU build, needs a CUDA driver --
-#                                                                          the disease-representation campaign
-#                                                                          only, see CLAUDE.md)
+#   pip install torch --index-url https://download.pytorch.org/whl/cu130 (GPU build, needs a CUDA
+#                                                                          driver -- the disease-
+#                                                                          representation campaign
+#                                                                          only, see CLAUDE.md.
+#                                                                          Match the cuNNN tag to the
+#                                                                          machine's driver; on Windows
+#                                                                          a bare `pip install torch`
+#                                                                          resolves to the +cpu wheel
+#                                                                          even with a GPU present --
+#                                                                          verified 2026-08-27, this
+#                                                                          comment previously claimed
+#                                                                          otherwise.)
 # (deploy/bootstrap_ec2.sh --extended does the CPU install automatically.) Once
 # torch is in place, the two lines below are plain PyPI installs.
 # tabpfn needs a one-time free license token before it'll actually run --

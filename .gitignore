@@ -22,3 +22,10 @@ results/experiments/_snapshots/
 
 # Regenerable report output (experiments/make_figures.py) -- not tracked.
 /figures/
+
+# T25's per-arm --output-dir runs (predictions/ + runs/, same shape as the
+# already-ignored results/runs/ and results/predictions/, just rooted
+# outside results/). Regenerable; T25 alone is 5.4h so keep locally but
+# don't bloat the repo -- results/experiments/t25_dense_vs_sparse.json is
+# the tracked summary.
+/results_t25_*/
