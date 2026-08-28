@@ -36,6 +36,7 @@ Usage:
 from __future__ import annotations
 
 import argparse
+import re
 
 import numpy as np
 import pandas as pd
@@ -50,7 +51,11 @@ from src.data.features import _recursive_parse_terms, concat_text
 from src.data.icd10_hierarchy import icd10_chapter
 from src.data.loader import load_task_phase
 from src.data.serialize import DISEASE_LEAK_COLS, render_arm
-from src.eval.pooled_bootstrap import two_sample_cluster_bootstrap
+from src.eval.pooled_bootstrap import (
+    diff_in_diff_bootstrap,
+    one_sample_cluster_bootstrap,
+    two_sample_cluster_bootstrap,
+)
 from src.methods.llm import TASK_QUESTIONS, _build_verbalized_prompt
 from src.methods.text_nlp import _TfidfLogRegBase
 
@@ -86,6 +91,28 @@ DISEASE_SWAP_MOVE_THRESHOLD = 0.05
 DISEASE_SWAP_INSENSITIVITY_THRESHOLD = 0.20
 
 OPUS_MODEL_KEY = "anthropic.claude-opus-4-5"
+
+# docs/t28b_reanalysis_plan.md R1: balanced_accuracy thresholds the
+# verbalized probability at a hard 0.5, and verbalized probabilities are
+# usually badly calibrated (LLM_CONTAMINATION_PLAN.md Sec1, disqualifier 3)
+# -- a fixed threshold interacting with a base-rate shift between arms can
+# manufacture a "drop" that is a calibration artifact, not lost
+# discrimination. AUROC/PR-AUC score the same continuous probabilities
+# without a threshold, so they're what R1/R2 actually decide the verdict
+# on; balanced_accuracy is still computed and reported (at this recorded
+# threshold), but moved to a secondary column, per the reanalysis plan's
+# explicit instruction.
+BALANCED_ACCURACY_THRESHOLD = 0.5
+DECISION_METRIC = "auroc"
+REPORTED_METRICS = ("auroc", "prauc", "balanced_accuracy")
+
+# T28a's per-task point estimates (results/experiments/t28a_probe_gate.json,
+# git_sha 1f68a6d7's lineage) -- what funded T28b and what R4 checks T28b's
+# Arm A against.
+T28A_OPUS_POINT_ESTIMATES = {
+    "mortality_rate_yn": 0.829,
+    "serious_adverse_rate_yn": 0.769,
+}
 
 
 # ----------------------------------------------------------------------------
@@ -286,27 +313,32 @@ def preflight_text_identity(n_check: int = 50, data_root: str = "data", seed: in
     tb_indexed = tb.set_index("nct_id")["brief_summary/textblock"]
 
     def _normalize(text) -> str:
-        # Two confirmed-benign, systematic formatting differences between
-        # the two pipelines, neither a content difference: (1) TrialBench
-        # keeps raw \r\n-wrapped whitespace from the original XML, AACT's
-        # copy is whitespace-normalized -- collapse all whitespace runs to
-        # single spaces; (2) AACT's pipe-delimited export encodes an
-        # embedded paragraph break as a literal "~" (to avoid a real
-        # newline breaking the row-oriented file format) where TrialBench
-        # collapses it to a space -- confirmed live on a real mismatch
-        # (NCT02563561: identical 870-char content, "~" vs " " at the same
-        # positions). Treat "~" as whitespace too before comparing content.
-        # (3) AACT backslash-escapes literal square brackets ("\[PSP\]"
-        # where TrialBench has plain "[PSP]", markdown-style) -- confirmed
-        # live on NCT04399551. (4) AACT uses "*" for a bullet marker where
-        # TrialBench uses "-" for the identical list -- confirmed live on
-        # NCT01727414 (both renderings 1933 chars, word-for-word
-        # identical apart from the marker). All four are confirmed-benign
-        # formatting/markup differences between the two export pipelines,
-        # never a content difference, checked by hand on every mismatch
-        # sampled during development -- not assumed.
-        t = (str(text).replace("~", " ").replace("\\[", "[").replace("\\]", "]")
-            .replace(" * ", " - "))
+        # Confirmed-benign, systematic formatting differences between the
+        # two pipelines, never a content difference -- checked by hand on
+        # every mismatch sampled during development, not assumed:
+        # (1) TrialBench keeps raw \r\n-wrapped whitespace from the
+        # original XML, AACT's copy is whitespace-normalized -- collapse
+        # all whitespace runs to single spaces. (2) AACT's pipe-delimited
+        # export encodes an embedded paragraph break as a literal "~" (to
+        # avoid a real newline breaking the row-oriented file format)
+        # where TrialBench collapses it to a space (NCT02563561). (3) AACT
+        # backslash-escapes markdown-significant characters TrialBench
+        # leaves bare: brackets (NCT04399551, "\[PSP\]"), a line-leading
+        # hyphen bullet (NCT01248455, "\- To evaluate"), and angle brackets
+        # (NCT01844765, "\<18"; NCT00640159, "p \< 0.001") -- a regex
+        # covering the standard markdown-escapable set, rather than adding
+        # one more literal .replace() per character discovered by sampling,
+        # since more will exist that this sample didn't happen to hit.
+        # (4) AACT uses "*" for a bullet marker where TrialBench uses "-"
+        # for the identical list (NCT01727414, 1933 chars, word-for-word
+        # identical apart from the marker). (5) AACT strips literal
+        # double-quote characters TrialBench keeps around an emphasized
+        # word (NCT00640159, `"OFF"` vs `OFF`) -- drop both sides' quote
+        # marks entirely rather than guess which side is "original."
+        # (6) AACT also escapes "^" (superscript markdown, NCT02747043:
+        # "mg/m\^2" vs "mg/m^2").
+        t = str(text).replace("~", " ").replace('"', "").replace(" * ", " - ")
+        t = re.sub(r"\\([\[\]()*_`<>#+.!^-])", r"\1", t)
         return " ".join(t.split())
 
     n_identical, n_checked, mismatches = 0, 0, []
@@ -445,6 +477,106 @@ def swap_disease(row: pd.Series, donor_pool: dict, rng: np.random.Generator) -> 
 
 
 # ----------------------------------------------------------------------------
+# R1/R2 -- bootstrap every reported metric, and align opus/reference onto
+# the same rows for the paired difference-in-differences test
+# ----------------------------------------------------------------------------
+def bootstrap_all_metrics(x_df: pd.DataFrame, y_df: pd.DataFrame, n_resamples: int, seed: int) -> dict:
+    """`two_sample_cluster_bootstrap` under each of REPORTED_METRICS, so
+    every contrast reports AUROC/PR-AUC (threshold-free, R1) alongside
+    balanced_accuracy (thresholded at BALANCED_ACCURACY_THRESHOLD,
+    secondary/contextual only) rather than balanced_accuracy alone."""
+    return {
+        metric: two_sample_cluster_bootstrap(
+            x_df["nct_id"].values, x_df["p14_label"].values, x_df["proba"].values,
+            y_df["nct_id"].values, y_df["p14_label"].values, y_df["proba"].values,
+            metric=metric, n_resamples=n_resamples, seed=seed,
+        )
+        for metric in REPORTED_METRICS
+    }
+
+
+def align_opus_and_reference(opus_df: pd.DataFrame, ref_df: pd.DataFrame) -> tuple:
+    """`score_arm` and `score_arm_reference` iterate rows in different
+    orders (the latter groups by endpoint first), so opus_df and ref_df
+    are NOT positionally aligned even though they cover the same trials --
+    an explicit join on (nct_id, endpoint, p14_label) is required before
+    treating same-index entries as the same row, which
+    diff_in_diff_bootstrap depends on (it needs proba_method[i] and
+    proba_ref[i] to be the same trial on every draw, not just the same
+    arm)."""
+    merged = opus_df.merge(ref_df, on=["nct_id", "endpoint", "p14_label"], suffixes=("_opus", "_ref"))
+    return (merged["nct_id"].values, merged["p14_label"].values,
+           merged["proba_opus"].values, merged["proba_ref"].values)
+
+
+# ----------------------------------------------------------------------------
+# R3 -- disease-swap granularity. Opus emits coarse verbalized integers;
+# the reference is continuous and essentially never moves less than 0.05
+# by chance -- that resolution mismatch alone could produce an
+# insensitivity gap with no memorisation involved, per
+# docs/t28b_reanalysis_plan.md R3.
+# ----------------------------------------------------------------------------
+def _distinct_value_profile(values) -> dict:
+    values = np.asarray(values, dtype=float)
+    if len(values) == 0:
+        return {"n": 0, "n_distinct": 0, "largest_tie_block": 0, "largest_tie_block_frac": None}
+    uniq, counts = np.unique(values, return_counts=True)
+    return {
+        "n": int(len(values)), "n_distinct": int(len(uniq)),
+        "largest_tie_block": int(counts.max()),
+        "largest_tie_block_frac": float(counts.max() / len(values)),
+    }
+
+
+def disease_swap_granularity(opus_a: pd.DataFrame, opus_swap: pd.DataFrame,
+                             ref2_swap_original: pd.DataFrame, ref2_swap: pd.DataFrame) -> dict:
+    orig_opus = opus_a.set_index(["nct_id", "endpoint"])["proba"]
+    swap_opus = opus_swap.set_index(["nct_id", "endpoint"])["proba"]
+    common = orig_opus.index.intersection(swap_opus.index)
+    opus_orig_vals, opus_swap_vals = orig_opus.loc[common], swap_opus.loc[common]
+    opus_move = (opus_orig_vals - opus_swap_vals).abs()
+
+    ref_orig = ref2_swap_original.set_index(["nct_id", "endpoint"])["proba"]
+    ref_swap = ref2_swap.set_index(["nct_id", "endpoint"])["proba"]
+    ref_common = ref_orig.index.intersection(ref_swap.index)
+    ref_orig_vals, ref_swap_vals = ref_orig.loc[ref_common], ref_swap.loc[ref_common]
+    ref_move = (ref_orig_vals - ref_swap_vals).abs()
+
+    # Discretize the reference to Opus's own observed value set: for each
+    # reference score, snap it to the nearest value Opus actually produced
+    # anywhere in Arm A, then recompute the reference's insensitivity rate
+    # at that matched resolution. If most of the granularity gap closes
+    # here, the swap comparison was reading a resolution mismatch, not
+    # differential memorisation.
+    opus_value_set = np.unique(np.concatenate([orig_opus.values, swap_opus.values])) if len(orig_opus) else np.array([])
+    def _snap(v):
+        if len(opus_value_set) == 0 or pd.isna(v):
+            return v
+        return float(opus_value_set[np.argmin(np.abs(opus_value_set - v))])
+    ref_orig_snapped = ref_orig_vals.apply(_snap)
+    ref_swap_snapped = ref_swap_vals.apply(_snap)
+    ref_move_snapped = (ref_orig_snapped - ref_swap_snapped).abs()
+
+    return {
+        "opus_value_profile_arm_a": _distinct_value_profile(opus_a["proba"].values),
+        "opus_move_exactly_zero_rate": float((opus_move == 0).mean()) if len(opus_move) else None,
+        "opus_move_nonzero_but_below_threshold_rate": (
+            float(((opus_move > 0) & (opus_move < DISEASE_SWAP_MOVE_THRESHOLD)).mean()) if len(opus_move) else None
+        ),
+        "opus_insensitivity_rate": float((opus_move < DISEASE_SWAP_MOVE_THRESHOLD).mean()) if len(opus_move) else None,
+        "reference_move_exactly_zero_rate": float((ref_move == 0).mean()) if len(ref_move) else None,
+        "reference_move_nonzero_but_below_threshold_rate": (
+            float(((ref_move > 0) & (ref_move < DISEASE_SWAP_MOVE_THRESHOLD)).mean()) if len(ref_move) else None
+        ),
+        "reference_insensitivity_rate": float((ref_move < DISEASE_SWAP_MOVE_THRESHOLD).mean()) if len(ref_move) else None,
+        "reference_insensitivity_rate_discretized_to_opus_resolution": (
+            float((ref_move_snapped < DISEASE_SWAP_MOVE_THRESHOLD).mean()) if len(ref_move_snapped) else None
+        ),
+        "n": int(len(common)),
+    }
+
+
+# ----------------------------------------------------------------------------
 # Elicitation -- identical to what T28 actually runs (src/methods/llm.py)
 # ----------------------------------------------------------------------------
 def elicit_row(client, results_dir, model_id, endpoint, row, meter):
@@ -521,64 +653,70 @@ def run(data_root="data", results_dir="results", n_arm_a=500, n_arm_b=500, n_swa
         ref2_swap_original = score_arm_reference(r2_by_endpoint, swap_candidates) if len(swap_candidates) else pd.DataFrame()
         ref2_swap = score_arm_reference(r2_by_endpoint, arm_swap) if len(arm_swap) else pd.DataFrame()
 
-        primary = two_sample_cluster_bootstrap(
-            opus_a["nct_id"].values, opus_a["p14_label"].values, opus_a["proba"].values,
-            opus_b["nct_id"].values, opus_b["p14_label"].values, opus_b["proba"].values,
-            metric="balanced_accuracy", n_resamples=n_resamples, seed=seed,
-        )
-        reference_ab = two_sample_cluster_bootstrap(
-            ref1_a["nct_id"].values, ref1_a["p14_label"].values, ref1_a["proba"].values,
-            ref1_b["nct_id"].values, ref1_b["p14_label"].values, ref1_b["proba"].values,
-            metric="balanced_accuracy", n_resamples=n_resamples, seed=seed,
-        )
+        # R1: every reported metric (AUROC/PR-AUC threshold-free, plus
+        # balanced_accuracy for context), both the primary A-vs-B contrast
+        # and the secondary A-vs-C one.
+        primary_opus = bootstrap_all_metrics(opus_a, opus_b, n_resamples, seed)
+        primary_ref = bootstrap_all_metrics(ref1_a, ref1_b, n_resamples, seed)
 
-        secondary_ac, reference_ac = None, None
+        secondary_opus, secondary_ref = None, None
         if len(opus_c):
-            secondary_ac = two_sample_cluster_bootstrap(
-                opus_a["nct_id"].values, opus_a["p14_label"].values, opus_a["proba"].values,
-                opus_c["nct_id"].values, opus_c["p14_label"].values, opus_c["proba"].values,
-                metric="balanced_accuracy", n_resamples=n_resamples, seed=seed,
-            )
-            reference_ac = two_sample_cluster_bootstrap(
-                ref1_a["nct_id"].values, ref1_a["p14_label"].values, ref1_a["proba"].values,
-                ref1_c["nct_id"].values, ref1_c["p14_label"].values, ref1_c["proba"].values,
-                metric="balanced_accuracy", n_resamples=n_resamples, seed=seed,
-            )
+            secondary_opus = bootstrap_all_metrics(opus_a, opus_c, n_resamples, seed)
+            secondary_ref = bootstrap_all_metrics(ref1_a, ref1_c, n_resamples, seed)
 
-        swap_result = None
-        if len(opus_swap):
-            # swap_candidates is a subset of arm_a's own rows, so the
-            # pre-swap Opus score for every swapped (nct_id, endpoint) pair
-            # is already sitting in opus_a -- no separate call needed, just
-            # join on (nct_id, endpoint), not nct_id alone (the same trial
-            # can appear under both endpoints with different questions/
-            # scores).
-            orig_opus = opus_a.set_index(["nct_id", "endpoint"])["proba"]
-            swap_opus = opus_swap.set_index(["nct_id", "endpoint"])["proba"]
-            common = orig_opus.index.intersection(swap_opus.index)
-            opus_move = (orig_opus.loc[common] - swap_opus.loc[common]).abs()
-            opus_insensitivity = float((opus_move < DISEASE_SWAP_MOVE_THRESHOLD).mean()) if len(opus_move) else None
+        # R2: the paired difference-in-differences on DECISION_METRIC,
+        # aligned row-for-row between Opus and the reference within each
+        # arm (see align_opus_and_reference's docstring for why this
+        # can't just zip the two DataFrames positionally).
+        nct_a, y_a, opus_proba_a, ref_proba_a = align_opus_and_reference(opus_a, ref1_a)
+        nct_b, y_b, opus_proba_b, ref_proba_b = align_opus_and_reference(opus_b, ref1_b)
+        diff_in_diff = diff_in_diff_bootstrap(
+            nct_a, y_a, opus_proba_a, ref_proba_a, nct_b, y_b, opus_proba_b, ref_proba_b,
+            metric=DECISION_METRIC, n_resamples=n_resamples, seed=seed,
+        )
 
-            ref_insensitivity = None
-            if len(ref2_swap_original) and len(ref2_swap):
-                orig_ref = ref2_swap_original.set_index(["nct_id", "endpoint"])["proba"]
-                swap_ref = ref2_swap.set_index(["nct_id", "endpoint"])["proba"]
-                ref_common = orig_ref.index.intersection(swap_ref.index)
-                ref_move = (orig_ref.loc[ref_common] - swap_ref.loc[ref_common]).abs()
-                ref_insensitivity = float((ref_move < DISEASE_SWAP_MOVE_THRESHOLD).mean()) if len(ref_move) else None
-
-            swap_result = {
-                "n": len(common),
-                "opus_insensitivity_rate": opus_insensitivity,
-                "reference_insensitivity_rate": ref_insensitivity,
-                "quarantine_ordering": (opus_insensitivity is not None
-                                       and opus_insensitivity > DISEASE_SWAP_INSENSITIVITY_THRESHOLD),
-                "note": "T22 came back INCONCLUSIVE on disease share, so low sensitivity is not "
-                       "recall on its own -- only interpretable against the reference's "
-                       "sensitivity on the same rows (docs/t28b_opus_recall_spec.md).",
+        # R4: per-endpoint split of Arm A, reconciled against T28a's
+        # per-task point estimates (n=34 each) -- distinguishes
+        # small-sample optimism from an elicitation-format effect.
+        per_endpoint_arm_a = {}
+        for endpoint in ENDPOINTS:
+            sub = opus_a[opus_a["endpoint"] == endpoint]
+            if len(sub) == 0:
+                continue
+            ci = one_sample_cluster_bootstrap(sub["nct_id"].values, sub["p14_label"].values,
+                                              sub["proba"].values, metric=DECISION_METRIC,
+                                              n_resamples=n_resamples, seed=seed)
+            ci_bal_acc = one_sample_cluster_bootstrap(sub["nct_id"].values, sub["p14_label"].values,
+                                                      sub["proba"].values, metric="balanced_accuracy",
+                                                      n_resamples=n_resamples, seed=seed)
+            t28a_point = T28A_OPUS_POINT_ESTIMATES.get(endpoint)
+            per_endpoint_arm_a[endpoint] = {
+                DECISION_METRIC: ci, "balanced_accuracy": ci_bal_acc,
+                "t28a_point_estimate_balanced_accuracy": t28a_point,
+                "t28a_point_estimate_inside_ci": (
+                    t28a_point is not None and ci_bal_acc["lo"] <= t28a_point <= ci_bal_acc["hi"]
+                ),
             }
 
-        branch, reason = decide(primary, reference_ab)
+        # R3: disease-swap granularity.
+        swap_result = None
+        if len(opus_swap):
+            granularity = disease_swap_granularity(opus_a, opus_swap, ref2_swap_original, ref2_swap)
+            swap_result = {
+                **granularity,
+                "quarantine_ordering": (granularity["opus_insensitivity_rate"] is not None
+                                       and granularity["opus_insensitivity_rate"] > DISEASE_SWAP_INSENSITIVITY_THRESHOLD),
+                "note": "T22 came back INCONCLUSIVE on disease share, so low sensitivity is not "
+                       "recall on its own -- only interpretable against the reference's "
+                       "sensitivity on the same rows (docs/t28b_opus_recall_spec.md). "
+                       "reference_insensitivity_rate_discretized_to_opus_resolution snaps the "
+                       "reference's continuous score to Opus's own observed value set before "
+                       "recomputing -- if quarantine_ordering only holds against the "
+                       "undiscretized reference, the gap is (at least partly) a resolution "
+                       "mismatch, not differential memorisation (docs/t28b_reanalysis_plan.md R3).",
+            }
+
+        branch, reason = decide(primary_opus, primary_ref, diff_in_diff)
 
     artifact = {
         "test_id": "T28b",
@@ -589,14 +727,42 @@ def run(data_root="data", results_dir="results", n_arm_a=500, n_arm_b=500, n_swa
             "model_key": model_key, "api_model_id": api_model_id, "cutoff": cutoff_str,
             "n_arm_a": n_arm_a, "n_arm_b": n_arm_b, "n_swap_requested": n_swap, "seed": seed,
             "data_root": data_root, "r1_text_cols": list(R1_TEXT_COLS), "r2_text_cols": list(R2_TEXT_COLS),
-            "n_resamples": n_resamples,
+            "n_resamples": n_resamples, "decision_metric": DECISION_METRIC,
+            "balanced_accuracy_threshold": BALANCED_ACCURACY_THRESHOLD,
+            "reported_metrics": list(REPORTED_METRICS),
+            "phase_string_format_note": (
+                "Arm A carries TrialBench's title-case phase strings (Phase2); Arms B/C carry "
+                "AACT's uppercase ones (PHASE2) plus categories absent from A entirely "
+                "(PHASE1/PHASE2, EARLY_PHASE1 -- 15.4% of Arm B per the covariates report). Not "
+                "normalized: doing so changes prompt text, changes the prompt hash, misses the "
+                "response cache, and re-bills roughly the full run's cost "
+                "(docs/t28b_reanalysis_plan.md). Deferred pending whether R1/R2 leaves a verdict "
+                "worth re-running for."
+            ),
+            "arm_c_prevalence_note": (
+                "Arm C's positive rate (mortality 9.6%, SAE 12.5%, both at n=208) is far below "
+                "Arm A's (39.6%, 67.6%), leaving roughly 20 positive trials per endpoint -- the "
+                "secondary A-vs-C contrast is uninformative by construction at this n, not a null "
+                "result, and should be read that way (docs/t28b_reanalysis_plan.md)."
+            ),
         },
         "preflight": preflight,
         "n_sampled": {"arm_a": len(arm_a), "arm_b": len(arm_b), "arm_c": len(arm_c), "swap": len(arm_swap)},
-        "primary_a_vs_b": {"opus": primary, "reference": reference_ab},
-        "secondary_a_vs_c": {"opus": secondary_ac, "reference": reference_ac},
+        "primary_a_vs_b": {"opus": primary_opus, "reference": primary_ref},
+        "secondary_a_vs_c": {"opus": secondary_opus, "reference": secondary_ref},
+        "diff_in_diff": diff_in_diff,
+        "per_endpoint_arm_a": per_endpoint_arm_a,
         "disease_swap": swap_result,
         "branch": branch, "branch_reason": reason,
+        "per_trial": {
+            "opus_arm_a": opus_a.to_dict(orient="records"), "opus_arm_b": opus_b.to_dict(orient="records"),
+            "opus_arm_c": opus_c.to_dict(orient="records") if len(opus_c) else [],
+            "opus_swap": opus_swap.to_dict(orient="records") if len(opus_swap) else [],
+            "reference_arm_a": ref1_a.to_dict(orient="records"), "reference_arm_b": ref1_b.to_dict(orient="records"),
+            "reference_arm_c": ref1_c.to_dict(orient="records") if len(ref1_c) else [],
+            "reference_swap_original": ref2_swap_original.to_dict(orient="records") if len(ref2_swap_original) else [],
+            "reference_swap": ref2_swap.to_dict(orient="records") if len(ref2_swap) else [],
+        },
         "meter": meter.summary(price_table, api_model_id, "sync"),
         "git_sha": git_sha(),
         "wall_clock_secs": round(t.secs, 1),
@@ -607,34 +773,61 @@ def run(data_root="data", results_dir="results", n_arm_a=500, n_arm_b=500, n_swa
     return artifact
 
 
-def decide(primary: dict, reference: dict) -> tuple:
-    """docs/t28b_opus_recall_spec.md's primary decision table, on the A->B
-    contrast. `primary`/`reference` are two_sample_cluster_bootstrap results
-    (delta = A - B; a positive delta with a CI excluding 0 is a real drop
-    from A to B)."""
-    opus_drops = primary["lo"] > 0  # CI excludes 0, delta > 0 -- A significantly beats B
-    ref_drops = reference["lo"] > 0
+def decide(primary_opus: dict, primary_ref: dict, diff_in_diff: dict) -> tuple:
+    """docs/t28b_reanalysis_plan.md's R1->R2 procedure, replacing the
+    original decide()'s two-independent-significance-tests logic (a
+    Gelman-Stern fallacy: testing Opus's drop and the reference's drop for
+    significance SEPARATELY never tests whether the two drops DIFFER from
+    each other, which is the actual claim -- the campaign's fourth
+    verdict-layer bug after T28a's threshold, T26's floor arm, T27's
+    direction check).
 
-    if opus_drops and not ref_drops:
+    `primary_opus`/`primary_ref` are `bootstrap_all_metrics` dicts (one
+    per DECISION_METRIC, here `auroc`, plus context metrics);
+    `diff_in_diff` is `diff_in_diff_bootstrap`'s result on the same metric.
+
+    R1 -- is Opus's own AUROC drop from A to B real, not a byproduct of
+    thresholding a poorly-calibrated verbalized probability at a fixed
+    0.5 while the base rate shifts between arms? If Opus's AUROC (a
+    threshold-free discrimination measure) is flat across A and B, any
+    earlier balanced-accuracy drop was a calibration artifact, not
+    evidence of anything -- reported and the verdict stops here.
+
+    R2 -- if AUROC does drop, does it drop MORE than the reference's own
+    AUROC drop on the identical rows? That is the actual "recall
+    demonstrated" claim; diff_in_diff's CI excluding zero is the
+    criterion, not two separately-significant deltas.
+    """
+    opus_auroc = primary_opus[DECISION_METRIC]
+    opus_drops = opus_auroc["lo"] > 0  # CI excludes 0, delta > 0 -- A significantly beats B on AUROC
+
+    if not opus_drops:
+        return ("NO_RECALL_FINDING_CALIBRATION_ARTIFACT",
+                f"R1: Opus's own {DECISION_METRIC} does not significantly drop from A to B "
+                f"(delta={opus_auroc['mean_delta']:.3f}, CI=[{opus_auroc['lo']:.3f}, "
+                f"{opus_auroc['hi']:.3f}]) -- any earlier balanced-accuracy drop (thresholded at "
+                f"{BALANCED_ACCURACY_THRESHOLD}) is read as a calibration/base-rate artifact, not "
+                f"evidence of recall. Report the threshold sensitivity as the finding.")
+
+    d = diff_in_diff
+    if d["lo"] > 0:
         return ("OUTCOME_RECALL_DEMONSTRATED",
-                f"Opus's A->B drop clears its CI (delta={primary['mean_delta']:.3f}, "
-                f"CI=[{primary['lo']:.3f}, {primary['hi']:.3f}]) and the reference's does not "
-                f"(delta={reference['mean_delta']:.3f}, CI=[{reference['lo']:.3f}, {reference['hi']:.3f}]) "
-                f"-- Opus's TrialBench figures are recall-inflated.")
-    if opus_drops and ref_drops:
-        return ("DISTRIBUTION_SHIFT_NOT_RECALL",
-                f"Both drop comparably (Opus delta={primary['mean_delta']:.3f}, "
-                f"reference delta={reference['mean_delta']:.3f}) -- Opus's arm orderings stand, "
-                f"shift noted.")
-    if not opus_drops and not ref_drops:
-        return ("NO_OUTCOME_RECALL_DETECTED",
-                f"Neither drops (Opus CI=[{primary['lo']:.3f}, {primary['hi']:.3f}], "
-                f"reference CI=[{reference['lo']:.3f}, {reference['hi']:.3f}]) -- Opus's signal "
-                f"is reading, not recall. T28 proceeds with Opus as rung 1 as designed.")
-    return ("OPUS_MORE_ROBUST_THAN_REFERENCE",
-            f"Opus does not drop (CI=[{primary['lo']:.3f}, {primary['hi']:.3f}]) but the "
-            f"reference does (delta={reference['mean_delta']:.3f}) -- reported as-is, not a "
-            f"contamination finding.")
+                f"R1: Opus's {DECISION_METRIC} drops significantly (delta="
+                f"{opus_auroc['mean_delta']:.3f}, CI=[{opus_auroc['lo']:.3f}, {opus_auroc['hi']:.3f}]). "
+                f"R2: that drop significantly exceeds the reference's own drop on the identical "
+                f"rows (diff={d['mean_diff']:.3f}, CI=[{d['lo']:.3f}, {d['hi']:.3f}], observed "
+                f"correlation rho={d['rho']}) -- Opus's TrialBench figures are recall-inflated. No "
+                f"absolute Opus number from TrialBench is quoted; T28's Opus arm is reported on "
+                f"fresh data or not at all.")
+
+    return ("INCONCLUSIVE",
+            f"R1: Opus's {DECISION_METRIC} drops significantly (delta={opus_auroc['mean_delta']:.3f}, "
+            f"CI=[{opus_auroc['lo']:.3f}, {opus_auroc['hi']:.3f}]). R2: that drop does not "
+            f"significantly exceed the reference's own drop on the identical rows "
+            f"(diff={d['mean_diff']:.3f}, CI=[{d['lo']:.3f}, {d['hi']:.3f}], observed correlation "
+            f"rho={d['rho']}) -- underpowered to separate Opus's drop from the reference's. Report "
+            f"both drops and the difference with its CI; do not read this as recall demonstrated "
+            f"or as cleared.")
 
 
 def main():
