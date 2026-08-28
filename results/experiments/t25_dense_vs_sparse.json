@@ -1,0 +1,3911 @@
+{
+  "test_id": "T25",
+  "claim_at_stake": "dense disease-entity vectors (SapBERT) versus multi-hot codes; does fusion add anything",
+  "arm_e_status": "DEFERRED -- fine-tuned encoder (PR-7) not implemented this pass (user decision, 2026-08-27). PR-7 is not evaluated by this artifact.",
+  "inputs": {
+    "fit_methods": [
+      "majority",
+      "logreg_l2",
+      "random_forest",
+      "extra_trees",
+      "lightgbm"
+    ],
+    "verdict_methods": [
+      "logreg_l2",
+      "random_forest",
+      "extra_trees",
+      "lightgbm"
+    ],
+    "seeds": [
+      42,
+      7,
+      123,
+      2024,
+      5
+    ],
+    "best_rung_per_task": {
+      "failure_reason": "char3",
+      "mortality_rate_yn": "ccsr",
+      "outcome": "char3",
+      "patient_dropout_rate_yn": "chapter",
+      "serious_adverse_rate_yn": "chapter"
+    },
+    "results_dirs": {
+      "sapbert": "results_t25_sapbert",
+      "mesh": "results_t25_mesh",
+      "concat": "results_t25_concat",
+      "sapbert_maxpool": "results_t25_sapbert_maxpool"
+    }
+  },
+  "null_check_majority": {
+    "rows": [
+      {
+        "task": "outcome",
+        "phase": "Phase1",
+        "per_arm": {
+          "sapbert": 0.43080357142857145,
+          "mesh": 0.43080357142857145,
+          "concat": 0.43080357142857145,
+          "best_code": 0.43080357142857145
+        },
+        "spread": 0.0
+      },
+      {
+        "task": "outcome",
+        "phase": "Phase2",
+        "per_arm": {
+          "sapbert": 0.36833731105807477,
+          "mesh": 0.36833731105807477,
+          "concat": 0.36833731105807477,
+          "best_code": 0.36833731105807477
+        },
+        "spread": 0.0
+      },
+      {
+        "task": "outcome",
+        "phase": "Phase3",
+        "per_arm": {
+          "sapbert": 0.5551489806586514,
+          "mesh": 0.5551489806586514,
+          "concat": 0.5551489806586514,
+          "best_code": 0.5551489806586514
+        },
+        "spread": 0.0
+      },
+      {
+        "task": "outcome",
+        "phase": "Phase4",
+        "per_arm": {
+          "sapbert": 0.40022421524663676,
+          "mesh": 0.40022421524663676,
+          "concat": 0.40022421524663676,
+          "best_code": 0.40022421524663676
+        },
+        "spread": 0.0
+      },
+      {
+        "task": "mortality_rate_yn",
+        "phase": "Phase1",
+        "per_arm": {
+          "sapbert": 0.26968973747016706,
+          "mesh": 0.26968973747016706,
+          "concat": 0.26968973747016706,
+          "best_code": 0.26968973747016706
+        },
+        "spread": 0.0
+      },
+      {
+        "task": "mortality_rate_yn",
+        "phase": "Phase2",
+        "per_arm": {
+          "sapbert": 0.45875000000000005,
+          "mesh": 0.45875000000000005,
+          "concat": 0.45875000000000005,
+          "best_code": 0.45875000000000005
+        },
+        "spread": 0.0
+      },
+      {
+        "task": "mortality_rate_yn",
+        "phase": "Phase3",
+        "per_arm": {
+          "sapbert": 0.4846560846560847,
+          "mesh": 0.4846560846560847,
+          "concat": 0.4846560846560847,
+          "best_code": 0.4846560846560847
+        },
+        "spread": 0.0
+      },
+      {
+        "task": "mortality_rate_yn",
+        "phase": "Phase4",
+        "per_arm": {
+          "sapbert": 0.17465753424657535,
+          "mesh": 0.17465753424657535,
+          "concat": 0.17465753424657535,
+          "best_code": 0.17465753424657535
+        },
+        "spread": 0.0
+      },
+      {
+        "task": "serious_adverse_rate_yn",
+        "phase": "Phase1",
+        "per_arm": {
+          "sapbert": 0.4343675417661098,
+          "mesh": 0.4343675417661098,
+          "concat": 0.4343675417661098,
+          "best_code": 0.4343675417661098
+        },
+        "spread": 0.0
+      },
+      {
+        "task": "serious_adverse_rate_yn",
+        "phase": "Phase2",
+        "per_arm": {
+          "sapbert": 0.745625,
+          "mesh": 0.745625,
+          "concat": 0.745625,
+          "best_code": 0.745625
+        },
+        "spread": 0.0
+      },
+      {
+        "task": "serious_adverse_rate_yn",
+        "phase": "Phase3",
+        "per_arm": {
+          "sapbert": 0.8465608465608465,
+          "mesh": 0.8465608465608465,
+          "concat": 0.8465608465608465,
+          "best_code": 0.8465608465608465
+        },
+        "spread": 0.0
+      },
+      {
+        "task": "serious_adverse_rate_yn",
+        "phase": "Phase4",
+        "per_arm": {
+          "sapbert": 0.3852739726027397,
+          "mesh": 0.3852739726027397,
+          "concat": 0.3852739726027397,
+          "best_code": 0.3852739726027397
+        },
+        "spread": 0.0
+      },
+      {
+        "task": "patient_dropout_rate_yn",
+        "phase": "Phase1",
+        "per_arm": {
+          "sapbert": 0.5900339750849377,
+          "mesh": 0.5900339750849377,
+          "concat": 0.5900339750849377,
+          "best_code": 0.5900339750849377
+        },
+        "spread": 0.0
+      },
+      {
+        "task": "patient_dropout_rate_yn",
+        "phase": "Phase2",
+        "per_arm": {
+          "sapbert": 0.7678684376976597,
+          "mesh": 0.7678684376976597,
+          "concat": 0.7678684376976597,
+          "best_code": 0.7678684376976597
+        },
+        "spread": 0.0
+      },
+      {
+        "task": "patient_dropout_rate_yn",
+        "phase": "Phase3",
+        "per_arm": {
+          "sapbert": 0.910377358490566,
+          "mesh": 0.910377358490566,
+          "concat": 0.910377358490566,
+          "best_code": 0.910377358490566
+        },
+        "spread": 0.0
+      },
+      {
+        "task": "patient_dropout_rate_yn",
+        "phase": "Phase4",
+        "per_arm": {
+          "sapbert": 0.7045454545454546,
+          "mesh": 0.7045454545454546,
+          "concat": 0.7045454545454546,
+          "best_code": 0.7045454545454546
+        },
+        "spread": 0.0
+      },
+      {
+        "task": "failure_reason",
+        "phase": "Phase1",
+        "per_arm": {
+          "sapbert": 0.24999999999999994,
+          "mesh": 0.24999999999999994,
+          "concat": 0.24999999999999994,
+          "best_code": 0.24999999999999994
+        },
+        "spread": 0.0
+      },
+      {
+        "task": "failure_reason",
+        "phase": "Phase2",
+        "per_arm": {
+          "sapbert": 0.25,
+          "mesh": 0.25,
+          "concat": 0.25,
+          "best_code": 0.25
+        },
+        "spread": 0.0
+      },
+      {
+        "task": "failure_reason",
+        "phase": "Phase3",
+        "per_arm": {
+          "sapbert": 0.25000000000000006,
+          "mesh": 0.25000000000000006,
+          "concat": 0.25000000000000006,
+          "best_code": 0.25000000000000006
+        },
+        "spread": 0.0
+      },
+      {
+        "task": "failure_reason",
+        "phase": "Phase4",
+        "per_arm": {
+          "sapbert": 0.25,
+          "mesh": 0.25,
+          "concat": 0.25,
+          "best_code": 0.25
+        },
+        "spread": 0.0
+      }
+    ],
+    "max_spread": 0.0,
+    "passed": true
+  },
+  "tfidf_logreg_null_check": "satisfied by construction -- tfidf_logreg is feature_view='raw' and is never touched by any tabular/codes/dense composition in this script.",
+  "per_cell_method_arm": [
+    {
+      "task": "outcome",
+      "phase": "Phase1",
+      "method": "majority",
+      "arm": "sapbert",
+      "mean_prauc": 0.43080357142857145,
+      "n_seeds": 5
+    },
+    {
+      "task": "outcome",
+      "phase": "Phase1",
+      "method": "majority",
+      "arm": "mesh",
+      "mean_prauc": 0.43080357142857145,
+      "n_seeds": 5
+    },
+    {
+      "task": "outcome",
+      "phase": "Phase1",
+      "method": "majority",
+      "arm": "concat",
+      "mean_prauc": 0.43080357142857145,
+      "n_seeds": 5
+    },
+    {
+      "task": "outcome",
+      "phase": "Phase1",
+      "method": "majority",
+      "arm": "best_code",
+      "mean_prauc": 0.43080357142857145,
+      "n_seeds": 5,
+      "best_rung_used": "char3"
+    },
+    {
+      "task": "outcome",
+      "phase": "Phase1",
+      "method": "logreg_l2",
+      "arm": "sapbert",
+      "mean_prauc": 0.5947600067192061,
+      "n_seeds": 5
+    },
+    {
+      "task": "outcome",
+      "phase": "Phase1",
+      "method": "logreg_l2",
+      "arm": "mesh",
+      "mean_prauc": 0.6350899322667146,
+      "n_seeds": 5
+    },
+    {
+      "task": "outcome",
+      "phase": "Phase1",
+      "method": "logreg_l2",
+      "arm": "concat",
+      "mean_prauc": 0.5655059403321548,
+      "n_seeds": 5
+    },
+    {
+      "task": "outcome",
+      "phase": "Phase1",
+      "method": "logreg_l2",
+      "arm": "best_code",
+      "mean_prauc": 0.6126895709126362,
+      "n_seeds": 5,
+      "best_rung_used": "char3"
+    },
+    {
+      "task": "outcome",
+      "phase": "Phase1",
+      "method": "random_forest",
+      "arm": "sapbert",
+      "mean_prauc": 0.6593750951134176,
+      "n_seeds": 5
+    },
+    {
+      "task": "outcome",
+      "phase": "Phase1",
+      "method": "random_forest",
+      "arm": "mesh",
+      "mean_prauc": 0.681077262679254,
+      "n_seeds": 5
+    },
+    {
+      "task": "outcome",
+      "phase": "Phase1",
+      "method": "random_forest",
+      "arm": "concat",
+      "mean_prauc": 0.6550283240356748,
+      "n_seeds": 5
+    },
+    {
+      "task": "outcome",
+      "phase": "Phase1",
+      "method": "random_forest",
+      "arm": "best_code",
+      "mean_prauc": 0.7293483035735226,
+      "n_seeds": 5,
+      "best_rung_used": "char3"
+    },
+    {
+      "task": "outcome",
+      "phase": "Phase1",
+      "method": "extra_trees",
+      "arm": "sapbert",
+      "mean_prauc": 0.6133039602573457,
+      "n_seeds": 5
+    },
+    {
+      "task": "outcome",
+      "phase": "Phase1",
+      "method": "extra_trees",
+      "arm": "mesh",
+      "mean_prauc": 0.6415169072864467,
+      "n_seeds": 5
+    },
+    {
+      "task": "outcome",
+      "phase": "Phase1",
+      "method": "extra_trees",
+      "arm": "concat",
+      "mean_prauc": 0.6137309644463766,
+      "n_seeds": 5
+    },
+    {
+      "task": "outcome",
+      "phase": "Phase1",
+      "method": "extra_trees",
+      "arm": "best_code",
+      "mean_prauc": 0.6871940776436634,
+      "n_seeds": 5,
+      "best_rung_used": "char3"
+    },
+    {
+      "task": "outcome",
+      "phase": "Phase1",
+      "method": "lightgbm",
+      "arm": "sapbert",
+      "mean_prauc": 0.686190360780555,
+      "n_seeds": 5
+    },
+    {
+      "task": "outcome",
+      "phase": "Phase1",
+      "method": "lightgbm",
+      "arm": "mesh",
+      "mean_prauc": 0.6810806473703036,
+      "n_seeds": 5
+    },
+    {
+      "task": "outcome",
+      "phase": "Phase1",
+      "method": "lightgbm",
+      "arm": "concat",
+      "mean_prauc": 0.6887413572574611,
+      "n_seeds": 5
+    },
+    {
+      "task": "outcome",
+      "phase": "Phase1",
+      "method": "lightgbm",
+      "arm": "best_code",
+      "mean_prauc": 0.7084466866675181,
+      "n_seeds": 5,
+      "best_rung_used": "char3"
+    },
+    {
+      "task": "outcome",
+      "phase": "Phase2",
+      "method": "majority",
+      "arm": "sapbert",
+      "mean_prauc": 0.36833731105807477,
+      "n_seeds": 5
+    },
+    {
+      "task": "outcome",
+      "phase": "Phase2",
+      "method": "majority",
+      "arm": "mesh",
+      "mean_prauc": 0.36833731105807477,
+      "n_seeds": 5
+    },
+    {
+      "task": "outcome",
+      "phase": "Phase2",
+      "method": "majority",
+      "arm": "concat",
+      "mean_prauc": 0.36833731105807477,
+      "n_seeds": 5
+    },
+    {
+      "task": "outcome",
+      "phase": "Phase2",
+      "method": "majority",
+      "arm": "best_code",
+      "mean_prauc": 0.36833731105807477,
+      "n_seeds": 5,
+      "best_rung_used": "char3"
+    },
+    {
+      "task": "outcome",
+      "phase": "Phase2",
+      "method": "logreg_l2",
+      "arm": "sapbert",
+      "mean_prauc": 0.5432648000415161,
+      "n_seeds": 5
+    },
+    {
+      "task": "outcome",
+      "phase": "Phase2",
+      "method": "logreg_l2",
+      "arm": "mesh",
+      "mean_prauc": 0.5569535068714331,
+      "n_seeds": 5
+    },
+    {
+      "task": "outcome",
+      "phase": "Phase2",
+      "method": "logreg_l2",
+      "arm": "concat",
+      "mean_prauc": 0.5112609407477529,
+      "n_seeds": 5
+    },
+    {
+      "task": "outcome",
+      "phase": "Phase2",
+      "method": "logreg_l2",
+      "arm": "best_code",
+      "mean_prauc": 0.5306955654599801,
+      "n_seeds": 5,
+      "best_rung_used": "char3"
+    },
+    {
+      "task": "outcome",
+      "phase": "Phase2",
+      "method": "random_forest",
+      "arm": "sapbert",
+      "mean_prauc": 0.6270193305482772,
+      "n_seeds": 5
+    },
+    {
+      "task": "outcome",
+      "phase": "Phase2",
+      "method": "random_forest",
+      "arm": "mesh",
+      "mean_prauc": 0.633763977072846,
+      "n_seeds": 5
+    },
+    {
+      "task": "outcome",
+      "phase": "Phase2",
+      "method": "random_forest",
+      "arm": "concat",
+      "mean_prauc": 0.6245448254185625,
+      "n_seeds": 5
+    },
+    {
+      "task": "outcome",
+      "phase": "Phase2",
+      "method": "random_forest",
+      "arm": "best_code",
+      "mean_prauc": 0.651674506177362,
+      "n_seeds": 5,
+      "best_rung_used": "char3"
+    },
+    {
+      "task": "outcome",
+      "phase": "Phase2",
+      "method": "extra_trees",
+      "arm": "sapbert",
+      "mean_prauc": 0.5718756455595368,
+      "n_seeds": 5
+    },
+    {
+      "task": "outcome",
+      "phase": "Phase2",
+      "method": "extra_trees",
+      "arm": "mesh",
+      "mean_prauc": 0.599387186072218,
+      "n_seeds": 5
+    },
+    {
+      "task": "outcome",
+      "phase": "Phase2",
+      "method": "extra_trees",
+      "arm": "concat",
+      "mean_prauc": 0.5805037340641859,
+      "n_seeds": 5
+    },
+    {
+      "task": "outcome",
+      "phase": "Phase2",
+      "method": "extra_trees",
+      "arm": "best_code",
+      "mean_prauc": 0.642483240174818,
+      "n_seeds": 5,
+      "best_rung_used": "char3"
+    },
+    {
+      "task": "outcome",
+      "phase": "Phase2",
+      "method": "lightgbm",
+      "arm": "sapbert",
+      "mean_prauc": 0.6085191933440833,
+      "n_seeds": 5
+    },
+    {
+      "task": "outcome",
+      "phase": "Phase2",
+      "method": "lightgbm",
+      "arm": "mesh",
+      "mean_prauc": 0.6084979819256618,
+      "n_seeds": 5
+    },
+    {
+      "task": "outcome",
+      "phase": "Phase2",
+      "method": "lightgbm",
+      "arm": "concat",
+      "mean_prauc": 0.6108778494105115,
+      "n_seeds": 5
+    },
+    {
+      "task": "outcome",
+      "phase": "Phase2",
+      "method": "lightgbm",
+      "arm": "best_code",
+      "mean_prauc": 0.6117452373653645,
+      "n_seeds": 5,
+      "best_rung_used": "char3"
+    },
+    {
+      "task": "outcome",
+      "phase": "Phase3",
+      "method": "majority",
+      "arm": "sapbert",
+      "mean_prauc": 0.5551489806586514,
+      "n_seeds": 5
+    },
+    {
+      "task": "outcome",
+      "phase": "Phase3",
+      "method": "majority",
+      "arm": "mesh",
+      "mean_prauc": 0.5551489806586514,
+      "n_seeds": 5
+    },
+    {
+      "task": "outcome",
+      "phase": "Phase3",
+      "method": "majority",
+      "arm": "concat",
+      "mean_prauc": 0.5551489806586514,
+      "n_seeds": 5
+    },
+    {
+      "task": "outcome",
+      "phase": "Phase3",
+      "method": "majority",
+      "arm": "best_code",
+      "mean_prauc": 0.5551489806586514,
+      "n_seeds": 5,
+      "best_rung_used": "char3"
+    },
+    {
+      "task": "outcome",
+      "phase": "Phase3",
+      "method": "logreg_l2",
+      "arm": "sapbert",
+      "mean_prauc": 0.6827837415207516,
+      "n_seeds": 5
+    },
+    {
+      "task": "outcome",
+      "phase": "Phase3",
+      "method": "logreg_l2",
+      "arm": "mesh",
+      "mean_prauc": 0.7080881494146319,
+      "n_seeds": 5
+    },
+    {
+      "task": "outcome",
+      "phase": "Phase3",
+      "method": "logreg_l2",
+      "arm": "concat",
+      "mean_prauc": 0.6844744554270121,
+      "n_seeds": 5
+    },
+    {
+      "task": "outcome",
+      "phase": "Phase3",
+      "method": "logreg_l2",
+      "arm": "best_code",
+      "mean_prauc": 0.7177995719333411,
+      "n_seeds": 5,
+      "best_rung_used": "char3"
+    },
+    {
+      "task": "outcome",
+      "phase": "Phase3",
+      "method": "random_forest",
+      "arm": "sapbert",
+      "mean_prauc": 0.8263070445020533,
+      "n_seeds": 5
+    },
+    {
+      "task": "outcome",
+      "phase": "Phase3",
+      "method": "random_forest",
+      "arm": "mesh",
+      "mean_prauc": 0.8325762528247767,
+      "n_seeds": 5
+    },
+    {
+      "task": "outcome",
+      "phase": "Phase3",
+      "method": "random_forest",
+      "arm": "concat",
+      "mean_prauc": 0.8221308081189577,
+      "n_seeds": 5
+    },
+    {
+      "task": "outcome",
+      "phase": "Phase3",
+      "method": "random_forest",
+      "arm": "best_code",
+      "mean_prauc": 0.8366735850239746,
+      "n_seeds": 5,
+      "best_rung_used": "char3"
+    },
+    {
+      "task": "outcome",
+      "phase": "Phase3",
+      "method": "extra_trees",
+      "arm": "sapbert",
+      "mean_prauc": 0.7952352431917942,
+      "n_seeds": 5
+    },
+    {
+      "task": "outcome",
+      "phase": "Phase3",
+      "method": "extra_trees",
+      "arm": "mesh",
+      "mean_prauc": 0.80370528213508,
+      "n_seeds": 5
+    },
+    {
+      "task": "outcome",
+      "phase": "Phase3",
+      "method": "extra_trees",
+      "arm": "concat",
+      "mean_prauc": 0.8008982634928097,
+      "n_seeds": 5
+    },
+    {
+      "task": "outcome",
+      "phase": "Phase3",
+      "method": "extra_trees",
+      "arm": "best_code",
+      "mean_prauc": 0.8221041372890857,
+      "n_seeds": 5,
+      "best_rung_used": "char3"
+    },
+    {
+      "task": "outcome",
+      "phase": "Phase3",
+      "method": "lightgbm",
+      "arm": "sapbert",
+      "mean_prauc": 0.7520047113250639,
+      "n_seeds": 5
+    },
+    {
+      "task": "outcome",
+      "phase": "Phase3",
+      "method": "lightgbm",
+      "arm": "mesh",
+      "mean_prauc": 0.7588301324678722,
+      "n_seeds": 5
+    },
+    {
+      "task": "outcome",
+      "phase": "Phase3",
+      "method": "lightgbm",
+      "arm": "concat",
+      "mean_prauc": 0.751608116040871,
+      "n_seeds": 5
+    },
+    {
+      "task": "outcome",
+      "phase": "Phase3",
+      "method": "lightgbm",
+      "arm": "best_code",
+      "mean_prauc": 0.7467441858505705,
+      "n_seeds": 5,
+      "best_rung_used": "char3"
+    },
+    {
+      "task": "outcome",
+      "phase": "Phase4",
+      "method": "majority",
+      "arm": "sapbert",
+      "mean_prauc": 0.40022421524663676,
+      "n_seeds": 5
+    },
+    {
+      "task": "outcome",
+      "phase": "Phase4",
+      "method": "majority",
+      "arm": "mesh",
+      "mean_prauc": 0.40022421524663676,
+      "n_seeds": 5
+    },
+    {
+      "task": "outcome",
+      "phase": "Phase4",
+      "method": "majority",
+      "arm": "concat",
+      "mean_prauc": 0.40022421524663676,
+      "n_seeds": 5
+    },
+    {
+      "task": "outcome",
+      "phase": "Phase4",
+      "method": "majority",
+      "arm": "best_code",
+      "mean_prauc": 0.40022421524663676,
+      "n_seeds": 5,
+      "best_rung_used": "char3"
+    },
+    {
+      "task": "outcome",
+      "phase": "Phase4",
+      "method": "logreg_l2",
+      "arm": "sapbert",
+      "mean_prauc": 0.5504287289526555,
+      "n_seeds": 5
+    },
+    {
+      "task": "outcome",
+      "phase": "Phase4",
+      "method": "logreg_l2",
+      "arm": "mesh",
+      "mean_prauc": 0.606496282182795,
+      "n_seeds": 5
+    },
+    {
+      "task": "outcome",
+      "phase": "Phase4",
+      "method": "logreg_l2",
+      "arm": "concat",
+      "mean_prauc": 0.5427339390058532,
+      "n_seeds": 5
+    },
+    {
+      "task": "outcome",
+      "phase": "Phase4",
+      "method": "logreg_l2",
+      "arm": "best_code",
+      "mean_prauc": 0.5770331238472707,
+      "n_seeds": 5,
+      "best_rung_used": "char3"
+    },
+    {
+      "task": "outcome",
+      "phase": "Phase4",
+      "method": "random_forest",
+      "arm": "sapbert",
+      "mean_prauc": 0.6815189840673094,
+      "n_seeds": 5
+    },
+    {
+      "task": "outcome",
+      "phase": "Phase4",
+      "method": "random_forest",
+      "arm": "mesh",
+      "mean_prauc": 0.6846103787855494,
+      "n_seeds": 5
+    },
+    {
+      "task": "outcome",
+      "phase": "Phase4",
+      "method": "random_forest",
+      "arm": "concat",
+      "mean_prauc": 0.6756389786599964,
+      "n_seeds": 5
+    },
+    {
+      "task": "outcome",
+      "phase": "Phase4",
+      "method": "random_forest",
+      "arm": "best_code",
+      "mean_prauc": 0.6962382493920503,
+      "n_seeds": 5,
+      "best_rung_used": "char3"
+    },
+    {
+      "task": "outcome",
+      "phase": "Phase4",
+      "method": "extra_trees",
+      "arm": "sapbert",
+      "mean_prauc": 0.6155567521931218,
+      "n_seeds": 5
+    },
+    {
+      "task": "outcome",
+      "phase": "Phase4",
+      "method": "extra_trees",
+      "arm": "mesh",
+      "mean_prauc": 0.6136641017178165,
+      "n_seeds": 5
+    },
+    {
+      "task": "outcome",
+      "phase": "Phase4",
+      "method": "extra_trees",
+      "arm": "concat",
+      "mean_prauc": 0.6163433434682647,
+      "n_seeds": 5
+    },
+    {
+      "task": "outcome",
+      "phase": "Phase4",
+      "method": "extra_trees",
+      "arm": "best_code",
+      "mean_prauc": 0.651449450345757,
+      "n_seeds": 5,
+      "best_rung_used": "char3"
+    },
+    {
+      "task": "outcome",
+      "phase": "Phase4",
+      "method": "lightgbm",
+      "arm": "sapbert",
+      "mean_prauc": 0.6685699472949189,
+      "n_seeds": 5
+    },
+    {
+      "task": "outcome",
+      "phase": "Phase4",
+      "method": "lightgbm",
+      "arm": "mesh",
+      "mean_prauc": 0.6663247076349254,
+      "n_seeds": 5
+    },
+    {
+      "task": "outcome",
+      "phase": "Phase4",
+      "method": "lightgbm",
+      "arm": "concat",
+      "mean_prauc": 0.6664674890113641,
+      "n_seeds": 5
+    },
+    {
+      "task": "outcome",
+      "phase": "Phase4",
+      "method": "lightgbm",
+      "arm": "best_code",
+      "mean_prauc": 0.6609112464548312,
+      "n_seeds": 5,
+      "best_rung_used": "char3"
+    },
+    {
+      "task": "mortality_rate_yn",
+      "phase": "Phase1",
+      "method": "majority",
+      "arm": "sapbert",
+      "mean_prauc": 0.26968973747016706,
+      "n_seeds": 5
+    },
+    {
+      "task": "mortality_rate_yn",
+      "phase": "Phase1",
+      "method": "majority",
+      "arm": "mesh",
+      "mean_prauc": 0.26968973747016706,
+      "n_seeds": 5
+    },
+    {
+      "task": "mortality_rate_yn",
+      "phase": "Phase1",
+      "method": "majority",
+      "arm": "concat",
+      "mean_prauc": 0.26968973747016706,
+      "n_seeds": 5
+    },
+    {
+      "task": "mortality_rate_yn",
+      "phase": "Phase1",
+      "method": "majority",
+      "arm": "best_code",
+      "mean_prauc": 0.26968973747016706,
+      "n_seeds": 5,
+      "best_rung_used": "ccsr"
+    },
+    {
+      "task": "mortality_rate_yn",
+      "phase": "Phase1",
+      "method": "logreg_l2",
+      "arm": "sapbert",
+      "mean_prauc": 0.7291163274266873,
+      "n_seeds": 5
+    },
+    {
+      "task": "mortality_rate_yn",
+      "phase": "Phase1",
+      "method": "logreg_l2",
+      "arm": "mesh",
+      "mean_prauc": 0.7656243505091151,
+      "n_seeds": 5
+    },
+    {
+      "task": "mortality_rate_yn",
+      "phase": "Phase1",
+      "method": "logreg_l2",
+      "arm": "concat",
+      "mean_prauc": 0.7093993361277718,
+      "n_seeds": 5
+    },
+    {
+      "task": "mortality_rate_yn",
+      "phase": "Phase1",
+      "method": "logreg_l2",
+      "arm": "best_code",
+      "mean_prauc": 0.6977799284943048,
+      "n_seeds": 5,
+      "best_rung_used": "ccsr"
+    },
+    {
+      "task": "mortality_rate_yn",
+      "phase": "Phase1",
+      "method": "random_forest",
+      "arm": "sapbert",
+      "mean_prauc": 0.7865990645473072,
+      "n_seeds": 5
+    },
+    {
+      "task": "mortality_rate_yn",
+      "phase": "Phase1",
+      "method": "random_forest",
+      "arm": "mesh",
+      "mean_prauc": 0.8003153744290632,
+      "n_seeds": 5
+    },
+    {
+      "task": "mortality_rate_yn",
+      "phase": "Phase1",
+      "method": "random_forest",
+      "arm": "concat",
+      "mean_prauc": 0.7890059998589622,
+      "n_seeds": 5
+    },
+    {
+      "task": "mortality_rate_yn",
+      "phase": "Phase1",
+      "method": "random_forest",
+      "arm": "best_code",
+      "mean_prauc": 0.8025084532321956,
+      "n_seeds": 5,
+      "best_rung_used": "ccsr"
+    },
+    {
+      "task": "mortality_rate_yn",
+      "phase": "Phase1",
+      "method": "extra_trees",
+      "arm": "sapbert",
+      "mean_prauc": 0.7474180416204976,
+      "n_seeds": 5
+    },
+    {
+      "task": "mortality_rate_yn",
+      "phase": "Phase1",
+      "method": "extra_trees",
+      "arm": "mesh",
+      "mean_prauc": 0.76616033319462,
+      "n_seeds": 5
+    },
+    {
+      "task": "mortality_rate_yn",
+      "phase": "Phase1",
+      "method": "extra_trees",
+      "arm": "concat",
+      "mean_prauc": 0.7450832102816441,
+      "n_seeds": 5
+    },
+    {
+      "task": "mortality_rate_yn",
+      "phase": "Phase1",
+      "method": "extra_trees",
+      "arm": "best_code",
+      "mean_prauc": 0.7926507340626759,
+      "n_seeds": 5,
+      "best_rung_used": "ccsr"
+    },
+    {
+      "task": "mortality_rate_yn",
+      "phase": "Phase1",
+      "method": "lightgbm",
+      "arm": "sapbert",
+      "mean_prauc": 0.7765661842778112,
+      "n_seeds": 5
+    },
+    {
+      "task": "mortality_rate_yn",
+      "phase": "Phase1",
+      "method": "lightgbm",
+      "arm": "mesh",
+      "mean_prauc": 0.7857142865696269,
+      "n_seeds": 5
+    },
+    {
+      "task": "mortality_rate_yn",
+      "phase": "Phase1",
+      "method": "lightgbm",
+      "arm": "concat",
+      "mean_prauc": 0.778192599958369,
+      "n_seeds": 5
+    },
+    {
+      "task": "mortality_rate_yn",
+      "phase": "Phase1",
+      "method": "lightgbm",
+      "arm": "best_code",
+      "mean_prauc": 0.7613417128892748,
+      "n_seeds": 5,
+      "best_rung_used": "ccsr"
+    },
+    {
+      "task": "mortality_rate_yn",
+      "phase": "Phase2",
+      "method": "majority",
+      "arm": "sapbert",
+      "mean_prauc": 0.45875000000000005,
+      "n_seeds": 5
+    },
+    {
+      "task": "mortality_rate_yn",
+      "phase": "Phase2",
+      "method": "majority",
+      "arm": "mesh",
+      "mean_prauc": 0.45875000000000005,
+      "n_seeds": 5
+    },
+    {
+      "task": "mortality_rate_yn",
+      "phase": "Phase2",
+      "method": "majority",
+      "arm": "concat",
+      "mean_prauc": 0.45875000000000005,
+      "n_seeds": 5
+    },
+    {
+      "task": "mortality_rate_yn",
+      "phase": "Phase2",
+      "method": "majority",
+      "arm": "best_code",
+      "mean_prauc": 0.45875000000000005,
+      "n_seeds": 5,
+      "best_rung_used": "ccsr"
+    },
+    {
+      "task": "mortality_rate_yn",
+      "phase": "Phase2",
+      "method": "logreg_l2",
+      "arm": "sapbert",
+      "mean_prauc": 0.7555494462867374,
+      "n_seeds": 5
+    },
+    {
+      "task": "mortality_rate_yn",
+      "phase": "Phase2",
+      "method": "logreg_l2",
+      "arm": "mesh",
+      "mean_prauc": 0.78525009875347,
+      "n_seeds": 5
+    },
+    {
+      "task": "mortality_rate_yn",
+      "phase": "Phase2",
+      "method": "logreg_l2",
+      "arm": "concat",
+      "mean_prauc": 0.7276268801204544,
+      "n_seeds": 5
+    },
+    {
+      "task": "mortality_rate_yn",
+      "phase": "Phase2",
+      "method": "logreg_l2",
+      "arm": "best_code",
+      "mean_prauc": 0.7641165234447326,
+      "n_seeds": 5,
+      "best_rung_used": "ccsr"
+    },
+    {
+      "task": "mortality_rate_yn",
+      "phase": "Phase2",
+      "method": "random_forest",
+      "arm": "sapbert",
+      "mean_prauc": 0.8013054671471019,
+      "n_seeds": 5
+    },
+    {
+      "task": "mortality_rate_yn",
+      "phase": "Phase2",
+      "method": "random_forest",
+      "arm": "mesh",
+      "mean_prauc": 0.7946209075621502,
+      "n_seeds": 5
+    },
+    {
+      "task": "mortality_rate_yn",
+      "phase": "Phase2",
+      "method": "random_forest",
+      "arm": "concat",
+      "mean_prauc": 0.7977800179312243,
+      "n_seeds": 5
+    },
+    {
+      "task": "mortality_rate_yn",
+      "phase": "Phase2",
+      "method": "random_forest",
+      "arm": "best_code",
+      "mean_prauc": 0.7957387114250569,
+      "n_seeds": 5,
+      "best_rung_used": "ccsr"
+    },
+    {
+      "task": "mortality_rate_yn",
+      "phase": "Phase2",
+      "method": "extra_trees",
+      "arm": "sapbert",
+      "mean_prauc": 0.7741295514202924,
+      "n_seeds": 5
+    },
+    {
+      "task": "mortality_rate_yn",
+      "phase": "Phase2",
+      "method": "extra_trees",
+      "arm": "mesh",
+      "mean_prauc": 0.7677406282215182,
+      "n_seeds": 5
+    },
+    {
+      "task": "mortality_rate_yn",
+      "phase": "Phase2",
+      "method": "extra_trees",
+      "arm": "concat",
+      "mean_prauc": 0.7725094528275832,
+      "n_seeds": 5
+    },
+    {
+      "task": "mortality_rate_yn",
+      "phase": "Phase2",
+      "method": "extra_trees",
+      "arm": "best_code",
+      "mean_prauc": 0.8104585821495636,
+      "n_seeds": 5,
+      "best_rung_used": "ccsr"
+    },
+    {
+      "task": "mortality_rate_yn",
+      "phase": "Phase2",
+      "method": "lightgbm",
+      "arm": "sapbert",
+      "mean_prauc": 0.7923988877264554,
+      "n_seeds": 5
+    },
+    {
+      "task": "mortality_rate_yn",
+      "phase": "Phase2",
+      "method": "lightgbm",
+      "arm": "mesh",
+      "mean_prauc": 0.7925047623961177,
+      "n_seeds": 5
+    },
+    {
+      "task": "mortality_rate_yn",
+      "phase": "Phase2",
+      "method": "lightgbm",
+      "arm": "concat",
+      "mean_prauc": 0.7995175559069763,
+      "n_seeds": 5
+    },
+    {
+      "task": "mortality_rate_yn",
+      "phase": "Phase2",
+      "method": "lightgbm",
+      "arm": "best_code",
+      "mean_prauc": 0.7714341632502206,
+      "n_seeds": 5,
+      "best_rung_used": "ccsr"
+    },
+    {
+      "task": "mortality_rate_yn",
+      "phase": "Phase3",
+      "method": "majority",
+      "arm": "sapbert",
+      "mean_prauc": 0.4846560846560847,
+      "n_seeds": 5
+    },
+    {
+      "task": "mortality_rate_yn",
+      "phase": "Phase3",
+      "method": "majority",
+      "arm": "mesh",
+      "mean_prauc": 0.4846560846560847,
+      "n_seeds": 5
+    },
+    {
+      "task": "mortality_rate_yn",
+      "phase": "Phase3",
+      "method": "majority",
+      "arm": "concat",
+      "mean_prauc": 0.4846560846560847,
+      "n_seeds": 5
+    },
+    {
+      "task": "mortality_rate_yn",
+      "phase": "Phase3",
+      "method": "majority",
+      "arm": "best_code",
+      "mean_prauc": 0.4846560846560847,
+      "n_seeds": 5,
+      "best_rung_used": "ccsr"
+    },
+    {
+      "task": "mortality_rate_yn",
+      "phase": "Phase3",
+      "method": "logreg_l2",
+      "arm": "sapbert",
+      "mean_prauc": 0.76567517032688,
+      "n_seeds": 5
+    },
+    {
+      "task": "mortality_rate_yn",
+      "phase": "Phase3",
+      "method": "logreg_l2",
+      "arm": "mesh",
+      "mean_prauc": 0.7782356650485689,
+      "n_seeds": 5
+    },
+    {
+      "task": "mortality_rate_yn",
+      "phase": "Phase3",
+      "method": "logreg_l2",
+      "arm": "concat",
+      "mean_prauc": 0.7651866248857229,
+      "n_seeds": 5
+    },
+    {
+      "task": "mortality_rate_yn",
+      "phase": "Phase3",
+      "method": "logreg_l2",
+      "arm": "best_code",
+      "mean_prauc": 0.7734338136001315,
+      "n_seeds": 5,
+      "best_rung_used": "ccsr"
+    },
+    {
+      "task": "mortality_rate_yn",
+      "phase": "Phase3",
+      "method": "random_forest",
+      "arm": "sapbert",
+      "mean_prauc": 0.8163066254548103,
+      "n_seeds": 5
+    },
+    {
+      "task": "mortality_rate_yn",
+      "phase": "Phase3",
+      "method": "random_forest",
+      "arm": "mesh",
+      "mean_prauc": 0.8369422496663177,
+      "n_seeds": 5
+    },
+    {
+      "task": "mortality_rate_yn",
+      "phase": "Phase3",
+      "method": "random_forest",
+      "arm": "concat",
+      "mean_prauc": 0.8120069518370293,
+      "n_seeds": 5
+    },
+    {
+      "task": "mortality_rate_yn",
+      "phase": "Phase3",
+      "method": "random_forest",
+      "arm": "best_code",
+      "mean_prauc": 0.8400749856707777,
+      "n_seeds": 5,
+      "best_rung_used": "ccsr"
+    },
+    {
+      "task": "mortality_rate_yn",
+      "phase": "Phase3",
+      "method": "extra_trees",
+      "arm": "sapbert",
+      "mean_prauc": 0.7765750670714525,
+      "n_seeds": 5
+    },
+    {
+      "task": "mortality_rate_yn",
+      "phase": "Phase3",
+      "method": "extra_trees",
+      "arm": "mesh",
+      "mean_prauc": 0.8026949225554845,
+      "n_seeds": 5
+    },
+    {
+      "task": "mortality_rate_yn",
+      "phase": "Phase3",
+      "method": "extra_trees",
+      "arm": "concat",
+      "mean_prauc": 0.7796620937610239,
+      "n_seeds": 5
+    },
+    {
+      "task": "mortality_rate_yn",
+      "phase": "Phase3",
+      "method": "extra_trees",
+      "arm": "best_code",
+      "mean_prauc": 0.8218986201024856,
+      "n_seeds": 5,
+      "best_rung_used": "ccsr"
+    },
+    {
+      "task": "mortality_rate_yn",
+      "phase": "Phase3",
+      "method": "lightgbm",
+      "arm": "sapbert",
+      "mean_prauc": 0.8101253195596968,
+      "n_seeds": 5
+    },
+    {
+      "task": "mortality_rate_yn",
+      "phase": "Phase3",
+      "method": "lightgbm",
+      "arm": "mesh",
+      "mean_prauc": 0.7916441269916575,
+      "n_seeds": 5
+    },
+    {
+      "task": "mortality_rate_yn",
+      "phase": "Phase3",
+      "method": "lightgbm",
+      "arm": "concat",
+      "mean_prauc": 0.8081623448058879,
+      "n_seeds": 5
+    },
+    {
+      "task": "mortality_rate_yn",
+      "phase": "Phase3",
+      "method": "lightgbm",
+      "arm": "best_code",
+      "mean_prauc": 0.758263024988981,
+      "n_seeds": 5,
+      "best_rung_used": "ccsr"
+    },
+    {
+      "task": "mortality_rate_yn",
+      "phase": "Phase4",
+      "method": "majority",
+      "arm": "sapbert",
+      "mean_prauc": 0.17465753424657535,
+      "n_seeds": 5
+    },
+    {
+      "task": "mortality_rate_yn",
+      "phase": "Phase4",
+      "method": "majority",
+      "arm": "mesh",
+      "mean_prauc": 0.17465753424657535,
+      "n_seeds": 5
+    },
+    {
+      "task": "mortality_rate_yn",
+      "phase": "Phase4",
+      "method": "majority",
+      "arm": "concat",
+      "mean_prauc": 0.17465753424657535,
+      "n_seeds": 5
+    },
+    {
+      "task": "mortality_rate_yn",
+      "phase": "Phase4",
+      "method": "majority",
+      "arm": "best_code",
+      "mean_prauc": 0.17465753424657535,
+      "n_seeds": 5,
+      "best_rung_used": "ccsr"
+    },
+    {
+      "task": "mortality_rate_yn",
+      "phase": "Phase4",
+      "method": "logreg_l2",
+      "arm": "sapbert",
+      "mean_prauc": 0.36215274077825044,
+      "n_seeds": 5
+    },
+    {
+      "task": "mortality_rate_yn",
+      "phase": "Phase4",
+      "method": "logreg_l2",
+      "arm": "mesh",
+      "mean_prauc": 0.3759074440343509,
+      "n_seeds": 5
+    },
+    {
+      "task": "mortality_rate_yn",
+      "phase": "Phase4",
+      "method": "logreg_l2",
+      "arm": "concat",
+      "mean_prauc": 0.35889762611926984,
+      "n_seeds": 5
+    },
+    {
+      "task": "mortality_rate_yn",
+      "phase": "Phase4",
+      "method": "logreg_l2",
+      "arm": "best_code",
+      "mean_prauc": 0.3446246281479711,
+      "n_seeds": 5,
+      "best_rung_used": "ccsr"
+    },
+    {
+      "task": "mortality_rate_yn",
+      "phase": "Phase4",
+      "method": "random_forest",
+      "arm": "sapbert",
+      "mean_prauc": 0.4125232098319017,
+      "n_seeds": 5
+    },
+    {
+      "task": "mortality_rate_yn",
+      "phase": "Phase4",
+      "method": "random_forest",
+      "arm": "mesh",
+      "mean_prauc": 0.42192726721549567,
+      "n_seeds": 5
+    },
+    {
+      "task": "mortality_rate_yn",
+      "phase": "Phase4",
+      "method": "random_forest",
+      "arm": "concat",
+      "mean_prauc": 0.40393358133929097,
+      "n_seeds": 5
+    },
+    {
+      "task": "mortality_rate_yn",
+      "phase": "Phase4",
+      "method": "random_forest",
+      "arm": "best_code",
+      "mean_prauc": 0.48058147544088214,
+      "n_seeds": 5,
+      "best_rung_used": "ccsr"
+    },
+    {
+      "task": "mortality_rate_yn",
+      "phase": "Phase4",
+      "method": "extra_trees",
+      "arm": "sapbert",
+      "mean_prauc": 0.40614595995552233,
+      "n_seeds": 5
+    },
+    {
+      "task": "mortality_rate_yn",
+      "phase": "Phase4",
+      "method": "extra_trees",
+      "arm": "mesh",
+      "mean_prauc": 0.4121876113621262,
+      "n_seeds": 5
+    },
+    {
+      "task": "mortality_rate_yn",
+      "phase": "Phase4",
+      "method": "extra_trees",
+      "arm": "concat",
+      "mean_prauc": 0.41283038131220007,
+      "n_seeds": 5
+    },
+    {
+      "task": "mortality_rate_yn",
+      "phase": "Phase4",
+      "method": "extra_trees",
+      "arm": "best_code",
+      "mean_prauc": 0.45271527928665656,
+      "n_seeds": 5,
+      "best_rung_used": "ccsr"
+    },
+    {
+      "task": "mortality_rate_yn",
+      "phase": "Phase4",
+      "method": "lightgbm",
+      "arm": "sapbert",
+      "mean_prauc": 0.40314850779712846,
+      "n_seeds": 5
+    },
+    {
+      "task": "mortality_rate_yn",
+      "phase": "Phase4",
+      "method": "lightgbm",
+      "arm": "mesh",
+      "mean_prauc": 0.4261797276297699,
+      "n_seeds": 5
+    },
+    {
+      "task": "mortality_rate_yn",
+      "phase": "Phase4",
+      "method": "lightgbm",
+      "arm": "concat",
+      "mean_prauc": 0.4038587409678742,
+      "n_seeds": 5
+    },
+    {
+      "task": "mortality_rate_yn",
+      "phase": "Phase4",
+      "method": "lightgbm",
+      "arm": "best_code",
+      "mean_prauc": 0.4162875054876287,
+      "n_seeds": 5,
+      "best_rung_used": "ccsr"
+    },
+    {
+      "task": "serious_adverse_rate_yn",
+      "phase": "Phase1",
+      "method": "majority",
+      "arm": "sapbert",
+      "mean_prauc": 0.4343675417661098,
+      "n_seeds": 5
+    },
+    {
+      "task": "serious_adverse_rate_yn",
+      "phase": "Phase1",
+      "method": "majority",
+      "arm": "mesh",
+      "mean_prauc": 0.4343675417661098,
+      "n_seeds": 5
+    },
+    {
+      "task": "serious_adverse_rate_yn",
+      "phase": "Phase1",
+      "method": "majority",
+      "arm": "concat",
+      "mean_prauc": 0.4343675417661098,
+      "n_seeds": 5
+    },
+    {
+      "task": "serious_adverse_rate_yn",
+      "phase": "Phase1",
+      "method": "majority",
+      "arm": "best_code",
+      "mean_prauc": 0.4343675417661098,
+      "n_seeds": 5,
+      "best_rung_used": "chapter"
+    },
+    {
+      "task": "serious_adverse_rate_yn",
+      "phase": "Phase1",
+      "method": "logreg_l2",
+      "arm": "sapbert",
+      "mean_prauc": 0.783600177413335,
+      "n_seeds": 5
+    },
+    {
+      "task": "serious_adverse_rate_yn",
+      "phase": "Phase1",
+      "method": "logreg_l2",
+      "arm": "mesh",
+      "mean_prauc": 0.8439117849597549,
+      "n_seeds": 5
+    },
+    {
+      "task": "serious_adverse_rate_yn",
+      "phase": "Phase1",
+      "method": "logreg_l2",
+      "arm": "concat",
+      "mean_prauc": 0.8011320074972513,
+      "n_seeds": 5
+    },
+    {
+      "task": "serious_adverse_rate_yn",
+      "phase": "Phase1",
+      "method": "logreg_l2",
+      "arm": "best_code",
+      "mean_prauc": 0.8577964512878399,
+      "n_seeds": 5,
+      "best_rung_used": "chapter"
+    },
+    {
+      "task": "serious_adverse_rate_yn",
+      "phase": "Phase1",
+      "method": "random_forest",
+      "arm": "sapbert",
+      "mean_prauc": 0.8435862656908487,
+      "n_seeds": 5
+    },
+    {
+      "task": "serious_adverse_rate_yn",
+      "phase": "Phase1",
+      "method": "random_forest",
+      "arm": "mesh",
+      "mean_prauc": 0.8687559454916368,
+      "n_seeds": 5
+    },
+    {
+      "task": "serious_adverse_rate_yn",
+      "phase": "Phase1",
+      "method": "random_forest",
+      "arm": "concat",
+      "mean_prauc": 0.8453597901520169,
+      "n_seeds": 5
+    },
+    {
+      "task": "serious_adverse_rate_yn",
+      "phase": "Phase1",
+      "method": "random_forest",
+      "arm": "best_code",
+      "mean_prauc": 0.8887248301519357,
+      "n_seeds": 5,
+      "best_rung_used": "chapter"
+    },
+    {
+      "task": "serious_adverse_rate_yn",
+      "phase": "Phase1",
+      "method": "extra_trees",
+      "arm": "sapbert",
+      "mean_prauc": 0.8063400544411898,
+      "n_seeds": 5
+    },
+    {
+      "task": "serious_adverse_rate_yn",
+      "phase": "Phase1",
+      "method": "extra_trees",
+      "arm": "mesh",
+      "mean_prauc": 0.8472718616995716,
+      "n_seeds": 5
+    },
+    {
+      "task": "serious_adverse_rate_yn",
+      "phase": "Phase1",
+      "method": "extra_trees",
+      "arm": "concat",
+      "mean_prauc": 0.8113386167731598,
+      "n_seeds": 5
+    },
+    {
+      "task": "serious_adverse_rate_yn",
+      "phase": "Phase1",
+      "method": "extra_trees",
+      "arm": "best_code",
+      "mean_prauc": 0.8868930641638709,
+      "n_seeds": 5,
+      "best_rung_used": "chapter"
+    },
+    {
+      "task": "serious_adverse_rate_yn",
+      "phase": "Phase1",
+      "method": "lightgbm",
+      "arm": "sapbert",
+      "mean_prauc": 0.8095946689025275,
+      "n_seeds": 5
+    },
+    {
+      "task": "serious_adverse_rate_yn",
+      "phase": "Phase1",
+      "method": "lightgbm",
+      "arm": "mesh",
+      "mean_prauc": 0.8451028591450838,
+      "n_seeds": 5
+    },
+    {
+      "task": "serious_adverse_rate_yn",
+      "phase": "Phase1",
+      "method": "lightgbm",
+      "arm": "concat",
+      "mean_prauc": 0.8102891742578846,
+      "n_seeds": 5
+    },
+    {
+      "task": "serious_adverse_rate_yn",
+      "phase": "Phase1",
+      "method": "lightgbm",
+      "arm": "best_code",
+      "mean_prauc": 0.8435590061916818,
+      "n_seeds": 5,
+      "best_rung_used": "chapter"
+    },
+    {
+      "task": "serious_adverse_rate_yn",
+      "phase": "Phase2",
+      "method": "majority",
+      "arm": "sapbert",
+      "mean_prauc": 0.745625,
+      "n_seeds": 5
+    },
+    {
+      "task": "serious_adverse_rate_yn",
+      "phase": "Phase2",
+      "method": "majority",
+      "arm": "mesh",
+      "mean_prauc": 0.745625,
+      "n_seeds": 5
+    },
+    {
+      "task": "serious_adverse_rate_yn",
+      "phase": "Phase2",
+      "method": "majority",
+      "arm": "concat",
+      "mean_prauc": 0.745625,
+      "n_seeds": 5
+    },
+    {
+      "task": "serious_adverse_rate_yn",
+      "phase": "Phase2",
+      "method": "majority",
+      "arm": "best_code",
+      "mean_prauc": 0.745625,
+      "n_seeds": 5,
+      "best_rung_used": "chapter"
+    },
+    {
+      "task": "serious_adverse_rate_yn",
+      "phase": "Phase2",
+      "method": "logreg_l2",
+      "arm": "sapbert",
+      "mean_prauc": 0.9022710165856728,
+      "n_seeds": 5
+    },
+    {
+      "task": "serious_adverse_rate_yn",
+      "phase": "Phase2",
+      "method": "logreg_l2",
+      "arm": "mesh",
+      "mean_prauc": 0.9220650189472325,
+      "n_seeds": 5
+    },
+    {
+      "task": "serious_adverse_rate_yn",
+      "phase": "Phase2",
+      "method": "logreg_l2",
+      "arm": "concat",
+      "mean_prauc": 0.8936843831286744,
+      "n_seeds": 5
+    },
+    {
+      "task": "serious_adverse_rate_yn",
+      "phase": "Phase2",
+      "method": "logreg_l2",
+      "arm": "best_code",
+      "mean_prauc": 0.913993582413255,
+      "n_seeds": 5,
+      "best_rung_used": "chapter"
+    },
+    {
+      "task": "serious_adverse_rate_yn",
+      "phase": "Phase2",
+      "method": "random_forest",
+      "arm": "sapbert",
+      "mean_prauc": 0.9051053205693694,
+      "n_seeds": 5
+    },
+    {
+      "task": "serious_adverse_rate_yn",
+      "phase": "Phase2",
+      "method": "random_forest",
+      "arm": "mesh",
+      "mean_prauc": 0.9143283295957264,
+      "n_seeds": 5
+    },
+    {
+      "task": "serious_adverse_rate_yn",
+      "phase": "Phase2",
+      "method": "random_forest",
+      "arm": "concat",
+      "mean_prauc": 0.9041307487548075,
+      "n_seeds": 5
+    },
+    {
+      "task": "serious_adverse_rate_yn",
+      "phase": "Phase2",
+      "method": "random_forest",
+      "arm": "best_code",
+      "mean_prauc": 0.9234460738351622,
+      "n_seeds": 5,
+      "best_rung_used": "chapter"
+    },
+    {
+      "task": "serious_adverse_rate_yn",
+      "phase": "Phase2",
+      "method": "extra_trees",
+      "arm": "sapbert",
+      "mean_prauc": 0.9002018313850687,
+      "n_seeds": 5
+    },
+    {
+      "task": "serious_adverse_rate_yn",
+      "phase": "Phase2",
+      "method": "extra_trees",
+      "arm": "mesh",
+      "mean_prauc": 0.9071685528396845,
+      "n_seeds": 5
+    },
+    {
+      "task": "serious_adverse_rate_yn",
+      "phase": "Phase2",
+      "method": "extra_trees",
+      "arm": "concat",
+      "mean_prauc": 0.9017062485585914,
+      "n_seeds": 5
+    },
+    {
+      "task": "serious_adverse_rate_yn",
+      "phase": "Phase2",
+      "method": "extra_trees",
+      "arm": "best_code",
+      "mean_prauc": 0.925461811773719,
+      "n_seeds": 5,
+      "best_rung_used": "chapter"
+    },
+    {
+      "task": "serious_adverse_rate_yn",
+      "phase": "Phase2",
+      "method": "lightgbm",
+      "arm": "sapbert",
+      "mean_prauc": 0.9048252815436493,
+      "n_seeds": 5
+    },
+    {
+      "task": "serious_adverse_rate_yn",
+      "phase": "Phase2",
+      "method": "lightgbm",
+      "arm": "mesh",
+      "mean_prauc": 0.9102715901139244,
+      "n_seeds": 5
+    },
+    {
+      "task": "serious_adverse_rate_yn",
+      "phase": "Phase2",
+      "method": "lightgbm",
+      "arm": "concat",
+      "mean_prauc": 0.9064317019573076,
+      "n_seeds": 5
+    },
+    {
+      "task": "serious_adverse_rate_yn",
+      "phase": "Phase2",
+      "method": "lightgbm",
+      "arm": "best_code",
+      "mean_prauc": 0.9165343534847805,
+      "n_seeds": 5,
+      "best_rung_used": "chapter"
+    },
+    {
+      "task": "serious_adverse_rate_yn",
+      "phase": "Phase3",
+      "method": "majority",
+      "arm": "sapbert",
+      "mean_prauc": 0.8465608465608465,
+      "n_seeds": 5
+    },
+    {
+      "task": "serious_adverse_rate_yn",
+      "phase": "Phase3",
+      "method": "majority",
+      "arm": "mesh",
+      "mean_prauc": 0.8465608465608465,
+      "n_seeds": 5
+    },
+    {
+      "task": "serious_adverse_rate_yn",
+      "phase": "Phase3",
+      "method": "majority",
+      "arm": "concat",
+      "mean_prauc": 0.8465608465608465,
+      "n_seeds": 5
+    },
+    {
+      "task": "serious_adverse_rate_yn",
+      "phase": "Phase3",
+      "method": "majority",
+      "arm": "best_code",
+      "mean_prauc": 0.8465608465608465,
+      "n_seeds": 5,
+      "best_rung_used": "chapter"
+    },
+    {
+      "task": "serious_adverse_rate_yn",
+      "phase": "Phase3",
+      "method": "logreg_l2",
+      "arm": "sapbert",
+      "mean_prauc": 0.9284428009033633,
+      "n_seeds": 5
+    },
+    {
+      "task": "serious_adverse_rate_yn",
+      "phase": "Phase3",
+      "method": "logreg_l2",
+      "arm": "mesh",
+      "mean_prauc": 0.9507120342275919,
+      "n_seeds": 5
+    },
+    {
+      "task": "serious_adverse_rate_yn",
+      "phase": "Phase3",
+      "method": "logreg_l2",
+      "arm": "concat",
+      "mean_prauc": 0.9298436023678388,
+      "n_seeds": 5
+    },
+    {
+      "task": "serious_adverse_rate_yn",
+      "phase": "Phase3",
+      "method": "logreg_l2",
+      "arm": "best_code",
+      "mean_prauc": 0.947159731007536,
+      "n_seeds": 5,
+      "best_rung_used": "chapter"
+    },
+    {
+      "task": "serious_adverse_rate_yn",
+      "phase": "Phase3",
+      "method": "random_forest",
+      "arm": "sapbert",
+      "mean_prauc": 0.9520430357981885,
+      "n_seeds": 5
+    },
+    {
+      "task": "serious_adverse_rate_yn",
+      "phase": "Phase3",
+      "method": "random_forest",
+      "arm": "mesh",
+      "mean_prauc": 0.9614353459847624,
+      "n_seeds": 5
+    },
+    {
+      "task": "serious_adverse_rate_yn",
+      "phase": "Phase3",
+      "method": "random_forest",
+      "arm": "concat",
+      "mean_prauc": 0.95347982520153,
+      "n_seeds": 5
+    },
+    {
+      "task": "serious_adverse_rate_yn",
+      "phase": "Phase3",
+      "method": "random_forest",
+      "arm": "best_code",
+      "mean_prauc": 0.9645316987131268,
+      "n_seeds": 5,
+      "best_rung_used": "chapter"
+    },
+    {
+      "task": "serious_adverse_rate_yn",
+      "phase": "Phase3",
+      "method": "extra_trees",
+      "arm": "sapbert",
+      "mean_prauc": 0.937876152652344,
+      "n_seeds": 5
+    },
+    {
+      "task": "serious_adverse_rate_yn",
+      "phase": "Phase3",
+      "method": "extra_trees",
+      "arm": "mesh",
+      "mean_prauc": 0.9478219016527081,
+      "n_seeds": 5
+    },
+    {
+      "task": "serious_adverse_rate_yn",
+      "phase": "Phase3",
+      "method": "extra_trees",
+      "arm": "concat",
+      "mean_prauc": 0.9375888984682395,
+      "n_seeds": 5
+    },
+    {
+      "task": "serious_adverse_rate_yn",
+      "phase": "Phase3",
+      "method": "extra_trees",
+      "arm": "best_code",
+      "mean_prauc": 0.9532260533079834,
+      "n_seeds": 5,
+      "best_rung_used": "chapter"
+    },
+    {
+      "task": "serious_adverse_rate_yn",
+      "phase": "Phase3",
+      "method": "lightgbm",
+      "arm": "sapbert",
+      "mean_prauc": 0.9541447093232274,
+      "n_seeds": 5
+    },
+    {
+      "task": "serious_adverse_rate_yn",
+      "phase": "Phase3",
+      "method": "lightgbm",
+      "arm": "mesh",
+      "mean_prauc": 0.9466045867682734,
+      "n_seeds": 5
+    },
+    {
+      "task": "serious_adverse_rate_yn",
+      "phase": "Phase3",
+      "method": "lightgbm",
+      "arm": "concat",
+      "mean_prauc": 0.9538382758696867,
+      "n_seeds": 5
+    },
+    {
+      "task": "serious_adverse_rate_yn",
+      "phase": "Phase3",
+      "method": "lightgbm",
+      "arm": "best_code",
+      "mean_prauc": 0.9517098599190756,
+      "n_seeds": 5,
+      "best_rung_used": "chapter"
+    },
+    {
+      "task": "serious_adverse_rate_yn",
+      "phase": "Phase4",
+      "method": "majority",
+      "arm": "sapbert",
+      "mean_prauc": 0.3852739726027397,
+      "n_seeds": 5
+    },
+    {
+      "task": "serious_adverse_rate_yn",
+      "phase": "Phase4",
+      "method": "majority",
+      "arm": "mesh",
+      "mean_prauc": 0.3852739726027397,
+      "n_seeds": 5
+    },
+    {
+      "task": "serious_adverse_rate_yn",
+      "phase": "Phase4",
+      "method": "majority",
+      "arm": "concat",
+      "mean_prauc": 0.3852739726027397,
+      "n_seeds": 5
+    },
+    {
+      "task": "serious_adverse_rate_yn",
+      "phase": "Phase4",
+      "method": "majority",
+      "arm": "best_code",
+      "mean_prauc": 0.3852739726027397,
+      "n_seeds": 5,
+      "best_rung_used": "chapter"
+    },
+    {
+      "task": "serious_adverse_rate_yn",
+      "phase": "Phase4",
+      "method": "logreg_l2",
+      "arm": "sapbert",
+      "mean_prauc": 0.5665805829968644,
+      "n_seeds": 5
+    },
+    {
+      "task": "serious_adverse_rate_yn",
+      "phase": "Phase4",
+      "method": "logreg_l2",
+      "arm": "mesh",
+      "mean_prauc": 0.6307556855305171,
+      "n_seeds": 5
+    },
+    {
+      "task": "serious_adverse_rate_yn",
+      "phase": "Phase4",
+      "method": "logreg_l2",
+      "arm": "concat",
+      "mean_prauc": 0.5615201486748855,
+      "n_seeds": 5
+    },
+    {
+      "task": "serious_adverse_rate_yn",
+      "phase": "Phase4",
+      "method": "logreg_l2",
+      "arm": "best_code",
+      "mean_prauc": 0.6364647859975643,
+      "n_seeds": 5,
+      "best_rung_used": "chapter"
+    },
+    {
+      "task": "serious_adverse_rate_yn",
+      "phase": "Phase4",
+      "method": "random_forest",
+      "arm": "sapbert",
+      "mean_prauc": 0.6358876963077139,
+      "n_seeds": 5
+    },
+    {
+      "task": "serious_adverse_rate_yn",
+      "phase": "Phase4",
+      "method": "random_forest",
+      "arm": "mesh",
+      "mean_prauc": 0.6520603283824713,
+      "n_seeds": 5
+    },
+    {
+      "task": "serious_adverse_rate_yn",
+      "phase": "Phase4",
+      "method": "random_forest",
+      "arm": "concat",
+      "mean_prauc": 0.63617648761323,
+      "n_seeds": 5
+    },
+    {
+      "task": "serious_adverse_rate_yn",
+      "phase": "Phase4",
+      "method": "random_forest",
+      "arm": "best_code",
+      "mean_prauc": 0.6693353727726288,
+      "n_seeds": 5,
+      "best_rung_used": "chapter"
+    },
+    {
+      "task": "serious_adverse_rate_yn",
+      "phase": "Phase4",
+      "method": "extra_trees",
+      "arm": "sapbert",
+      "mean_prauc": 0.6181749349166856,
+      "n_seeds": 5
+    },
+    {
+      "task": "serious_adverse_rate_yn",
+      "phase": "Phase4",
+      "method": "extra_trees",
+      "arm": "mesh",
+      "mean_prauc": 0.6544767298406203,
+      "n_seeds": 5
+    },
+    {
+      "task": "serious_adverse_rate_yn",
+      "phase": "Phase4",
+      "method": "extra_trees",
+      "arm": "concat",
+      "mean_prauc": 0.6224664686338587,
+      "n_seeds": 5
+    },
+    {
+      "task": "serious_adverse_rate_yn",
+      "phase": "Phase4",
+      "method": "extra_trees",
+      "arm": "best_code",
+      "mean_prauc": 0.685696871255181,
+      "n_seeds": 5,
+      "best_rung_used": "chapter"
+    },
+    {
+      "task": "serious_adverse_rate_yn",
+      "phase": "Phase4",
+      "method": "lightgbm",
+      "arm": "sapbert",
+      "mean_prauc": 0.621722359778237,
+      "n_seeds": 5
+    },
+    {
+      "task": "serious_adverse_rate_yn",
+      "phase": "Phase4",
+      "method": "lightgbm",
+      "arm": "mesh",
+      "mean_prauc": 0.6213109089930264,
+      "n_seeds": 5
+    },
+    {
+      "task": "serious_adverse_rate_yn",
+      "phase": "Phase4",
+      "method": "lightgbm",
+      "arm": "concat",
+      "mean_prauc": 0.6202023395769454,
+      "n_seeds": 5
+    },
+    {
+      "task": "serious_adverse_rate_yn",
+      "phase": "Phase4",
+      "method": "lightgbm",
+      "arm": "best_code",
+      "mean_prauc": 0.5937562028157363,
+      "n_seeds": 5,
+      "best_rung_used": "chapter"
+    },
+    {
+      "task": "patient_dropout_rate_yn",
+      "phase": "Phase1",
+      "method": "majority",
+      "arm": "sapbert",
+      "mean_prauc": 0.5900339750849377,
+      "n_seeds": 5
+    },
+    {
+      "task": "patient_dropout_rate_yn",
+      "phase": "Phase1",
+      "method": "majority",
+      "arm": "mesh",
+      "mean_prauc": 0.5900339750849377,
+      "n_seeds": 5
+    },
+    {
+      "task": "patient_dropout_rate_yn",
+      "phase": "Phase1",
+      "method": "majority",
+      "arm": "concat",
+      "mean_prauc": 0.5900339750849377,
+      "n_seeds": 5
+    },
+    {
+      "task": "patient_dropout_rate_yn",
+      "phase": "Phase1",
+      "method": "majority",
+      "arm": "best_code",
+      "mean_prauc": 0.5900339750849377,
+      "n_seeds": 5,
+      "best_rung_used": "chapter"
+    },
+    {
+      "task": "patient_dropout_rate_yn",
+      "phase": "Phase1",
+      "method": "logreg_l2",
+      "arm": "sapbert",
+      "mean_prauc": 0.7123437902956475,
+      "n_seeds": 5
+    },
+    {
+      "task": "patient_dropout_rate_yn",
+      "phase": "Phase1",
+      "method": "logreg_l2",
+      "arm": "mesh",
+      "mean_prauc": 0.7283552341104438,
+      "n_seeds": 5
+    },
+    {
+      "task": "patient_dropout_rate_yn",
+      "phase": "Phase1",
+      "method": "logreg_l2",
+      "arm": "concat",
+      "mean_prauc": 0.7146031901218564,
+      "n_seeds": 5
+    },
+    {
+      "task": "patient_dropout_rate_yn",
+      "phase": "Phase1",
+      "method": "logreg_l2",
+      "arm": "best_code",
+      "mean_prauc": 0.74684507185838,
+      "n_seeds": 5,
+      "best_rung_used": "chapter"
+    },
+    {
+      "task": "patient_dropout_rate_yn",
+      "phase": "Phase1",
+      "method": "random_forest",
+      "arm": "sapbert",
+      "mean_prauc": 0.776612462350921,
+      "n_seeds": 5
+    },
+    {
+      "task": "patient_dropout_rate_yn",
+      "phase": "Phase1",
+      "method": "random_forest",
+      "arm": "mesh",
+      "mean_prauc": 0.7659980529916229,
+      "n_seeds": 5
+    },
+    {
+      "task": "patient_dropout_rate_yn",
+      "phase": "Phase1",
+      "method": "random_forest",
+      "arm": "concat",
+      "mean_prauc": 0.7799670584203817,
+      "n_seeds": 5
+    },
+    {
+      "task": "patient_dropout_rate_yn",
+      "phase": "Phase1",
+      "method": "random_forest",
+      "arm": "best_code",
+      "mean_prauc": 0.7953192502271289,
+      "n_seeds": 5,
+      "best_rung_used": "chapter"
+    },
+    {
+      "task": "patient_dropout_rate_yn",
+      "phase": "Phase1",
+      "method": "extra_trees",
+      "arm": "sapbert",
+      "mean_prauc": 0.7445897431491062,
+      "n_seeds": 5
+    },
+    {
+      "task": "patient_dropout_rate_yn",
+      "phase": "Phase1",
+      "method": "extra_trees",
+      "arm": "mesh",
+      "mean_prauc": 0.7270459200446953,
+      "n_seeds": 5
+    },
+    {
+      "task": "patient_dropout_rate_yn",
+      "phase": "Phase1",
+      "method": "extra_trees",
+      "arm": "concat",
+      "mean_prauc": 0.7415429164919474,
+      "n_seeds": 5
+    },
+    {
+      "task": "patient_dropout_rate_yn",
+      "phase": "Phase1",
+      "method": "extra_trees",
+      "arm": "best_code",
+      "mean_prauc": 0.7699174861817362,
+      "n_seeds": 5,
+      "best_rung_used": "chapter"
+    },
+    {
+      "task": "patient_dropout_rate_yn",
+      "phase": "Phase1",
+      "method": "lightgbm",
+      "arm": "sapbert",
+      "mean_prauc": 0.7473366972638841,
+      "n_seeds": 5
+    },
+    {
+      "task": "patient_dropout_rate_yn",
+      "phase": "Phase1",
+      "method": "lightgbm",
+      "arm": "mesh",
+      "mean_prauc": 0.7421024433560908,
+      "n_seeds": 5
+    },
+    {
+      "task": "patient_dropout_rate_yn",
+      "phase": "Phase1",
+      "method": "lightgbm",
+      "arm": "concat",
+      "mean_prauc": 0.748810527538202,
+      "n_seeds": 5
+    },
+    {
+      "task": "patient_dropout_rate_yn",
+      "phase": "Phase1",
+      "method": "lightgbm",
+      "arm": "best_code",
+      "mean_prauc": 0.7465516326220148,
+      "n_seeds": 5,
+      "best_rung_used": "chapter"
+    },
+    {
+      "task": "patient_dropout_rate_yn",
+      "phase": "Phase2",
+      "method": "majority",
+      "arm": "sapbert",
+      "mean_prauc": 0.7678684376976597,
+      "n_seeds": 5
+    },
+    {
+      "task": "patient_dropout_rate_yn",
+      "phase": "Phase2",
+      "method": "majority",
+      "arm": "mesh",
+      "mean_prauc": 0.7678684376976597,
+      "n_seeds": 5
+    },
+    {
+      "task": "patient_dropout_rate_yn",
+      "phase": "Phase2",
+      "method": "majority",
+      "arm": "concat",
+      "mean_prauc": 0.7678684376976597,
+      "n_seeds": 5
+    },
+    {
+      "task": "patient_dropout_rate_yn",
+      "phase": "Phase2",
+      "method": "majority",
+      "arm": "best_code",
+      "mean_prauc": 0.7678684376976597,
+      "n_seeds": 5,
+      "best_rung_used": "chapter"
+    },
+    {
+      "task": "patient_dropout_rate_yn",
+      "phase": "Phase2",
+      "method": "logreg_l2",
+      "arm": "sapbert",
+      "mean_prauc": 0.8784874682031635,
+      "n_seeds": 5
+    },
+    {
+      "task": "patient_dropout_rate_yn",
+      "phase": "Phase2",
+      "method": "logreg_l2",
+      "arm": "mesh",
+      "mean_prauc": 0.8995114644655938,
+      "n_seeds": 5
+    },
+    {
+      "task": "patient_dropout_rate_yn",
+      "phase": "Phase2",
+      "method": "logreg_l2",
+      "arm": "concat",
+      "mean_prauc": 0.8546130582719078,
+      "n_seeds": 5
+    },
+    {
+      "task": "patient_dropout_rate_yn",
+      "phase": "Phase2",
+      "method": "logreg_l2",
+      "arm": "best_code",
+      "mean_prauc": 0.8694454219862451,
+      "n_seeds": 5,
+      "best_rung_used": "chapter"
+    },
+    {
+      "task": "patient_dropout_rate_yn",
+      "phase": "Phase2",
+      "method": "random_forest",
+      "arm": "sapbert",
+      "mean_prauc": 0.8654995333431945,
+      "n_seeds": 5
+    },
+    {
+      "task": "patient_dropout_rate_yn",
+      "phase": "Phase2",
+      "method": "random_forest",
+      "arm": "mesh",
+      "mean_prauc": 0.8634474888736374,
+      "n_seeds": 5
+    },
+    {
+      "task": "patient_dropout_rate_yn",
+      "phase": "Phase2",
+      "method": "random_forest",
+      "arm": "concat",
+      "mean_prauc": 0.8668058358276923,
+      "n_seeds": 5
+    },
+    {
+      "task": "patient_dropout_rate_yn",
+      "phase": "Phase2",
+      "method": "random_forest",
+      "arm": "best_code",
+      "mean_prauc": 0.8783468009407635,
+      "n_seeds": 5,
+      "best_rung_used": "chapter"
+    },
+    {
+      "task": "patient_dropout_rate_yn",
+      "phase": "Phase2",
+      "method": "extra_trees",
+      "arm": "sapbert",
+      "mean_prauc": 0.8606384450217301,
+      "n_seeds": 5
+    },
+    {
+      "task": "patient_dropout_rate_yn",
+      "phase": "Phase2",
+      "method": "extra_trees",
+      "arm": "mesh",
+      "mean_prauc": 0.8645285280880444,
+      "n_seeds": 5
+    },
+    {
+      "task": "patient_dropout_rate_yn",
+      "phase": "Phase2",
+      "method": "extra_trees",
+      "arm": "concat",
+      "mean_prauc": 0.8673413537550985,
+      "n_seeds": 5
+    },
+    {
+      "task": "patient_dropout_rate_yn",
+      "phase": "Phase2",
+      "method": "extra_trees",
+      "arm": "best_code",
+      "mean_prauc": 0.8856549438950789,
+      "n_seeds": 5,
+      "best_rung_used": "chapter"
+    },
+    {
+      "task": "patient_dropout_rate_yn",
+      "phase": "Phase2",
+      "method": "lightgbm",
+      "arm": "sapbert",
+      "mean_prauc": 0.8559044168665476,
+      "n_seeds": 5
+    },
+    {
+      "task": "patient_dropout_rate_yn",
+      "phase": "Phase2",
+      "method": "lightgbm",
+      "arm": "mesh",
+      "mean_prauc": 0.8629322894551101,
+      "n_seeds": 5
+    },
+    {
+      "task": "patient_dropout_rate_yn",
+      "phase": "Phase2",
+      "method": "lightgbm",
+      "arm": "concat",
+      "mean_prauc": 0.8568929068522113,
+      "n_seeds": 5
+    },
+    {
+      "task": "patient_dropout_rate_yn",
+      "phase": "Phase2",
+      "method": "lightgbm",
+      "arm": "best_code",
+      "mean_prauc": 0.8733229452224162,
+      "n_seeds": 5,
+      "best_rung_used": "chapter"
+    },
+    {
+      "task": "patient_dropout_rate_yn",
+      "phase": "Phase3",
+      "method": "majority",
+      "arm": "sapbert",
+      "mean_prauc": 0.910377358490566,
+      "n_seeds": 5
+    },
+    {
+      "task": "patient_dropout_rate_yn",
+      "phase": "Phase3",
+      "method": "majority",
+      "arm": "mesh",
+      "mean_prauc": 0.910377358490566,
+      "n_seeds": 5
+    },
+    {
+      "task": "patient_dropout_rate_yn",
+      "phase": "Phase3",
+      "method": "majority",
+      "arm": "concat",
+      "mean_prauc": 0.910377358490566,
+      "n_seeds": 5
+    },
+    {
+      "task": "patient_dropout_rate_yn",
+      "phase": "Phase3",
+      "method": "majority",
+      "arm": "best_code",
+      "mean_prauc": 0.910377358490566,
+      "n_seeds": 5,
+      "best_rung_used": "chapter"
+    },
+    {
+      "task": "patient_dropout_rate_yn",
+      "phase": "Phase3",
+      "method": "logreg_l2",
+      "arm": "sapbert",
+      "mean_prauc": 0.9309547454867658,
+      "n_seeds": 5
+    },
+    {
+      "task": "patient_dropout_rate_yn",
+      "phase": "Phase3",
+      "method": "logreg_l2",
+      "arm": "mesh",
+      "mean_prauc": 0.9462750467729961,
+      "n_seeds": 5
+    },
+    {
+      "task": "patient_dropout_rate_yn",
+      "phase": "Phase3",
+      "method": "logreg_l2",
+      "arm": "concat",
+      "mean_prauc": 0.9321691083818984,
+      "n_seeds": 5
+    },
+    {
+      "task": "patient_dropout_rate_yn",
+      "phase": "Phase3",
+      "method": "logreg_l2",
+      "arm": "best_code",
+      "mean_prauc": 0.9398503458025699,
+      "n_seeds": 5,
+      "best_rung_used": "chapter"
+    },
+    {
+      "task": "patient_dropout_rate_yn",
+      "phase": "Phase3",
+      "method": "random_forest",
+      "arm": "sapbert",
+      "mean_prauc": 0.9664826360381028,
+      "n_seeds": 5
+    },
+    {
+      "task": "patient_dropout_rate_yn",
+      "phase": "Phase3",
+      "method": "random_forest",
+      "arm": "mesh",
+      "mean_prauc": 0.9686450788587273,
+      "n_seeds": 5
+    },
+    {
+      "task": "patient_dropout_rate_yn",
+      "phase": "Phase3",
+      "method": "random_forest",
+      "arm": "concat",
+      "mean_prauc": 0.9646973129480119,
+      "n_seeds": 5
+    },
+    {
+      "task": "patient_dropout_rate_yn",
+      "phase": "Phase3",
+      "method": "random_forest",
+      "arm": "best_code",
+      "mean_prauc": 0.9764994782660524,
+      "n_seeds": 5,
+      "best_rung_used": "chapter"
+    },
+    {
+      "task": "patient_dropout_rate_yn",
+      "phase": "Phase3",
+      "method": "extra_trees",
+      "arm": "sapbert",
+      "mean_prauc": 0.9583417219819186,
+      "n_seeds": 5
+    },
+    {
+      "task": "patient_dropout_rate_yn",
+      "phase": "Phase3",
+      "method": "extra_trees",
+      "arm": "mesh",
+      "mean_prauc": 0.9603182705472927,
+      "n_seeds": 5
+    },
+    {
+      "task": "patient_dropout_rate_yn",
+      "phase": "Phase3",
+      "method": "extra_trees",
+      "arm": "concat",
+      "mean_prauc": 0.9589176091546271,
+      "n_seeds": 5
+    },
+    {
+      "task": "patient_dropout_rate_yn",
+      "phase": "Phase3",
+      "method": "extra_trees",
+      "arm": "best_code",
+      "mean_prauc": 0.9685992576226266,
+      "n_seeds": 5,
+      "best_rung_used": "chapter"
+    },
+    {
+      "task": "patient_dropout_rate_yn",
+      "phase": "Phase3",
+      "method": "lightgbm",
+      "arm": "sapbert",
+      "mean_prauc": 0.9603532550575207,
+      "n_seeds": 5
+    },
+    {
+      "task": "patient_dropout_rate_yn",
+      "phase": "Phase3",
+      "method": "lightgbm",
+      "arm": "mesh",
+      "mean_prauc": 0.9619366421561872,
+      "n_seeds": 5
+    },
+    {
+      "task": "patient_dropout_rate_yn",
+      "phase": "Phase3",
+      "method": "lightgbm",
+      "arm": "concat",
+      "mean_prauc": 0.9630235833806683,
+      "n_seeds": 5
+    },
+    {
+      "task": "patient_dropout_rate_yn",
+      "phase": "Phase3",
+      "method": "lightgbm",
+      "arm": "best_code",
+      "mean_prauc": 0.9596801217368164,
+      "n_seeds": 5,
+      "best_rung_used": "chapter"
+    },
+    {
+      "task": "patient_dropout_rate_yn",
+      "phase": "Phase4",
+      "method": "majority",
+      "arm": "sapbert",
+      "mean_prauc": 0.7045454545454546,
+      "n_seeds": 5
+    },
+    {
+      "task": "patient_dropout_rate_yn",
+      "phase": "Phase4",
+      "method": "majority",
+      "arm": "mesh",
+      "mean_prauc": 0.7045454545454546,
+      "n_seeds": 5
+    },
+    {
+      "task": "patient_dropout_rate_yn",
+      "phase": "Phase4",
+      "method": "majority",
+      "arm": "concat",
+      "mean_prauc": 0.7045454545454546,
+      "n_seeds": 5
+    },
+    {
+      "task": "patient_dropout_rate_yn",
+      "phase": "Phase4",
+      "method": "majority",
+      "arm": "best_code",
+      "mean_prauc": 0.7045454545454546,
+      "n_seeds": 5,
+      "best_rung_used": "chapter"
+    },
+    {
+      "task": "patient_dropout_rate_yn",
+      "phase": "Phase4",
+      "method": "logreg_l2",
+      "arm": "sapbert",
+      "mean_prauc": 0.7957762266600504,
+      "n_seeds": 5
+    },
+    {
+      "task": "patient_dropout_rate_yn",
+      "phase": "Phase4",
+      "method": "logreg_l2",
+      "arm": "mesh",
+      "mean_prauc": 0.8287332471782707,
+      "n_seeds": 5
+    },
+    {
+      "task": "patient_dropout_rate_yn",
+      "phase": "Phase4",
+      "method": "logreg_l2",
+      "arm": "concat",
+      "mean_prauc": 0.7896708306521053,
+      "n_seeds": 5
+    },
+    {
+      "task": "patient_dropout_rate_yn",
+      "phase": "Phase4",
+      "method": "logreg_l2",
+      "arm": "best_code",
+      "mean_prauc": 0.8131268588887106,
+      "n_seeds": 5,
+      "best_rung_used": "chapter"
+    },
+    {
+      "task": "patient_dropout_rate_yn",
+      "phase": "Phase4",
+      "method": "random_forest",
+      "arm": "sapbert",
+      "mean_prauc": 0.8424898216123751,
+      "n_seeds": 5
+    },
+    {
+      "task": "patient_dropout_rate_yn",
+      "phase": "Phase4",
+      "method": "random_forest",
+      "arm": "mesh",
+      "mean_prauc": 0.8442487372222793,
+      "n_seeds": 5
+    },
+    {
+      "task": "patient_dropout_rate_yn",
+      "phase": "Phase4",
+      "method": "random_forest",
+      "arm": "concat",
+      "mean_prauc": 0.8416982413855809,
+      "n_seeds": 5
+    },
+    {
+      "task": "patient_dropout_rate_yn",
+      "phase": "Phase4",
+      "method": "random_forest",
+      "arm": "best_code",
+      "mean_prauc": 0.8521680512765452,
+      "n_seeds": 5,
+      "best_rung_used": "chapter"
+    },
+    {
+      "task": "patient_dropout_rate_yn",
+      "phase": "Phase4",
+      "method": "extra_trees",
+      "arm": "sapbert",
+      "mean_prauc": 0.8318034712105071,
+      "n_seeds": 5
+    },
+    {
+      "task": "patient_dropout_rate_yn",
+      "phase": "Phase4",
+      "method": "extra_trees",
+      "arm": "mesh",
+      "mean_prauc": 0.8446590698928518,
+      "n_seeds": 5
+    },
+    {
+      "task": "patient_dropout_rate_yn",
+      "phase": "Phase4",
+      "method": "extra_trees",
+      "arm": "concat",
+      "mean_prauc": 0.8349667469883123,
+      "n_seeds": 5
+    },
+    {
+      "task": "patient_dropout_rate_yn",
+      "phase": "Phase4",
+      "method": "extra_trees",
+      "arm": "best_code",
+      "mean_prauc": 0.8578146046783729,
+      "n_seeds": 5,
+      "best_rung_used": "chapter"
+    },
+    {
+      "task": "patient_dropout_rate_yn",
+      "phase": "Phase4",
+      "method": "lightgbm",
+      "arm": "sapbert",
+      "mean_prauc": 0.8227043972935736,
+      "n_seeds": 5
+    },
+    {
+      "task": "patient_dropout_rate_yn",
+      "phase": "Phase4",
+      "method": "lightgbm",
+      "arm": "mesh",
+      "mean_prauc": 0.8181184022976291,
+      "n_seeds": 5
+    },
+    {
+      "task": "patient_dropout_rate_yn",
+      "phase": "Phase4",
+      "method": "lightgbm",
+      "arm": "concat",
+      "mean_prauc": 0.8242876608904943,
+      "n_seeds": 5
+    },
+    {
+      "task": "patient_dropout_rate_yn",
+      "phase": "Phase4",
+      "method": "lightgbm",
+      "arm": "best_code",
+      "mean_prauc": 0.8190949938197896,
+      "n_seeds": 5,
+      "best_rung_used": "chapter"
+    },
+    {
+      "task": "failure_reason",
+      "phase": "Phase1",
+      "method": "majority",
+      "arm": "sapbert",
+      "mean_prauc": 0.24999999999999994,
+      "n_seeds": 5
+    },
+    {
+      "task": "failure_reason",
+      "phase": "Phase1",
+      "method": "majority",
+      "arm": "mesh",
+      "mean_prauc": 0.24999999999999994,
+      "n_seeds": 5
+    },
+    {
+      "task": "failure_reason",
+      "phase": "Phase1",
+      "method": "majority",
+      "arm": "concat",
+      "mean_prauc": 0.24999999999999994,
+      "n_seeds": 5
+    },
+    {
+      "task": "failure_reason",
+      "phase": "Phase1",
+      "method": "majority",
+      "arm": "best_code",
+      "mean_prauc": 0.24999999999999994,
+      "n_seeds": 5,
+      "best_rung_used": "char3"
+    },
+    {
+      "task": "failure_reason",
+      "phase": "Phase1",
+      "method": "logreg_l2",
+      "arm": "sapbert",
+      "mean_prauc": 0.2953264156909601,
+      "n_seeds": 5
+    },
+    {
+      "task": "failure_reason",
+      "phase": "Phase1",
+      "method": "logreg_l2",
+      "arm": "mesh",
+      "mean_prauc": 0.29817432819959044,
+      "n_seeds": 5
+    },
+    {
+      "task": "failure_reason",
+      "phase": "Phase1",
+      "method": "logreg_l2",
+      "arm": "concat",
+      "mean_prauc": 0.2950812278850906,
+      "n_seeds": 5
+    },
+    {
+      "task": "failure_reason",
+      "phase": "Phase1",
+      "method": "logreg_l2",
+      "arm": "best_code",
+      "mean_prauc": 0.29042713502232126,
+      "n_seeds": 5,
+      "best_rung_used": "char3"
+    },
+    {
+      "task": "failure_reason",
+      "phase": "Phase1",
+      "method": "random_forest",
+      "arm": "sapbert",
+      "mean_prauc": 0.29997284017300957,
+      "n_seeds": 5
+    },
+    {
+      "task": "failure_reason",
+      "phase": "Phase1",
+      "method": "random_forest",
+      "arm": "mesh",
+      "mean_prauc": 0.2832441917478653,
+      "n_seeds": 5
+    },
+    {
+      "task": "failure_reason",
+      "phase": "Phase1",
+      "method": "random_forest",
+      "arm": "concat",
+      "mean_prauc": 0.2952788043381999,
+      "n_seeds": 5
+    },
+    {
+      "task": "failure_reason",
+      "phase": "Phase1",
+      "method": "random_forest",
+      "arm": "best_code",
+      "mean_prauc": 0.3212351891206645,
+      "n_seeds": 5,
+      "best_rung_used": "char3"
+    },
+    {
+      "task": "failure_reason",
+      "phase": "Phase1",
+      "method": "extra_trees",
+      "arm": "sapbert",
+      "mean_prauc": 0.29645056939306447,
+      "n_seeds": 5
+    },
+    {
+      "task": "failure_reason",
+      "phase": "Phase1",
+      "method": "extra_trees",
+      "arm": "mesh",
+      "mean_prauc": 0.27760391303453985,
+      "n_seeds": 5
+    },
+    {
+      "task": "failure_reason",
+      "phase": "Phase1",
+      "method": "extra_trees",
+      "arm": "concat",
+      "mean_prauc": 0.3006160552766334,
+      "n_seeds": 5
+    },
+    {
+      "task": "failure_reason",
+      "phase": "Phase1",
+      "method": "extra_trees",
+      "arm": "best_code",
+      "mean_prauc": 0.3094166369865406,
+      "n_seeds": 5,
+      "best_rung_used": "char3"
+    },
+    {
+      "task": "failure_reason",
+      "phase": "Phase1",
+      "method": "lightgbm",
+      "arm": "sapbert",
+      "mean_prauc": 0.3099447601470306,
+      "n_seeds": 5
+    },
+    {
+      "task": "failure_reason",
+      "phase": "Phase1",
+      "method": "lightgbm",
+      "arm": "mesh",
+      "mean_prauc": 0.28899102264221366,
+      "n_seeds": 5
+    },
+    {
+      "task": "failure_reason",
+      "phase": "Phase1",
+      "method": "lightgbm",
+      "arm": "concat",
+      "mean_prauc": 0.31037337225650685,
+      "n_seeds": 5
+    },
+    {
+      "task": "failure_reason",
+      "phase": "Phase1",
+      "method": "lightgbm",
+      "arm": "best_code",
+      "mean_prauc": 0.316581790649603,
+      "n_seeds": 5,
+      "best_rung_used": "char3"
+    },
+    {
+      "task": "failure_reason",
+      "phase": "Phase2",
+      "method": "majority",
+      "arm": "sapbert",
+      "mean_prauc": 0.25,
+      "n_seeds": 5
+    },
+    {
+      "task": "failure_reason",
+      "phase": "Phase2",
+      "method": "majority",
+      "arm": "mesh",
+      "mean_prauc": 0.25,
+      "n_seeds": 5
+    },
+    {
+      "task": "failure_reason",
+      "phase": "Phase2",
+      "method": "majority",
+      "arm": "concat",
+      "mean_prauc": 0.25,
+      "n_seeds": 5
+    },
+    {
+      "task": "failure_reason",
+      "phase": "Phase2",
+      "method": "majority",
+      "arm": "best_code",
+      "mean_prauc": 0.25,
+      "n_seeds": 5,
+      "best_rung_used": "char3"
+    },
+    {
+      "task": "failure_reason",
+      "phase": "Phase2",
+      "method": "logreg_l2",
+      "arm": "sapbert",
+      "mean_prauc": 0.2927060508510413,
+      "n_seeds": 5
+    },
+    {
+      "task": "failure_reason",
+      "phase": "Phase2",
+      "method": "logreg_l2",
+      "arm": "mesh",
+      "mean_prauc": 0.30989154131806296,
+      "n_seeds": 5
+    },
+    {
+      "task": "failure_reason",
+      "phase": "Phase2",
+      "method": "logreg_l2",
+      "arm": "concat",
+      "mean_prauc": 0.2916275435824183,
+      "n_seeds": 5
+    },
+    {
+      "task": "failure_reason",
+      "phase": "Phase2",
+      "method": "logreg_l2",
+      "arm": "best_code",
+      "mean_prauc": 0.29872536748447664,
+      "n_seeds": 5,
+      "best_rung_used": "char3"
+    },
+    {
+      "task": "failure_reason",
+      "phase": "Phase2",
+      "method": "random_forest",
+      "arm": "sapbert",
+      "mean_prauc": 0.2983344575746651,
+      "n_seeds": 5
+    },
+    {
+      "task": "failure_reason",
+      "phase": "Phase2",
+      "method": "random_forest",
+      "arm": "mesh",
+      "mean_prauc": 0.2870362926611569,
+      "n_seeds": 5
+    },
+    {
+      "task": "failure_reason",
+      "phase": "Phase2",
+      "method": "random_forest",
+      "arm": "concat",
+      "mean_prauc": 0.3031666328224115,
+      "n_seeds": 5
+    },
+    {
+      "task": "failure_reason",
+      "phase": "Phase2",
+      "method": "random_forest",
+      "arm": "best_code",
+      "mean_prauc": 0.3212039240657726,
+      "n_seeds": 5,
+      "best_rung_used": "char3"
+    },
+    {
+      "task": "failure_reason",
+      "phase": "Phase2",
+      "method": "extra_trees",
+      "arm": "sapbert",
+      "mean_prauc": 0.2901971900641714,
+      "n_seeds": 5
+    },
+    {
+      "task": "failure_reason",
+      "phase": "Phase2",
+      "method": "extra_trees",
+      "arm": "mesh",
+      "mean_prauc": 0.28179291568535914,
+      "n_seeds": 5
+    },
+    {
+      "task": "failure_reason",
+      "phase": "Phase2",
+      "method": "extra_trees",
+      "arm": "concat",
+      "mean_prauc": 0.2994013938509414,
+      "n_seeds": 5
+    },
+    {
+      "task": "failure_reason",
+      "phase": "Phase2",
+      "method": "extra_trees",
+      "arm": "best_code",
+      "mean_prauc": 0.3090004404763661,
+      "n_seeds": 5,
+      "best_rung_used": "char3"
+    },
+    {
+      "task": "failure_reason",
+      "phase": "Phase2",
+      "method": "lightgbm",
+      "arm": "sapbert",
+      "mean_prauc": 0.3060661194462091,
+      "n_seeds": 5
+    },
+    {
+      "task": "failure_reason",
+      "phase": "Phase2",
+      "method": "lightgbm",
+      "arm": "mesh",
+      "mean_prauc": 0.3045044221775127,
+      "n_seeds": 5
+    },
+    {
+      "task": "failure_reason",
+      "phase": "Phase2",
+      "method": "lightgbm",
+      "arm": "concat",
+      "mean_prauc": 0.31714028392496674,
+      "n_seeds": 5
+    },
+    {
+      "task": "failure_reason",
+      "phase": "Phase2",
+      "method": "lightgbm",
+      "arm": "best_code",
+      "mean_prauc": 0.3243767486252406,
+      "n_seeds": 5,
+      "best_rung_used": "char3"
+    },
+    {
+      "task": "failure_reason",
+      "phase": "Phase3",
+      "method": "majority",
+      "arm": "sapbert",
+      "mean_prauc": 0.25000000000000006,
+      "n_seeds": 5
+    },
+    {
+      "task": "failure_reason",
+      "phase": "Phase3",
+      "method": "majority",
+      "arm": "mesh",
+      "mean_prauc": 0.25000000000000006,
+      "n_seeds": 5
+    },
+    {
+      "task": "failure_reason",
+      "phase": "Phase3",
+      "method": "majority",
+      "arm": "concat",
+      "mean_prauc": 0.25000000000000006,
+      "n_seeds": 5
+    },
+    {
+      "task": "failure_reason",
+      "phase": "Phase3",
+      "method": "majority",
+      "arm": "best_code",
+      "mean_prauc": 0.25000000000000006,
+      "n_seeds": 5,
+      "best_rung_used": "char3"
+    },
+    {
+      "task": "failure_reason",
+      "phase": "Phase3",
+      "method": "logreg_l2",
+      "arm": "sapbert",
+      "mean_prauc": 0.3040040128495975,
+      "n_seeds": 5
+    },
+    {
+      "task": "failure_reason",
+      "phase": "Phase3",
+      "method": "logreg_l2",
+      "arm": "mesh",
+      "mean_prauc": 0.3249929424438313,
+      "n_seeds": 5
+    },
+    {
+      "task": "failure_reason",
+      "phase": "Phase3",
+      "method": "logreg_l2",
+      "arm": "concat",
+      "mean_prauc": 0.2996440333467363,
+      "n_seeds": 5
+    },
+    {
+      "task": "failure_reason",
+      "phase": "Phase3",
+      "method": "logreg_l2",
+      "arm": "best_code",
+      "mean_prauc": 0.29883611122494724,
+      "n_seeds": 5,
+      "best_rung_used": "char3"
+    },
+    {
+      "task": "failure_reason",
+      "phase": "Phase3",
+      "method": "random_forest",
+      "arm": "sapbert",
+      "mean_prauc": 0.3516410178755141,
+      "n_seeds": 5
+    },
+    {
+      "task": "failure_reason",
+      "phase": "Phase3",
+      "method": "random_forest",
+      "arm": "mesh",
+      "mean_prauc": 0.35204026897853413,
+      "n_seeds": 5
+    },
+    {
+      "task": "failure_reason",
+      "phase": "Phase3",
+      "method": "random_forest",
+      "arm": "concat",
+      "mean_prauc": 0.3501080774920289,
+      "n_seeds": 5
+    },
+    {
+      "task": "failure_reason",
+      "phase": "Phase3",
+      "method": "random_forest",
+      "arm": "best_code",
+      "mean_prauc": 0.36469052397078616,
+      "n_seeds": 5,
+      "best_rung_used": "char3"
+    },
+    {
+      "task": "failure_reason",
+      "phase": "Phase3",
+      "method": "extra_trees",
+      "arm": "sapbert",
+      "mean_prauc": 0.36001373966904593,
+      "n_seeds": 5
+    },
+    {
+      "task": "failure_reason",
+      "phase": "Phase3",
+      "method": "extra_trees",
+      "arm": "mesh",
+      "mean_prauc": 0.3418572758624248,
+      "n_seeds": 5
+    },
+    {
+      "task": "failure_reason",
+      "phase": "Phase3",
+      "method": "extra_trees",
+      "arm": "concat",
+      "mean_prauc": 0.36086447181839676,
+      "n_seeds": 5
+    },
+    {
+      "task": "failure_reason",
+      "phase": "Phase3",
+      "method": "extra_trees",
+      "arm": "best_code",
+      "mean_prauc": 0.3519997977631249,
+      "n_seeds": 5,
+      "best_rung_used": "char3"
+    },
+    {
+      "task": "failure_reason",
+      "phase": "Phase3",
+      "method": "lightgbm",
+      "arm": "sapbert",
+      "mean_prauc": 0.37489011422417134,
+      "n_seeds": 5
+    },
+    {
+      "task": "failure_reason",
+      "phase": "Phase3",
+      "method": "lightgbm",
+      "arm": "mesh",
+      "mean_prauc": 0.36720239817243544,
+      "n_seeds": 5
+    },
+    {
+      "task": "failure_reason",
+      "phase": "Phase3",
+      "method": "lightgbm",
+      "arm": "concat",
+      "mean_prauc": 0.37170809321099185,
+      "n_seeds": 5
+    },
+    {
+      "task": "failure_reason",
+      "phase": "Phase3",
+      "method": "lightgbm",
+      "arm": "best_code",
+      "mean_prauc": 0.3423190636843666,
+      "n_seeds": 5,
+      "best_rung_used": "char3"
+    },
+    {
+      "task": "failure_reason",
+      "phase": "Phase4",
+      "method": "majority",
+      "arm": "sapbert",
+      "mean_prauc": 0.25,
+      "n_seeds": 5
+    },
+    {
+      "task": "failure_reason",
+      "phase": "Phase4",
+      "method": "majority",
+      "arm": "mesh",
+      "mean_prauc": 0.25,
+      "n_seeds": 5
+    },
+    {
+      "task": "failure_reason",
+      "phase": "Phase4",
+      "method": "majority",
+      "arm": "concat",
+      "mean_prauc": 0.25,
+      "n_seeds": 5
+    },
+    {
+      "task": "failure_reason",
+      "phase": "Phase4",
+      "method": "majority",
+      "arm": "best_code",
+      "mean_prauc": 0.25,
+      "n_seeds": 5,
+      "best_rung_used": "char3"
+    },
+    {
+      "task": "failure_reason",
+      "phase": "Phase4",
+      "method": "logreg_l2",
+      "arm": "sapbert",
+      "mean_prauc": 0.26605945413142695,
+      "n_seeds": 5
+    },
+    {
+      "task": "failure_reason",
+      "phase": "Phase4",
+      "method": "logreg_l2",
+      "arm": "mesh",
+      "mean_prauc": 0.2698452346173864,
+      "n_seeds": 5
+    },
+    {
+      "task": "failure_reason",
+      "phase": "Phase4",
+      "method": "logreg_l2",
+      "arm": "concat",
+      "mean_prauc": 0.26608872027639013,
+      "n_seeds": 5
+    },
+    {
+      "task": "failure_reason",
+      "phase": "Phase4",
+      "method": "logreg_l2",
+      "arm": "best_code",
+      "mean_prauc": 0.2694975030233956,
+      "n_seeds": 5,
+      "best_rung_used": "char3"
+    },
+    {
+      "task": "failure_reason",
+      "phase": "Phase4",
+      "method": "random_forest",
+      "arm": "sapbert",
+      "mean_prauc": 0.283727632276035,
+      "n_seeds": 5
+    },
+    {
+      "task": "failure_reason",
+      "phase": "Phase4",
+      "method": "random_forest",
+      "arm": "mesh",
+      "mean_prauc": 0.2740947642607408,
+      "n_seeds": 5
+    },
+    {
+      "task": "failure_reason",
+      "phase": "Phase4",
+      "method": "random_forest",
+      "arm": "concat",
+      "mean_prauc": 0.28591786504941125,
+      "n_seeds": 5
+    },
+    {
+      "task": "failure_reason",
+      "phase": "Phase4",
+      "method": "random_forest",
+      "arm": "best_code",
+      "mean_prauc": 0.26988451939246727,
+      "n_seeds": 5,
+      "best_rung_used": "char3"
+    },
+    {
+      "task": "failure_reason",
+      "phase": "Phase4",
+      "method": "extra_trees",
+      "arm": "sapbert",
+      "mean_prauc": 0.2784099835655033,
+      "n_seeds": 5
+    },
+    {
+      "task": "failure_reason",
+      "phase": "Phase4",
+      "method": "extra_trees",
+      "arm": "mesh",
+      "mean_prauc": 0.2652411918359844,
+      "n_seeds": 5
+    },
+    {
+      "task": "failure_reason",
+      "phase": "Phase4",
+      "method": "extra_trees",
+      "arm": "concat",
+      "mean_prauc": 0.28096841639427345,
+      "n_seeds": 5
+    },
+    {
+      "task": "failure_reason",
+      "phase": "Phase4",
+      "method": "extra_trees",
+      "arm": "best_code",
+      "mean_prauc": 0.26459690860829366,
+      "n_seeds": 5,
+      "best_rung_used": "char3"
+    },
+    {
+      "task": "failure_reason",
+      "phase": "Phase4",
+      "method": "lightgbm",
+      "arm": "sapbert",
+      "mean_prauc": 0.27928548195203456,
+      "n_seeds": 5
+    },
+    {
+      "task": "failure_reason",
+      "phase": "Phase4",
+      "method": "lightgbm",
+      "arm": "mesh",
+      "mean_prauc": 0.272257118568987,
+      "n_seeds": 5
+    },
+    {
+      "task": "failure_reason",
+      "phase": "Phase4",
+      "method": "lightgbm",
+      "arm": "concat",
+      "mean_prauc": 0.28707993925044967,
+      "n_seeds": 5
+    },
+    {
+      "task": "failure_reason",
+      "phase": "Phase4",
+      "method": "lightgbm",
+      "arm": "best_code",
+      "mean_prauc": 0.2695381826381613,
+      "n_seeds": 5,
+      "best_rung_used": "char3"
+    }
+  ],
+  "pooled_contrasts_per_task": {
+    "outcome": {
+      "n_phases_used": {
+        "a_sapbert": 4,
+        "c_best_code": 4,
+        "d_concat": 4
+      },
+      "a_vs_c": {
+        "mean_a": 0.6899040417076422,
+        "mean_b": 0.7441831184775894,
+        "mean_delta": -0.05427907676994729,
+        "lo": -0.06900468957345451,
+        "hi": -0.039855968476841405,
+        "std": 0.00723214599484614,
+        "n_resamples_used": 1000,
+        "n_resamples_requested": 1000,
+        "n_rows": 31075,
+        "n_clusters": 6215
+      },
+      "d_vs_a": {
+        "mean_a": 0.6902821108706705,
+        "mean_b": 0.6899040417076422,
+        "mean_delta": 0.000378069163028383,
+        "lo": -0.002115591864532631,
+        "hi": 0.00289025114562661,
+        "std": 0.001275785451871821,
+        "n_resamples_used": 1000,
+        "n_resamples_requested": 1000,
+        "n_rows": 31075,
+        "n_clusters": 6215
+      },
+      "d_vs_c": {
+        "mean_a": 0.6902821108706705,
+        "mean_b": 0.7441831184775894,
+        "mean_delta": -0.053901007606918905,
+        "lo": -0.06889714063130233,
+        "hi": -0.03996298462024444,
+        "std": 0.007255383930927708,
+        "n_resamples_used": 1000,
+        "n_resamples_requested": 1000,
+        "n_rows": 31075,
+        "n_clusters": 6215
+      }
+    },
+    "mortality_rate_yn": {
+      "n_phases_used": {
+        "a_sapbert": 4,
+        "c_best_code": 4,
+        "d_concat": 4
+      },
+      "a_vs_c": {
+        "mean_a": 0.7580154487265861,
+        "mean_b": 0.7922278878107148,
+        "mean_delta": -0.034212439084128805,
+        "lo": -0.05205265250641341,
+        "hi": -0.01655568905486559,
+        "std": 0.009082731083995786,
+        "n_resamples_used": 1000,
+        "n_resamples_requested": 1000,
+        "n_rows": 17740,
+        "n_clusters": 3548
+      },
+      "d_vs_a": {
+        "mean_a": 0.7550813122601839,
+        "mean_b": 0.7580154487265861,
+        "mean_delta": -0.0029341364664020727,
+        "lo": -0.005880110723713586,
+        "hi": -0.00022251386497692643,
+        "std": 0.0014429043119234802,
+        "n_resamples_used": 1000,
+        "n_resamples_requested": 1000,
+        "n_rows": 17740,
+        "n_clusters": 3548
+      },
+      "d_vs_c": {
+        "mean_a": 0.7550813122601839,
+        "mean_b": 0.7922278878107148,
+        "mean_delta": -0.03714657555053088,
+        "lo": -0.05550762064021265,
+        "hi": -0.019554665505002827,
+        "std": 0.00908560079937487,
+        "n_resamples_used": 1000,
+        "n_resamples_requested": 1000,
+        "n_rows": 17740,
+        "n_clusters": 3548
+      }
+    },
+    "serious_adverse_rate_yn": {
+      "n_phases_used": {
+        "a_sapbert": 4,
+        "c_best_code": 4,
+        "d_concat": 4
+      },
+      "a_vs_c": {
+        "mean_a": 0.9078129248322374,
+        "mean_b": 0.9203710780027001,
+        "mean_delta": -0.012558153170462664,
+        "lo": -0.018919146125989935,
+        "hi": -0.00616159361179162,
+        "std": 0.003207791820118788,
+        "n_resamples_used": 1000,
+        "n_resamples_requested": 1000,
+        "n_rows": 17740,
+        "n_clusters": 3548
+      },
+      "d_vs_a": {
+        "mean_a": 0.8971163632726732,
+        "mean_b": 0.9078129248322374,
+        "mean_delta": -0.010696561559564237,
+        "lo": -0.018967636298547048,
+        "hi": -0.0021003391837746783,
+        "std": 0.004319941817545497,
+        "n_resamples_used": 1000,
+        "n_resamples_requested": 1000,
+        "n_rows": 17740,
+        "n_clusters": 3548
+      },
+      "d_vs_c": {
+        "mean_a": 0.8971163632726732,
+        "mean_b": 0.9203710780027001,
+        "mean_delta": -0.023254714730026903,
+        "lo": -0.03280059020377845,
+        "hi": -0.01415680933834676,
+        "std": 0.0047609569962944005,
+        "n_resamples_used": 1000,
+        "n_resamples_requested": 1000,
+        "n_rows": 17740,
+        "n_clusters": 3548
+      }
+    },
+    "patient_dropout_rate_yn": {
+      "n_phases_used": {
+        "a_sapbert": 4,
+        "c_best_code": 4,
+        "d_concat": 4
+      },
+      "a_vs_c": {
+        "mean_a": 0.9107558426803498,
+        "mean_b": 0.9223583105779468,
+        "mean_delta": -0.011602467897596884,
+        "lo": -0.015503714995202566,
+        "hi": -0.007553817858459265,
+        "std": 0.002022644248464605,
+        "n_resamples_used": 1000,
+        "n_resamples_requested": 1000,
+        "n_rows": 38705,
+        "n_clusters": 7741
+      },
+      "d_vs_a": {
+        "mean_a": 0.9101995973575037,
+        "mean_b": 0.9107558426803498,
+        "mean_delta": -0.0005562453228462985,
+        "lo": -0.0035155622980041156,
+        "hi": 0.0025102387501290953,
+        "std": 0.0015552065635580873,
+        "n_resamples_used": 1000,
+        "n_resamples_requested": 1000,
+        "n_rows": 38705,
+        "n_clusters": 7741
+      },
+      "d_vs_c": {
+        "mean_a": 0.9101995973575037,
+        "mean_b": 0.9223583105779468,
+        "mean_delta": -0.012158713220443183,
+        "lo": -0.01600755963876327,
+        "hi": -0.008650354239952121,
+        "std": 0.0018694336099385183,
+        "n_resamples_used": 1000,
+        "n_resamples_requested": 1000,
+        "n_rows": 38705,
+        "n_clusters": 7741
+      }
+    },
+    "failure_reason": {
+      "n_phases_used": {
+        "a_sapbert": 0,
+        "c_best_code": 0,
+        "d_concat": 0
+      },
+      "a_vs_c": {
+        "error": "too few pooled rows or misaligned"
+      },
+      "d_vs_a": {
+        "error": "too few pooled rows or misaligned"
+      },
+      "d_vs_c": {
+        "error": "too few pooled rows or misaligned"
+      }
+    }
+  },
+  "sapbert_pool_variant_maxpool_vs_meanpool": {
+    "note": "descriptive only, method=random_forest, not decision-bearing",
+    "rows": [
+      {
+        "task": "outcome",
+        "phase": "Phase1",
+        "mean_pool_prauc": 0.6593750951134176,
+        "max_pool_prauc": 0.6627266832986755,
+        "max_minus_mean": 0.0033515881852578255
+      },
+      {
+        "task": "outcome",
+        "phase": "Phase2",
+        "mean_pool_prauc": 0.6270193305482772,
+        "max_pool_prauc": 0.6278032387693007,
+        "max_minus_mean": 0.0007839082210234771
+      },
+      {
+        "task": "outcome",
+        "phase": "Phase3",
+        "mean_pool_prauc": 0.8263070445020533,
+        "max_pool_prauc": 0.8246723175952464,
+        "max_minus_mean": -0.0016347269068068826
+      },
+      {
+        "task": "outcome",
+        "phase": "Phase4",
+        "mean_pool_prauc": 0.6815189840673094,
+        "max_pool_prauc": 0.6849754935411807,
+        "max_minus_mean": 0.0034565094738713276
+      },
+      {
+        "task": "mortality_rate_yn",
+        "phase": "Phase1",
+        "mean_pool_prauc": 0.7865990645473072,
+        "max_pool_prauc": 0.7888242740289723,
+        "max_minus_mean": 0.002225209481665047
+      },
+      {
+        "task": "mortality_rate_yn",
+        "phase": "Phase2",
+        "mean_pool_prauc": 0.8013054671471019,
+        "max_pool_prauc": 0.7976374849660121,
+        "max_minus_mean": -0.0036679821810898794
+      },
+      {
+        "task": "mortality_rate_yn",
+        "phase": "Phase3",
+        "mean_pool_prauc": 0.8163066254548103,
+        "max_pool_prauc": 0.8157143536969217,
+        "max_minus_mean": -0.0005922717578885628
+      },
+      {
+        "task": "mortality_rate_yn",
+        "phase": "Phase4",
+        "mean_pool_prauc": 0.4125232098319017,
+        "max_pool_prauc": 0.42715734211199735,
+        "max_minus_mean": 0.014634132280095635
+      },
+      {
+        "task": "serious_adverse_rate_yn",
+        "phase": "Phase1",
+        "mean_pool_prauc": 0.8435862656908487,
+        "max_pool_prauc": 0.8362577157453124,
+        "max_minus_mean": -0.007328549945536333
+      },
+      {
+        "task": "serious_adverse_rate_yn",
+        "phase": "Phase2",
+        "mean_pool_prauc": 0.9051053205693694,
+        "max_pool_prauc": 0.9074847065605169,
+        "max_minus_mean": 0.002379385991147509
+      },
+      {
+        "task": "serious_adverse_rate_yn",
+        "phase": "Phase3",
+        "mean_pool_prauc": 0.9520430357981885,
+        "max_pool_prauc": 0.9551045255043759,
+        "max_minus_mean": 0.003061489706187359
+      },
+      {
+        "task": "serious_adverse_rate_yn",
+        "phase": "Phase4",
+        "mean_pool_prauc": 0.6358876963077139,
+        "max_pool_prauc": 0.6452383237693486,
+        "max_minus_mean": 0.00935062746163473
+      },
+      {
+        "task": "patient_dropout_rate_yn",
+        "phase": "Phase1",
+        "mean_pool_prauc": 0.776612462350921,
+        "max_pool_prauc": 0.7785964005713407,
+        "max_minus_mean": 0.0019839382204197564
+      },
+      {
+        "task": "patient_dropout_rate_yn",
+        "phase": "Phase2",
+        "mean_pool_prauc": 0.8654995333431945,
+        "max_pool_prauc": 0.8640918363915873,
+        "max_minus_mean": -0.0014076969516072513
+      },
+      {
+        "task": "patient_dropout_rate_yn",
+        "phase": "Phase3",
+        "mean_pool_prauc": 0.9664826360381028,
+        "max_pool_prauc": 0.9677052511568943,
+        "max_minus_mean": 0.0012226151187915146
+      },
+      {
+        "task": "patient_dropout_rate_yn",
+        "phase": "Phase4",
+        "mean_pool_prauc": 0.8424898216123751,
+        "max_pool_prauc": 0.8406436364173777,
+        "max_minus_mean": -0.0018461851949973518
+      },
+      {
+        "task": "failure_reason",
+        "phase": "Phase1",
+        "mean_pool_prauc": 0.29997284017300957,
+        "max_pool_prauc": 0.2992440384004052,
+        "max_minus_mean": -0.0007288017726043705
+      },
+      {
+        "task": "failure_reason",
+        "phase": "Phase2",
+        "mean_pool_prauc": 0.2983344575746651,
+        "max_pool_prauc": 0.29861811164342933,
+        "max_minus_mean": 0.0002836540687642386
+      },
+      {
+        "task": "failure_reason",
+        "phase": "Phase3",
+        "mean_pool_prauc": 0.3516410178755141,
+        "max_pool_prauc": 0.3529131236595814,
+        "max_minus_mean": 0.001272105784067279
+      },
+      {
+        "task": "failure_reason",
+        "phase": "Phase4",
+        "mean_pool_prauc": 0.283727632276035,
+        "max_pool_prauc": 0.282349597242732,
+        "max_minus_mean": -0.0013780350333029712
+      }
+    ]
+  },
+  "decision_rule": {
+    "primary": "PR-3 (first half) SUPPORTED if (a) is within pooled CI of (c) on the clinical tasks. Losing by more than the pooled CI -> CUT on that task. (d) beating both (a) and (c) by more than the pooled CI on any task -> fusion earns a line."
+  },
+  "verdict": "PR-3 (first half) CUT on ['mortality_rate_yn', 'serious_adverse_rate_yn']: SapBERT (a) loses to best multi-hot (c) by more than the pooled CI -- dense-entity vectors join Bio_ClinicalBERT in the 'lost here' column on these tasks. T26 remains PR-3's second half.",
+  "git_sha": "f4970dda94d6e122a29d9083b6ebf768ee0f5801-dirty",
+  "provenance_note": "git_sha above is dirty (uncommitted working tree at run time). That tree is now committed verbatim at 958ca37 (\"T25/T26/T27 code + P12 disease-holdout splits; SapBERT GPU fix; ignore T25 per-arm run caches\") -- no code changed between this run and that commit. Not re-run for provenance; see docs/open_items_2026-08-28.md A1.",
+  "wall_clock_secs": 19568.2
+}

@@ -1,0 +1,388 @@
+{
+  "test_id": "T26",
+  "claim_at_stake": "which representation still predicts when the disease family was never in training",
+  "inputs": {
+    "arms": [
+      "best_rung",
+      "ancestors",
+      "sapbert",
+      "presence",
+      "disease_text_only"
+    ],
+    "methods": [
+      "random_forest",
+      "logreg_l2"
+    ],
+    "seeds": [
+      42,
+      7,
+      123
+    ],
+    "clinical_cells": [
+      [
+        "mortality_rate_yn",
+        "Phase1"
+      ],
+      [
+        "mortality_rate_yn",
+        "Phase2"
+      ],
+      [
+        "mortality_rate_yn",
+        "Phase3"
+      ],
+      [
+        "mortality_rate_yn",
+        "Phase4"
+      ],
+      [
+        "serious_adverse_rate_yn",
+        "Phase1"
+      ],
+      [
+        "serious_adverse_rate_yn",
+        "Phase2"
+      ],
+      [
+        "serious_adverse_rate_yn",
+        "Phase3"
+      ],
+      [
+        "serious_adverse_rate_yn",
+        "Phase4"
+      ]
+    ],
+    "best_rung_per_task": {
+      "failure_reason": "char3",
+      "mortality_rate_yn": "ccsr",
+      "outcome": "char3",
+      "patient_dropout_rate_yn": "chapter",
+      "serious_adverse_rate_yn": "chapter"
+    }
+  },
+  "n_skipped_single_class_folds": 0,
+  "transfer_penalty": {
+    "mortality_rate_yn|best_rung|random_forest": {
+      "task": "mortality_rate_yn",
+      "arm": "best_rung",
+      "method": "random_forest",
+      "n_fold_fits": 96,
+      "mean_a": 0.8000331864387566,
+      "mean_b": 0.7611307292781672,
+      "mean_delta": 0.038902457160589585,
+      "lo": 0.03230439384608364,
+      "hi": 0.045323055369462656,
+      "std": 0.0034525761633974576,
+      "n_resamples_used": 1000,
+      "n_resamples_requested": 1000,
+      "n_rows": 34449,
+      "n_clusters": 11483
+    },
+    "mortality_rate_yn|best_rung|logreg_l2": {
+      "task": "mortality_rate_yn",
+      "arm": "best_rung",
+      "method": "logreg_l2",
+      "n_fold_fits": 96,
+      "mean_a": 0.7395764901804605,
+      "mean_b": 0.6751829941915567,
+      "mean_delta": 0.06439349598890391,
+      "lo": 0.055680289810098565,
+      "hi": 0.07338513112484882,
+      "std": 0.004683868350603389,
+      "n_resamples_used": 1000,
+      "n_resamples_requested": 1000,
+      "n_rows": 34449,
+      "n_clusters": 11483
+    },
+    "mortality_rate_yn|ancestors|random_forest": {
+      "task": "mortality_rate_yn",
+      "arm": "ancestors",
+      "method": "random_forest",
+      "n_fold_fits": 96,
+      "mean_a": 0.8132147199618701,
+      "mean_b": 0.773666337769906,
+      "mean_delta": 0.0395483821919639,
+      "lo": 0.03276040608661337,
+      "hi": 0.046880505322819996,
+      "std": 0.0036525276176886615,
+      "n_resamples_used": 1000,
+      "n_resamples_requested": 1000,
+      "n_rows": 34449,
+      "n_clusters": 11483
+    },
+    "mortality_rate_yn|ancestors|logreg_l2": {
+      "task": "mortality_rate_yn",
+      "arm": "ancestors",
+      "method": "logreg_l2",
+      "n_fold_fits": 96,
+      "mean_a": 0.7271861184296206,
+      "mean_b": 0.6725462157689738,
+      "mean_delta": 0.054639902660646694,
+      "lo": 0.04423790390400266,
+      "hi": 0.06491181906156147,
+      "std": 0.005318908294770456,
+      "n_resamples_used": 1000,
+      "n_resamples_requested": 1000,
+      "n_rows": 34449,
+      "n_clusters": 11483
+    },
+    "mortality_rate_yn|sapbert|random_forest": {
+      "task": "mortality_rate_yn",
+      "arm": "sapbert",
+      "method": "random_forest",
+      "n_fold_fits": 96,
+      "mean_a": 0.7938685143311113,
+      "mean_b": 0.7752566788801025,
+      "mean_delta": 0.018611835451008907,
+      "lo": 0.009784906936651539,
+      "hi": 0.026928571735281463,
+      "std": 0.004321697300807953,
+      "n_resamples_used": 1000,
+      "n_resamples_requested": 1000,
+      "n_rows": 34449,
+      "n_clusters": 11483
+    },
+    "mortality_rate_yn|sapbert|logreg_l2": {
+      "task": "mortality_rate_yn",
+      "arm": "sapbert",
+      "method": "logreg_l2",
+      "n_fold_fits": 96,
+      "mean_a": 0.739316415088395,
+      "mean_b": 0.6962842882792191,
+      "mean_delta": 0.043032126809175876,
+      "lo": 0.03420513782623519,
+      "hi": 0.0520595525178643,
+      "std": 0.004590615885460628,
+      "n_resamples_used": 1000,
+      "n_resamples_requested": 1000,
+      "n_rows": 34449,
+      "n_clusters": 11483
+    },
+    "mortality_rate_yn|presence|random_forest": {
+      "task": "mortality_rate_yn",
+      "arm": "presence",
+      "method": "random_forest",
+      "n_fold_fits": 96,
+      "mean_a": 0.7197368176074531,
+      "mean_b": 0.7045544283878625,
+      "mean_delta": 0.01518238921959041,
+      "lo": 0.008793655812123298,
+      "hi": 0.02186326020648648,
+      "std": 0.0034149268641592736,
+      "n_resamples_used": 1000,
+      "n_resamples_requested": 1000,
+      "n_rows": 34449,
+      "n_clusters": 11483
+    },
+    "mortality_rate_yn|presence|logreg_l2": {
+      "task": "mortality_rate_yn",
+      "arm": "presence",
+      "method": "logreg_l2",
+      "n_fold_fits": 96,
+      "mean_a": 0.6755278266455139,
+      "mean_b": 0.6686017004660445,
+      "mean_delta": 0.006926126179469403,
+      "lo": 0.002384151431245879,
+      "hi": 0.011518088355321636,
+      "std": 0.00227551272348318,
+      "n_resamples_used": 1000,
+      "n_resamples_requested": 1000,
+      "n_rows": 34449,
+      "n_clusters": 11483
+    },
+    "serious_adverse_rate_yn|best_rung|random_forest": {
+      "task": "serious_adverse_rate_yn",
+      "arm": "best_rung",
+      "method": "random_forest",
+      "n_fold_fits": 96,
+      "mean_a": 0.9257040980460222,
+      "mean_b": 0.9167451621932764,
+      "mean_delta": 0.008958935852745629,
+      "lo": 0.005923451541072783,
+      "hi": 0.012076387136171984,
+      "std": 0.0015642559496899214,
+      "n_resamples_used": 1000,
+      "n_resamples_requested": 1000,
+      "n_rows": 34449,
+      "n_clusters": 11483
+    },
+    "serious_adverse_rate_yn|best_rung|logreg_l2": {
+      "task": "serious_adverse_rate_yn",
+      "arm": "best_rung",
+      "method": "logreg_l2",
+      "n_fold_fits": 96,
+      "mean_a": 0.9006032755510256,
+      "mean_b": 0.891438163628654,
+      "mean_delta": 0.009165111922371566,
+      "lo": 0.005342690064596386,
+      "hi": 0.01332712364138645,
+      "std": 0.002040259868062273,
+      "n_resamples_used": 1000,
+      "n_resamples_requested": 1000,
+      "n_rows": 34449,
+      "n_clusters": 11483
+    },
+    "serious_adverse_rate_yn|ancestors|random_forest": {
+      "task": "serious_adverse_rate_yn",
+      "arm": "ancestors",
+      "method": "random_forest",
+      "n_fold_fits": 96,
+      "mean_a": 0.9283295305760947,
+      "mean_b": 0.917657325577047,
+      "mean_delta": 0.010672204999047637,
+      "lo": 0.007448855769662623,
+      "hi": 0.014310915222583381,
+      "std": 0.00174962335216998,
+      "n_resamples_used": 1000,
+      "n_resamples_requested": 1000,
+      "n_rows": 34449,
+      "n_clusters": 11483
+    },
+    "serious_adverse_rate_yn|ancestors|logreg_l2": {
+      "task": "serious_adverse_rate_yn",
+      "arm": "ancestors",
+      "method": "logreg_l2",
+      "n_fold_fits": 96,
+      "mean_a": 0.8770861166613205,
+      "mean_b": 0.8538453496922966,
+      "mean_delta": 0.023240766969023774,
+      "lo": 0.017018293740610826,
+      "hi": 0.029992815263917647,
+      "std": 0.0032657082089727714,
+      "n_resamples_used": 1000,
+      "n_resamples_requested": 1000,
+      "n_rows": 34449,
+      "n_clusters": 11483
+    },
+    "serious_adverse_rate_yn|sapbert|random_forest": {
+      "task": "serious_adverse_rate_yn",
+      "arm": "sapbert",
+      "method": "random_forest",
+      "n_fold_fits": 96,
+      "mean_a": 0.9153780531588651,
+      "mean_b": 0.903328829410536,
+      "mean_delta": 0.012049223748329051,
+      "lo": 0.007764485607614011,
+      "hi": 0.016521374875665594,
+      "std": 0.0021676278290088118,
+      "n_resamples_used": 1000,
+      "n_resamples_requested": 1000,
+      "n_rows": 34449,
+      "n_clusters": 11483
+    },
+    "serious_adverse_rate_yn|sapbert|logreg_l2": {
+      "task": "serious_adverse_rate_yn",
+      "arm": "sapbert",
+      "method": "logreg_l2",
+      "n_fold_fits": 96,
+      "mean_a": 0.8875432892574107,
+      "mean_b": 0.8680119724107876,
+      "mean_delta": 0.019531316846622963,
+      "lo": 0.014571332934768129,
+      "hi": 0.02423401228733651,
+      "std": 0.0024219502237306655,
+      "n_resamples_used": 1000,
+      "n_resamples_requested": 1000,
+      "n_rows": 34449,
+      "n_clusters": 11483
+    },
+    "serious_adverse_rate_yn|presence|random_forest": {
+      "task": "serious_adverse_rate_yn",
+      "arm": "presence",
+      "method": "random_forest",
+      "n_fold_fits": 96,
+      "mean_a": 0.9096740288477883,
+      "mean_b": 0.9038395239634208,
+      "mean_delta": 0.005834504884367487,
+      "lo": 0.0027567057014463757,
+      "hi": 0.008922332487150008,
+      "std": 0.0015849429893864053,
+      "n_resamples_used": 1000,
+      "n_resamples_requested": 1000,
+      "n_rows": 34449,
+      "n_clusters": 11483
+    },
+    "serious_adverse_rate_yn|presence|logreg_l2": {
+      "task": "serious_adverse_rate_yn",
+      "arm": "presence",
+      "method": "logreg_l2",
+      "n_fold_fits": 96,
+      "mean_a": 0.9045753779245422,
+      "mean_b": 0.9028946289790444,
+      "mean_delta": 0.0016807489454977826,
+      "lo": 8.29759940415209e-05,
+      "hi": 0.003216002976135254,
+      "std": 0.0008011914632021521,
+      "n_resamples_used": 1000,
+      "n_resamples_requested": 1000,
+      "n_rows": 34449,
+      "n_clusters": 11483
+    },
+    "mortality_rate_yn|disease_text_only|internal": {
+      "task": "mortality_rate_yn",
+      "arm": "disease_text_only",
+      "method": "internal",
+      "n_fold_fits": 96,
+      "mean_a": 0.7557319658043832,
+      "mean_b": 0.7178666085517108,
+      "mean_delta": 0.03786535725267236,
+      "lo": 0.03220888432486982,
+      "hi": 0.04387003299499526,
+      "std": 0.003023352255482981,
+      "n_resamples_used": 1000,
+      "n_resamples_requested": 1000,
+      "n_rows": 34449,
+      "n_clusters": 11483
+    },
+    "serious_adverse_rate_yn|disease_text_only|internal": {
+      "task": "serious_adverse_rate_yn",
+      "arm": "disease_text_only",
+      "method": "internal",
+      "n_fold_fits": 96,
+      "mean_a": 0.8557823369885156,
+      "mean_b": 0.8349074412796731,
+      "mean_delta": 0.02087489570884241,
+      "lo": 0.01653050496971734,
+      "hi": 0.025380878084658796,
+      "std": 0.002314222418128474,
+      "n_resamples_used": 1000,
+      "n_resamples_requested": 1000,
+      "n_rows": 34449,
+      "n_clusters": 11483
+    }
+  },
+  "per_task_ordering_random_forest": {
+    "mortality_rate_yn": {
+      "presence": 0.01518238921959041,
+      "sapbert": 0.018611835451008907,
+      "disease_text_only": 0.03786535725267236,
+      "best_rung": 0.038902457160589585,
+      "ancestors": 0.0395483821919639
+    },
+    "serious_adverse_rate_yn": {
+      "presence": 0.005834504884367487,
+      "best_rung": 0.008958935852745629,
+      "ancestors": 0.010672204999047637,
+      "sapbert": 0.012049223748329051,
+      "disease_text_only": 0.02087489570884241
+    }
+  },
+  "decision_rule": {
+    "primary": "PR-3 (second half) SUPPORTED if SapBERT's transfer penalty is smaller than every multi-hot arm's by more than the pooled fold CI, with ancestors between them. All penalties indistinguishable -> transfer robustness sells nothing, drop the angle. Report disease_text_only's penalty beside them regardless -- if free text transfers best, that leads the section."
+  },
+  "verdict": "Mixed, per-task result -- not the clean both-clinical-tasks pattern PR-3 asks for: per_task_clears={'mortality_rate_yn': {'best_rung': True, 'ancestors': True}, 'serious_adverse_rate_yn': {'best_rung': False, 'ancestors': False}}. SapBERT clears both multi-hot arms on mortality_rate_yn (non-overlapping CIs) but not on serious_adverse_rate_yn (overlapping CIs, point estimate slightly worse than best_rung/ancestors there). Report per_task_ordering and transfer_penalty descriptively; PR-3 is task-dependent, not SUPPORTED or CUT overall.",
+  "git_sha": "f4970dda94d6e122a29d9083b6ebf768ee0f5801-dirty",
+  "provenance_note": "git_sha above is dirty (uncommitted working tree at run time). That tree is now committed verbatim at 958ca37 (\"T25/T26/T27 code + P12 disease-holdout splits; SapBERT GPU fix; ignore T25 per-arm run caches\") -- no code changed between this run and that commit. Not re-run for provenance; see docs/open_items_2026-08-28.md A1.",
+  "wall_clock_secs": 3056.1,
+  "per_task_clears_multihot_random_forest": {
+    "mortality_rate_yn": {
+      "best_rung": true,
+      "ancestors": true
+    },
+    "serious_adverse_rate_yn": {
+      "best_rung": false,
+      "ancestors": false
+    }
+  },
+  "verdict_correction_note": "2026-08-28: the original verdict logic compared SapBERT against ALL arms including  (a trivial floor with near-zero penalty by construction, not a real multi-hot contender) when picking the smallest per task. Corrected to compare only against the multi-hot arms (best_rung, ancestors), per PR-3's actual wording. The underlying transfer_penalty numbers are unchanged -- only this derived verdict was wrong."
+}

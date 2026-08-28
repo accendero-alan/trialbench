@@ -1,0 +1,335 @@
+{
+  "test_id": "T27",
+  "claim_at_stake": "how noisy is the shipped string->ICD mapping, and does cleaning it move scores",
+  "inputs": {
+    "levels": [
+      "chapter",
+      "char3",
+      "full"
+    ],
+    "seeds": [
+      42,
+      7,
+      123,
+      2024,
+      5
+    ],
+    "n_hand_adjudicate": 100,
+    "n_rerun_cells": 4,
+    "official_index_size": 46881,
+    "best_rung_per_task": {
+      "failure_reason": "char3",
+      "mortality_rate_yn": "ccsr",
+      "outcome": "char3",
+      "patient_dropout_rate_yn": "chapter",
+      "serious_adverse_rate_yn": "chapter"
+    }
+  },
+  "cell_agreement_table": [
+    {
+      "task": "outcome",
+      "phase": "Phase1",
+      "mean_jaccard_chapter": 0.45026912261845303,
+      "mean_jaccard_char3": 0.2312240606065201,
+      "mean_jaccard_full": 0.036101420046474285,
+      "n_scored_chapter": 896,
+      "n_scored_char3": 896,
+      "n_scored_full": 896
+    },
+    {
+      "task": "outcome",
+      "phase": "Phase2",
+      "mean_jaccard_chapter": 0.5844784574349013,
+      "mean_jaccard_char3": 0.3109384333366789,
+      "mean_jaccard_full": 0.07083782500414615,
+      "n_scored_chapter": 2514,
+      "n_scored_char3": 2514,
+      "n_scored_full": 2514
+    },
+    {
+      "task": "outcome",
+      "phase": "Phase3",
+      "mean_jaccard_chapter": 0.6022697665928195,
+      "mean_jaccard_char3": 0.38517575131852266,
+      "mean_jaccard_full": 0.07325181389102627,
+      "n_scored_chapter": 1913,
+      "n_scored_char3": 1913,
+      "n_scored_full": 1913
+    },
+    {
+      "task": "outcome",
+      "phase": "Phase4",
+      "mean_jaccard_chapter": 0.5370391131041355,
+      "mean_jaccard_char3": 0.35618240171506044,
+      "mean_jaccard_full": 0.07774076656942705,
+      "n_scored_chapter": 892,
+      "n_scored_char3": 892,
+      "n_scored_full": 892
+    },
+    {
+      "task": "mortality_rate_yn",
+      "phase": "Phase1",
+      "mean_jaccard_chapter": 0.37779293101488803,
+      "mean_jaccard_char3": 0.22051739694937786,
+      "mean_jaccard_full": 0.043072007612561934,
+      "n_scored_chapter": 419,
+      "n_scored_char3": 419,
+      "n_scored_full": 419
+    },
+    {
+      "task": "mortality_rate_yn",
+      "phase": "Phase2",
+      "mean_jaccard_chapter": 0.5535275297619048,
+      "mean_jaccard_char3": 0.3294213323182526,
+      "mean_jaccard_full": 0.0943237192909222,
+      "n_scored_chapter": 1600,
+      "n_scored_char3": 1600,
+      "n_scored_full": 1600
+    },
+    {
+      "task": "mortality_rate_yn",
+      "phase": "Phase3",
+      "mean_jaccard_chapter": 0.5465822625346434,
+      "mean_jaccard_char3": 0.36683334347373725,
+      "mean_jaccard_full": 0.09444982430117188,
+      "n_scored_chapter": 945,
+      "n_scored_char3": 945,
+      "n_scored_full": 945
+    },
+    {
+      "task": "mortality_rate_yn",
+      "phase": "Phase4",
+      "mean_jaccard_chapter": 0.46582681017612526,
+      "mean_jaccard_char3": 0.3210599117853587,
+      "mean_jaccard_full": 0.08380519234420761,
+      "n_scored_chapter": 584,
+      "n_scored_char3": 584,
+      "n_scored_full": 584
+    },
+    {
+      "task": "serious_adverse_rate_yn",
+      "phase": "Phase1",
+      "mean_jaccard_chapter": 0.37779293101488803,
+      "mean_jaccard_char3": 0.22051739694937786,
+      "mean_jaccard_full": 0.043072007612561934,
+      "n_scored_chapter": 419,
+      "n_scored_char3": 419,
+      "n_scored_full": 419
+    },
+    {
+      "task": "serious_adverse_rate_yn",
+      "phase": "Phase2",
+      "mean_jaccard_chapter": 0.5535275297619048,
+      "mean_jaccard_char3": 0.3294213323182526,
+      "mean_jaccard_full": 0.0943237192909222,
+      "n_scored_chapter": 1600,
+      "n_scored_char3": 1600,
+      "n_scored_full": 1600
+    },
+    {
+      "task": "serious_adverse_rate_yn",
+      "phase": "Phase3",
+      "mean_jaccard_chapter": 0.5465822625346434,
+      "mean_jaccard_char3": 0.36683334347373725,
+      "mean_jaccard_full": 0.09444982430117188,
+      "n_scored_chapter": 945,
+      "n_scored_char3": 945,
+      "n_scored_full": 945
+    },
+    {
+      "task": "serious_adverse_rate_yn",
+      "phase": "Phase4",
+      "mean_jaccard_chapter": 0.46582681017612526,
+      "mean_jaccard_char3": 0.3210599117853587,
+      "mean_jaccard_full": 0.08380519234420761,
+      "n_scored_chapter": 584,
+      "n_scored_char3": 584,
+      "n_scored_full": 584
+    },
+    {
+      "task": "patient_dropout_rate_yn",
+      "phase": "Phase1",
+      "mean_jaccard_chapter": 0.3883289794388322,
+      "mean_jaccard_char3": 0.22279379823432421,
+      "mean_jaccard_full": 0.05134756072100482,
+      "n_scored_chapter": 883,
+      "n_scored_char3": 883,
+      "n_scored_full": 883
+    },
+    {
+      "task": "patient_dropout_rate_yn",
+      "phase": "Phase2",
+      "mean_jaccard_chapter": 0.5707391102601226,
+      "mean_jaccard_char3": 0.33273603345365427,
+      "mean_jaccard_full": 0.09122578731258604,
+      "n_scored_chapter": 3162,
+      "n_scored_char3": 3162,
+      "n_scored_full": 3162
+    },
+    {
+      "task": "patient_dropout_rate_yn",
+      "phase": "Phase3",
+      "mean_jaccard_chapter": 0.5701683584187873,
+      "mean_jaccard_char3": 0.38672064699303227,
+      "mean_jaccard_full": 0.08903143126776918,
+      "n_scored_chapter": 2332,
+      "n_scored_char3": 2332,
+      "n_scored_full": 2332
+    },
+    {
+      "task": "patient_dropout_rate_yn",
+      "phase": "Phase4",
+      "mean_jaccard_chapter": 0.5206320113578178,
+      "mean_jaccard_char3": 0.358134575402231,
+      "mean_jaccard_full": 0.08549754009269242,
+      "n_scored_chapter": 1364,
+      "n_scored_char3": 1364,
+      "n_scored_full": 1364
+    },
+    {
+      "task": "failure_reason",
+      "phase": "Phase1",
+      "mean_jaccard_chapter": 0.4276841725179017,
+      "mean_jaccard_char3": 0.21972075684083972,
+      "mean_jaccard_full": 0.04429011095810611,
+      "n_scored_chapter": 842,
+      "n_scored_char3": 842,
+      "n_scored_full": 842
+    },
+    {
+      "task": "failure_reason",
+      "phase": "Phase2",
+      "mean_jaccard_chapter": 0.5485890404851078,
+      "mean_jaccard_char3": 0.26844004327941834,
+      "mean_jaccard_full": 0.07715565577310265,
+      "n_scored_chapter": 1780,
+      "n_scored_char3": 1780,
+      "n_scored_full": 1780
+    },
+    {
+      "task": "failure_reason",
+      "phase": "Phase3",
+      "mean_jaccard_chapter": 0.5278414121665655,
+      "mean_jaccard_char3": 0.33625251608619994,
+      "mean_jaccard_full": 0.07563685522921257,
+      "n_scored_chapter": 815,
+      "n_scored_char3": 815,
+      "n_scored_full": 815
+    },
+    {
+      "task": "failure_reason",
+      "phase": "Phase4",
+      "mean_jaccard_chapter": 0.4671751503742718,
+      "mean_jaccard_char3": 0.30338249870589895,
+      "mean_jaccard_full": 0.06696094310804837,
+      "n_scored_chapter": 683,
+      "n_scored_char3": 683,
+      "n_scored_full": 683
+    }
+  ],
+  "disagreement_sample_csv": "results/experiments/t27_disagreement_sample.csv",
+  "disagreement_sample_n": 75,
+  "hand_adjudication_status": "NOT PERFORMED -- the sample is written for manual review; the plan calls this 'an evening' of human work, not automatable.",
+  "rerun_cells": [
+    {
+      "task": "failure_reason",
+      "phase": "Phase1",
+      "mean_jaccard_char3": 0.21972075684083972
+    },
+    {
+      "task": "mortality_rate_yn",
+      "phase": "Phase1",
+      "mean_jaccard_char3": 0.22051739694937786
+    },
+    {
+      "task": "serious_adverse_rate_yn",
+      "phase": "Phase1",
+      "mean_jaccard_char3": 0.22051739694937786
+    },
+    {
+      "task": "patient_dropout_rate_yn",
+      "phase": "Phase1",
+      "mean_jaccard_char3": 0.22279379823432421
+    }
+  ],
+  "rerun_results": [
+    {
+      "task": "failure_reason",
+      "phase": "Phase1",
+      "mean_jaccard_char3": 0.21972075684083972,
+      "best_rung": "char3",
+      "error": "no validation predictions on disk"
+    },
+    {
+      "task": "mortality_rate_yn",
+      "phase": "Phase1",
+      "mean_jaccard_char3": 0.22051739694937786,
+      "best_rung": "ccsr",
+      "best_method": "random_forest",
+      "remapped_vs_shipped": {
+        "mean_a": 0.7853537558262349,
+        "mean_b": 0.8012953270192443,
+        "mean_delta": -0.015941571193009568,
+        "lo": -0.04041494809727652,
+        "hi": 0.005404000146324816,
+        "std": 0.011317660858353232,
+        "n_resamples_used": 1000,
+        "n_resamples_requested": 1000,
+        "n_rows": 2095,
+        "n_clusters": 419
+      }
+    },
+    {
+      "task": "serious_adverse_rate_yn",
+      "phase": "Phase1",
+      "mean_jaccard_char3": 0.22051739694937786,
+      "best_rung": "chapter",
+      "best_method": "random_forest",
+      "remapped_vs_shipped": {
+        "mean_a": 0.8873068280273476,
+        "mean_b": 0.8880231269409881,
+        "mean_delta": -0.0007162989136404471,
+        "lo": -0.010612760272749674,
+        "hi": 0.01056653116548873,
+        "std": 0.005331416406065799,
+        "n_resamples_used": 1000,
+        "n_resamples_requested": 1000,
+        "n_rows": 2095,
+        "n_clusters": 419
+      }
+    },
+    {
+      "task": "patient_dropout_rate_yn",
+      "phase": "Phase1",
+      "mean_jaccard_char3": 0.22279379823432421,
+      "best_rung": "chapter",
+      "best_method": "random_forest",
+      "remapped_vs_shipped": {
+        "mean_a": 0.7833986648684684,
+        "mean_b": 0.7952621652638494,
+        "mean_delta": -0.011863500395380847,
+        "lo": -0.024256903718035187,
+        "hi": -0.0008596664044814637,
+        "std": 0.005819985457506145,
+        "n_resamples_used": 1000,
+        "n_resamples_requested": 1000,
+        "n_rows": 4415,
+        "n_clusters": 883
+      }
+    }
+  ],
+  "decision_rule": {
+    "primary": "If re-mapping moves pooled PR-AUC by more than the pooled CI on the re-run cells, every T23-T26 conclusion gets a mapping-sensitivity caveat and the cleaned mapping becomes the campaign's recommended default. If not, the 13% literature figure is non-binding here. The agreement table is reported regardless -- the first published error estimate for this mapping pipeline."
+  },
+  "verdict": "Re-mapping measurably HURTS pooled PR-AUC (relative to the shipped mapping) on [('patient_dropout_rate_yn', 'Phase1')], despite low shipped/remap agreement there (see cell_agreement_table). This is not the direction the plan default framing anticipated: the shipped mapping is not improved upon by this SapBERT nearest-neighbor remap, so it stays the campaign default; the disagreement is reported as an interpretive caveat (condition strings may carry predictive signal beyond what any single ICD code captures), not as grounds to switch mappings. The 13-percent-error-floor literature figure is not vindicated as a quality problem here -- disagreement is real, but cleaning it does not help this benchmark predictions.",
+  "git_sha": "f4970dda94d6e122a29d9083b6ebf768ee0f5801-dirty",
+  "provenance_note": "git_sha above is dirty (uncommitted working tree at run time). That tree is now committed verbatim at 958ca37 (\"T25/T26/T27 code + P12 disease-holdout splits; SapBERT GPU fix; ignore T25 per-arm run caches\") -- no code changed between this run and that commit. Not re-run for provenance; see docs/open_items_2026-08-28.md A1.",
+  "wall_clock_secs": 66.2,
+  "rerun_directions": {
+    "failure_reason/Phase1": null,
+    "mortality_rate_yn/Phase1": "indistinguishable",
+    "serious_adverse_rate_yn/Phase1": "indistinguishable",
+    "patient_dropout_rate_yn/Phase1": "remap_worse"
+  },
+  "verdict_correction_note": "2026-08-28: the original verdict logic declared the CI-clearing cell a reason to recommend the remapped mapping as default without checking direction. The actual result on patient_dropout_rate_yn/Phase1 is that remapping HURTS pooled PR-AUC (mean_delta negative, CI excludes zero) -- corrected to report this honestly rather than assume improvement. The underlying remapped_vs_shipped numbers are unchanged, only this derived verdict was wrong."
+}
