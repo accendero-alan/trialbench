@@ -15,8 +15,10 @@ import numpy as np
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from src.eval.pooled_bootstrap import (  # noqa: E402
+    cluster_bootstrap_indices,
     diff_in_diff_bootstrap,
     one_sample_cluster_bootstrap,
+    pooled_paired_bootstrap,
     two_sample_cluster_bootstrap,
 )
 
@@ -128,6 +130,32 @@ def test_one_sample_cluster_bootstrap_ci_contains_point_estimate():
     print("one-sample CI OK:", r["point"], "CI=[", r["lo"], r["hi"], "]")
 
 
+def test_cluster_bootstrap_indices_empty_input_yields_empty_draws_not_a_crash():
+    """Found live on T28b-L0's disease-swap arm: a fully-empty arm (every
+    candidate had no eligible cross-chapter donor -- real on AACT's
+    icdcode-sparse Arm B) used to crash inside np.concatenate([]) (\"need
+    at least one array to concatenate\") instead of yielding the empty
+    resample that draw legitimately represents."""
+    draws = list(cluster_bootstrap_indices(np.array([]), n_resamples=10, seed=0))
+    assert len(draws) == 10
+    assert all(len(d) == 0 for d in draws)
+    print("empty-input cluster_bootstrap_indices OK:", len(draws), "draws, all empty")
+
+
+def test_one_sample_and_paired_bootstrap_degrade_to_nan_on_empty_arm():
+    """The two real callers of cluster_bootstrap_indices must not crash
+    when handed a genuinely empty arm -- they already have a `has = len(
+    ...) > 0` fallback to NaN for \"zero usable resamples\"; this just
+    confirms the empty-input case reaches that fallback instead of
+    raising, now that cluster_bootstrap_indices itself doesn't."""
+    empty = np.array([])
+    r1 = one_sample_cluster_bootstrap(empty, empty, empty, metric="auroc", n_resamples=10, seed=0)
+    assert r1["n_resamples_used"] == 0 and np.isnan(r1["lo"]) and np.isnan(r1["hi"])
+    r2 = pooled_paired_bootstrap(empty, empty, empty, empty, metric="auroc", n_resamples=10, seed=0)
+    assert r2["n_resamples_used"] == 0 and np.isnan(r2["lo"]) and np.isnan(r2["hi"])
+    print("empty-arm bootstrap degradation OK: both report n_resamples_used=0, CI=[nan, nan]")
+
+
 if __name__ == "__main__":
     test_detects_real_gap_between_independent_arms()
     test_no_gap_when_arms_are_equally_uninformative()
@@ -136,4 +164,6 @@ if __name__ == "__main__":
     test_diff_in_diff_null_when_both_drop_comparably()
     test_diff_in_diff_reports_observed_not_assumed_correlation()
     test_one_sample_cluster_bootstrap_ci_contains_point_estimate()
+    test_cluster_bootstrap_indices_empty_input_yields_empty_draws_not_a_crash()
+    test_one_sample_and_paired_bootstrap_degrade_to_nan_on_empty_arm()
     print("pooled_bootstrap tests passed")

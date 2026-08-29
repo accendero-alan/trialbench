@@ -475,13 +475,45 @@ def build_donor_pool(arm_a: pd.DataFrame) -> dict:
 def swap_disease(row: pd.Series, donor_pool: dict, rng: np.random.Generator) -> "pd.Series | None":
     """Returns a copy of `row` with `condition` replaced by a donor disease
     name from a DIFFERENT ICD chapter, or None if no eligible donor chapter
-    exists for this trial (skipped, not forced)."""
+    exists for this trial (skipped, not forced).
+
+    Found live on real Arm B data (icdcode is null-heavy on the fresh AACT
+    slice per docs/p14_4_schema_slice.md): if `_row_chapters(row)` comes
+    back empty because this trial's icdcode is unresolvable, the original
+    `[c for c in donor_pool if c not in own_chapters]` excludes nothing --
+    an unverifiable chapter was silently treated as "no conflicts" instead
+    of "can't tell," so the donor could be drawn from the trial's own
+    actual disease area, including (as happened for NCT00782431, a real
+    Influenza trial with icdcode=None) a same-NAMED donor from a different
+    Arm A trial. That is not a swap; it is a no-op with an extra join,
+    exactly what assert_no_disease_leak exists to catch, but the trial
+    should never have reached that assertion. Two independent guards, not
+    one: an empty own_chapters can't be verified cross-chapter, so it is
+    skipped outright; and even within a genuinely-different chapter, a
+    donor pool built from many trials can still contain the original
+    disease's own name (data-quality overlap between chapters), so
+    same-named candidates are excluded before drawing."""
     own_chapters = _row_chapters(row)
+    if not own_chapters:
+        return None
+    own_terms = {t.strip().lower() for t in _recursive_parse_terms(row.get("condition"))}
     eligible_chapters = [c for c in donor_pool if c not in own_chapters]
     if not eligible_chapters:
         return None
     chapter = rng.choice(eligible_chapters)
-    donor_name = rng.choice(donor_pool[chapter])
+    candidates = [n for n in donor_pool[chapter] if n.strip().lower() not in own_terms]
+    if not candidates:
+        return None
+    # str(...): rng.choice on a Python list of str returns a numpy str_
+    # scalar, not a plain str. numpy 2.x's repr() on that scalar is
+    # "np.str_('Asthma')", not "'Asthma'" -- repr([donor_name]) would
+    # write condition as the literal text "[np.str_('Asthma')]", which
+    # ast.literal_eval can't parse, so _disease_filler's parser falls back
+    # to treating that whole garbled string as the "disease name" shown to
+    # the model. Silent, not a crash -- would not have been caught by
+    # assert_no_disease_leak (which only checks for the ORIGINAL disease's
+    # terms leaking, not for the donor's name being malformed).
+    donor_name = str(rng.choice(candidates))
     swapped = row.copy()
     swapped["condition"] = repr([donor_name])
     return swapped
@@ -567,13 +599,24 @@ def elicit_row(client, results_dir, model_id, endpoint, row, meter, arm="L7", sl
     return result
 
 
+_SCORE_ARM_COLUMNS = ("nct_id", "endpoint", "p14_label", "arm", "proba", "parse_ok", "refused", "raw_text")
+
+
 def score_arm(client, results_dir, model_id, arm_df: pd.DataFrame, meter, arm_name: str,
              arm: str = "L7", slot_df: "pd.DataFrame | None" = None) -> pd.DataFrame:
     """`arm_name` is a free-text label carried into the artifact for
     readability (e.g. "A", "B", "swap"); `arm` is the actual serialize.py
     arm code rendered (defaults "L7", matching every call site before P1).
     `slot_df`, if given, must share `arm_df`'s index (row-for-row) and
-    supplies each row's disease-slot override -- see `elicit_row`."""
+    supplies each row's disease-slot override -- see `elicit_row`.
+
+    Always returns a DataFrame with `_SCORE_ARM_COLUMNS`, even when
+    `arm_df` is empty: a swap arm can legitimately have zero rows (every
+    candidate had no eligible cross-chapter donor, e.g. an icdcode-null
+    Arm B trial -- see `swap_disease`'s docstring), and
+    `pd.DataFrame.from_records([])` with no explicit columns returns a
+    columnless frame that KeyErrors on the merge in
+    `_paired_arm_comparison` instead of degrading to an empty result."""
     records = []
     for idx, row in arm_df.iterrows():
         slot_row = slot_df.loc[idx] if slot_df is not None else None
@@ -584,7 +627,7 @@ def score_arm(client, results_dir, model_id, arm_df: pd.DataFrame, meter, arm_na
             "arm": arm, "proba": result.primary_prob, "parse_ok": result.parse_ok,
             "refused": result.refused, "raw_text": result.raw_text,
         })
-    return pd.DataFrame.from_records(records)
+    return pd.DataFrame.from_records(records, columns=list(_SCORE_ARM_COLUMNS))
 
 
 def score_arm_reference(method_by_endpoint: dict, arm_df: pd.DataFrame) -> pd.DataFrame:
@@ -889,8 +932,14 @@ def assert_no_disease_leak(original_row: pd.Series, slot_row: pd.Series, rendere
         )
 
 
+_SCORE_ARM_REFERENCE_TEXT_COLUMNS = ("nct_id", "endpoint", "p14_label", "arm", "proba")
+
+
 def score_reference_arm_text(ref_by_endpoint: dict, candidates: pd.DataFrame, arm: str,
                              slot_df: "pd.DataFrame | None" = None) -> pd.DataFrame:
+    """Always returns a DataFrame with `_SCORE_ARM_REFERENCE_TEXT_COLUMNS`,
+    even when `candidates` is empty -- see `score_arm`'s docstring for why
+    (a fully-empty swap arm is a real possibility, not a hypothetical)."""
     records = []
     for endpoint, sub in candidates.groupby("endpoint", observed=True):
         method = ref_by_endpoint[endpoint]
@@ -906,7 +955,7 @@ def score_reference_arm_text(ref_by_endpoint: dict, candidates: pd.DataFrame, ar
         for (_, row), p in zip(sub.iterrows(), proba):
             records.append({"nct_id": row["nct_id"], "endpoint": endpoint,
                            "p14_label": int(row["p14_label"]), "arm": arm, "proba": float(p)})
-    return pd.DataFrame.from_records(records)
+    return pd.DataFrame.from_records(records, columns=list(_SCORE_ARM_REFERENCE_TEXT_COLUMNS))
 
 
 def run_three_point_curve(client, results_dir, model_id, candidates: pd.DataFrame, donor_pool: dict,

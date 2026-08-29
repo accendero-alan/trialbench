@@ -78,6 +78,21 @@ def cluster_bootstrap_indices(nct_id, n_resamples: int, seed: int = 0) -> Iterat
     unique_ids, start_idx, counts = np.unique(sorted_ids, return_index=True, return_counts=True)
     groups = [order[s:s + c] for s, c in zip(start_idx, counts)]
     n_clusters = len(unique_ids)
+    if n_clusters == 0:
+        # A real caller can pass an empty arm (e.g. T28b-L0's disease-swap
+        # probe when zero candidates had an eligible cross-chapter donor --
+        # np.random.default_rng(...).integers(0, 0, size=0) legitimately
+        # returns an empty draw every time, but np.concatenate([]) then
+        # raises "need at least one array to concatenate" instead of
+        # yielding the empty resample that draw actually represents. Every
+        # caller here already treats a resample with <2 classes present as
+        # unusable and skips it (see one_sample_cluster_bootstrap /
+        # pooled_paired_bootstrap's `has = len(...) > 0` fallback to NaN),
+        # so an empty index array on every draw degrades to that same
+        # already-handled "not computable" path instead of a crash.
+        for _ in range(n_resamples):
+            yield np.empty(0, dtype=int)
+        return
     rng = np.random.default_rng(seed)
     for _ in range(n_resamples):
         drawn = rng.integers(0, n_clusters, size=n_clusters)

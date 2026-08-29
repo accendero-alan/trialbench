@@ -13,6 +13,7 @@ import sys
 import tempfile
 from unittest import mock
 
+import numpy as np
 import pandas as pd
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -28,6 +29,7 @@ from experiments.t28b_opus_recall import (  # noqa: E402
     render_arm_with_disease_override,
     run,
     run_l0_null_check,
+    swap_disease,
 )
 from src.bedrock.client import BedrockClient  # noqa: E402
 from src.bedrock.meter import Meter  # noqa: E402
@@ -196,6 +198,85 @@ def test_swap_rendering_via_override_has_no_disease_leak():
     print("swap-rendering disease-leak check OK")
 
 
+def test_swap_disease_skips_when_own_chapter_is_unresolvable():
+    """Found live on real Arm B data: NCT00782431 (condition "Influenza")
+    has icdcode=None, so _row_chapters(row) came back empty and the
+    original `[c for c in donor_pool if c not in own_chapters]` excluded
+    NOTHING -- an unverifiable chapter silently read as "no conflicts"
+    rather than "can't tell," so the donor could be drawn from the
+    trial's own real disease area, including a same-NAMED donor from a
+    different Arm A trial ("Influenza" swapped for "Influenza"). That
+    crashed assert_no_disease_leak downstream; the real fix is here, one
+    layer up, where the false eligibility was manufactured."""
+    row = _fixture_row(condition="Influenza")
+    row["icdcode"] = None
+    # Adversarial on purpose: even the chapter that WOULD be correct for
+    # this trial contains a donor literally named "Influenza" (as it did
+    # live, from a different NCT) -- if own_chapters were ever incorrectly
+    # resolved as non-empty here, this donor pool would still be able to
+    # produce a same-name "swap" by chance, which the second guard below
+    # covers separately.
+    donor_pool = {"J00-J99": ["Influenza", "Asthma"], "C00-D49": ["Breast Cancer"]}
+    for seed in range(20):
+        result = swap_disease(row, donor_pool, np.random.default_rng(seed))
+        assert result is None, (
+            f"seed={seed}: a trial with an unresolvable icdcode must be skipped as a swap "
+            f"candidate, not swapped -- got {result['condition'] if result is not None else result}"
+        )
+    print("swap_disease unresolvable-chapter guard OK: skipped on all 20 seeds")
+
+
+def test_swap_disease_never_picks_a_same_named_donor():
+    """Defense in depth for a second, independent way the same failure
+    mode can happen: even with a resolvable, genuinely-different-chapter
+    donor pool, real-world ICD/condition data can be noisy enough that the
+    trial's own disease name also appears as a donor entry in an eligible
+    chapter (e.g. a miscategorized trial). swap_disease must filter those
+    out before drawing, not rely on chapter exclusion alone."""
+    row = _fixture_row(condition="Influenza")
+    row["icdcode"] = "['J09']"  # resolves to J00-J99, a real, non-empty chapter
+    # The only "eligible" (different-chapter) donor pool also happens to
+    # contain "Influenza" itself, alongside a genuinely different disease.
+    donor_pool = {"C00-D49": ["Influenza", "Breast Cancer"]}
+    seen_names = set()
+    for seed in range(30):
+        result = swap_disease(row, donor_pool, np.random.default_rng(seed))
+        if result is not None:
+            from src.data.features import _recursive_parse_terms
+            names = _recursive_parse_terms(result["condition"])
+            seen_names.update(names)
+            assert "influenza" not in [n.lower() for n in names], (
+                f"seed={seed}: swap_disease picked a same-named donor -- not a real swap"
+            )
+    assert seen_names, "expected at least one successful swap to Breast Cancer across 30 seeds"
+    print("swap_disease same-name-donor guard OK: never picked 'Influenza', saw", seen_names)
+
+
+def test_swap_disease_condition_is_clean_python_literal():
+    """numpy 2.x regression this repo hit live: rng.choice on a Python
+    list of str returns a numpy str_ scalar, and repr() on THAT scalar is
+    "np.str_('Asthma')", not "'Asthma'" -- repr([donor_name]) then writes
+    condition as the garbled literal text "[np.str_('Asthma')]", which
+    ast.literal_eval can't parse. _disease_filler's parser silently falls
+    back to treating that whole string as the disease name, so the model
+    would have been shown "[np.str_('Asthma')]" verbatim as the swapped
+    disease -- not a crash, and not caught by assert_no_disease_leak
+    (which only checks the ORIGINAL disease's terms, not donor validity)."""
+    row = _fixture_row(condition="Influenza")
+    row["icdcode"] = "['J09']"
+    donor_pool = {"C00-D49": ["Breast Cancer", "Asthma"]}
+    result = swap_disease(row, donor_pool, np.random.default_rng(0))
+    assert result is not None
+    assert "np.str_" not in result["condition"], (
+        f"condition is a garbled numpy repr, not a clean Python list literal: {result['condition']!r}"
+    )
+    from src.data.features import _recursive_parse_terms
+    terms = _recursive_parse_terms(result["condition"])
+    assert terms == [str(t) for t in terms] and all(isinstance(t, str) for t in terms), terms
+    assert terms[0] in ("Breast Cancer", "Asthma"), terms
+    print("swap_disease clean-literal check OK:", result["condition"])
+
+
 def test_elicit_row_renders_requested_arm():
     """Regression guard for the exact bug P1 fixed: elicit_row used to
     hardcode render_arm(row, "L7", ...) regardless of the `arm` argument.
@@ -277,6 +358,9 @@ if __name__ == "__main__":
         test_full_pipeline_tiny_sample()
         test_l0_null_check_tiny_sample()
     test_swap_rendering_via_override_has_no_disease_leak()
+    test_swap_disease_skips_when_own_chapter_is_unresolvable()
+    test_swap_disease_never_picks_a_same_named_donor()
+    test_swap_disease_condition_is_clean_python_literal()
     test_elicit_row_renders_requested_arm()
     test_decide_recall_demonstrated_needs_both_r1_and_r2()
     test_decide_calibration_artifact_when_opus_auroc_flat()
