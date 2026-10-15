@@ -144,7 +144,12 @@ class ClinicalEmbeddings(BaseMethod):
 
         import torch
 
-        tok, model = _get_encoder(self.MODEL_NAME)
+        # GPU when present. Before this, the encoder and every batch stayed on
+        # CPU regardless (~51 min/cell on EC2, bert_vs_tfidf.md). Same model,
+        # same fp32 math, so vectors match the CPU path to float tolerance and
+        # the cache key deliberately leaves device out.
+        device = "cuda" if torch.cuda.is_available() else "cpu"
+        tok, model = _get_encoder(self.MODEL_NAME, device=device)
         texts = concat_text(X)
         chunks = []
         with torch.no_grad():
@@ -152,9 +157,10 @@ class ClinicalEmbeddings(BaseMethod):
                 batch = texts[i:i + self.BATCH_SIZE]
                 enc = tok(batch, padding=True, truncation=True,
                           max_length=self.MAX_LENGTH, return_tensors="pt")
+                enc = {k: v.to(device) for k, v in enc.items()}
                 out = model(**enc)
                 pooled = _mean_pool(out.last_hidden_state, enc["attention_mask"])
-                chunks.append(pooled.numpy())
+                chunks.append(pooled.cpu().numpy())
         emb = np.concatenate(chunks, axis=0).astype(np.float32)
 
         os.makedirs(self.CACHE_DIR, exist_ok=True)
@@ -186,6 +192,113 @@ class ClinicalEmbeddings(BaseMethod):
         for j, c in enumerate(self.clf_.classes_):
             full[:, int(c)] = proba[:, j]
         return full
+
+
+@register("clinical_bert_finetuned")
+class FineTunedClinicalBERT(BaseMethod):
+    """Bio_ClinicalBERT fine-tuned end to end on each cell's training split --
+    the arm Part 3 never ran (``clinical_embeddings`` is frozen and loses to
+    TF-IDF everywhere it completed, bert_vs_tfidf.md). Same text as the frozen
+    arm (``concat_text`` over TEXT_COLS, truncated at MAX_LENGTH), so the two
+    differ only in whether the encoder trains.
+
+    Standard recipe, fixed before any run: AdamW lr 2e-5, weight decay 0.01,
+    batch 16, linear schedule with 10% warmup, fp16 autocast on GPU, up to
+    MAX_EPOCHS epochs. The epoch kept is the one with the best validation
+    AUROC (patience 1); the test split is never seen during training or
+    selection. GPU strongly recommended -- CPU will work but takes hours.
+    """
+    feature_view = "raw"
+
+    MODEL_NAME = "emilyalsentzer/Bio_ClinicalBERT"
+    REVISION = "d5892b39a4adaed74b92212a44081509db72f87b"  # HF refs/main, pinned 2026-10-15
+    MAX_LENGTH = 256
+    BATCH_SIZE = 16
+    EVAL_BATCH_SIZE = 64
+    LR = 2e-5
+    WEIGHT_DECAY = 0.01
+    WARMUP_FRAC = 0.1
+    MAX_EPOCHS = 3
+    PATIENCE = 1
+
+    def _encode(self, X):
+        enc = self.tok_(concat_text(X), padding="max_length", truncation=True,
+                        max_length=self.MAX_LENGTH, return_tensors="pt")
+        return enc["input_ids"], enc["attention_mask"]
+
+    def _proba(self, ids, mask):
+        import torch
+
+        self.model_.eval()
+        out = []
+        with torch.no_grad(), torch.autocast(self.device_, dtype=torch.float16, enabled=self.device_ == "cuda"):
+            for i in range(0, len(ids), self.EVAL_BATCH_SIZE):
+                logits = self.model_(input_ids=ids[i:i + self.EVAL_BATCH_SIZE].to(self.device_),
+                                     attention_mask=mask[i:i + self.EVAL_BATCH_SIZE].to(self.device_)).logits
+                out.append(torch.softmax(logits.float(), dim=-1).cpu().numpy())
+        return np.concatenate(out, axis=0)
+
+    def fit(self, X_train, y_train, X_valid=None, y_valid=None):
+        import random
+
+        import torch
+        from sklearn.metrics import roc_auc_score
+        from transformers import AutoModelForSequenceClassification, AutoTokenizer, get_linear_schedule_with_warmup
+
+        random.seed(self.seed); np.random.seed(self.seed); torch.manual_seed(self.seed)
+        self.device_ = "cuda" if torch.cuda.is_available() else "cpu"
+        self.tok_ = AutoTokenizer.from_pretrained(self.MODEL_NAME, revision=self.REVISION)
+        self.model_ = AutoModelForSequenceClassification.from_pretrained(
+            self.MODEL_NAME, revision=self.REVISION, num_labels=self.num_classes).to(self.device_)
+
+        ids, mask = self._encode(X_train)
+        y = torch.as_tensor(np.asarray(y_train), dtype=torch.long)
+        has_valid = X_valid is not None and y_valid is not None and len(X_valid)
+        if has_valid:
+            v_ids, v_mask = self._encode(X_valid)
+            y_valid = np.asarray(y_valid)
+
+        steps = self.MAX_EPOCHS * ((len(ids) + self.BATCH_SIZE - 1) // self.BATCH_SIZE)
+        opt = torch.optim.AdamW(self.model_.parameters(), lr=self.LR, weight_decay=self.WEIGHT_DECAY)
+        sched = get_linear_schedule_with_warmup(opt, int(self.WARMUP_FRAC * steps), steps)
+        scaler = torch.amp.GradScaler(self.device_, enabled=self.device_ == "cuda")
+        gen = torch.Generator().manual_seed(self.seed)
+
+        best_score, best_state, bad, self.epoch_scores_ = -np.inf, None, 0, []
+        for epoch in range(self.MAX_EPOCHS):
+            self.model_.train()
+            for b in torch.randperm(len(ids), generator=gen).split(self.BATCH_SIZE):
+                opt.zero_grad(set_to_none=True)
+                with torch.autocast(self.device_, dtype=torch.float16, enabled=self.device_ == "cuda"):
+                    loss = self.model_(input_ids=ids[b].to(self.device_), attention_mask=mask[b].to(self.device_),
+                                       labels=y[b].to(self.device_)).loss
+                scaler.scale(loss).backward()
+                scaler.unscale_(opt)
+                torch.nn.utils.clip_grad_norm_(self.model_.parameters(), 1.0)
+                scaler.step(opt)
+                scaler.update()
+                sched.step()
+            if not has_valid:
+                continue
+            p = self._proba(v_ids, v_mask)
+            score = (roc_auc_score(y_valid, p[:, 1]) if self.num_classes == 2
+                     else roc_auc_score(y_valid, p, multi_class="ovr", labels=list(range(self.num_classes))))
+            self.epoch_scores_.append(float(score))
+            if score > best_score:
+                best_score, bad = score, 0
+                best_state = {k: v.detach().cpu().clone() for k, v in self.model_.state_dict().items()}
+            else:
+                bad += 1
+                if bad > self.PATIENCE - 1:
+                    break
+        if best_state is not None:
+            self.model_.load_state_dict(best_state)
+        self.best_epoch_ = int(np.argmax(self.epoch_scores_)) + 1 if self.epoch_scores_ else self.MAX_EPOCHS
+        return self
+
+    def predict_proba(self, X):
+        p = self._proba(*self._encode(X))
+        return p[:, 1] if self.task_type == "binary" else p
 
 
 class SapBERTEncoder:

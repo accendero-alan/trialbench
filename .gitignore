@@ -29,3 +29,8 @@ results/experiments/_snapshots/
 # don't bloat the repo -- results/experiments/t25_dense_vs_sparse.json is
 # the tracked summary.
 /results_t25_*/
+
+# Jev vs BERT vs LR grid runs (predictions/, runs/, jev_meta/, logs).
+# Regenerable; results/experiments/jev_benchmark_compare.json is the
+# tracked summary.
+/results_jev/
