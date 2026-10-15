@@ -1,0 +1,147 @@
+{
+ "test_id": "t28b_jev_preflight",
+ "git_sha": "a5002122eb98743359dd0866e62b0c096d3e1220-dirty",
+ "seed": 42,
+ "snapshot_b": {
+  "source": "AACT (aact.ctti-clinicaltrials.org)",
+  "format": "pipe-delimited flat files",
+  "date": "2026-10-15",
+  "url": "https://aact.ctti-clinicaltrials.org/static/exported_files/daily/2026-10-15",
+  "zip_sha256": "5b6b0f725dbefa4d7bfc39a0bc2d851c295930e2f515bfabf5017dd30cbaecb9",
+  "zip_size_bytes": 2544818909
+ },
+ "snapshot_a_labels": {
+  "source": "AACT (aact.ctti-clinicaltrials.org)",
+  "format": "pipe-delimited flat files",
+  "date": "2026-08-26",
+  "url": "https://aact.ctti-clinicaltrials.org/static/exported_files/daily/2026-08-26",
+  "zip_sha256": "d2ef247566ec080a4788f7556ab7fe1dad630e87af5a783f3664be0ddee75e57",
+  "zip_size_bytes": 2513044058
+ },
+ "b_cutoff": "2026-09-18",
+ "a_cutoff": "2023-01-01",
+ "b_cutoff_source": "OpenRouter listing of typesafe/jev-1.13, created 2026-09-18 00:01 UTC (model id dated 20260917; press launch 2026-09-15)",
+ "snapshot_results_dates": {
+  "max_results_posted": "2026-10-14",
+  "n_results_posted_after_b_cutoff": 356,
+  "by_week_after_b_cutoff": {
+   "2026-09-21": 103,
+   "2026-09-28": 110,
+   "2026-10-05": 103,
+   "2026-10-12": 40
+  }
+ },
+ "slice_sizes": {
+  "a_registered_pre_results_post": 356,
+  "b_fully_post_release": 0
+ },
+ "n_and_label_balance": {
+  "arm_a": {
+   "n": 500,
+   "mortality_rate_yn": {
+    "n": 250,
+    "positive_rate": 0.392
+   },
+   "serious_adverse_rate_yn": {
+    "n": 250,
+    "positive_rate": 0.672
+   }
+  },
+  "arm_b": {
+   "n": 500,
+   "mortality_rate_yn": {
+    "n": 250,
+    "positive_rate": 0.344
+   },
+   "serious_adverse_rate_yn": {
+    "n": 250,
+    "positive_rate": 0.552
+   }
+  },
+  "arm_c": {
+   "n": 0
+  }
+ },
+ "covariates": {
+  "arm_a": {
+   "summary_token_len_median": 49.0,
+   "phase_distribution": {
+    "Phase2": 0.424,
+    "Phase3": 0.296,
+    "Phase4": 0.17,
+    "Phase1": 0.11
+   },
+   "enrollment_median": 64.5
+  },
+  "arm_b": {
+   "summary_token_len_median": 65.0,
+   "phase_distribution": {
+    "PHASE2": 0.389,
+    "PHASE3": 0.175,
+    "PHASE1/PHASE2": 0.165,
+    "PHASE4": 0.123,
+    "PHASE1": 0.084,
+    "PHASE2/PHASE3": 0.042,
+    "EARLY_PHASE1": 0.021
+   },
+   "enrollment_median": 75.0
+  },
+  "arm_c": {}
+ },
+ "power": {
+  "detectable_drop_frac_relabelled": 0.02,
+  "n_arm_a": 500,
+  "n_arm_b": 500
+ },
+ "text_identity_new_snapshot": {
+  "n_checked": 50,
+  "n_identical": 49,
+  "example_mismatches": [
+   "NCT04934722"
+  ]
+ },
+ "reference_preview": {
+  "mortality_rate_yn": {
+   "auroc_a": 0.8941997851772286,
+   "auroc_b": 0.8693278502552467,
+   "n_a": 250,
+   "n_b": 250,
+   "a_minus_b": {
+    "mean_x": 0.8951729726895544,
+    "mean_y": 0.8708348276519362,
+    "mean_delta": 0.024338145037618098,
+    "lo": -0.036638623565751566,
+    "hi": 0.08857410713784543,
+    "std": 0.03193820665922021,
+    "n_resamples_used": 1000,
+    "n_resamples_requested": 1000,
+    "n_rows_x": 250,
+    "n_rows_y": 250,
+    "n_clusters_x": 250,
+    "n_clusters_y": 250
+   }
+  },
+  "serious_adverse_rate_yn": {
+   "auroc_a": 0.8736207897793264,
+   "auroc_b": 0.8711180124223602,
+   "n_a": 250,
+   "n_b": 250,
+   "a_minus_b": {
+    "mean_x": 0.8725264460552221,
+    "mean_y": 0.8718284313162288,
+    "mean_delta": 0.0006980147389932832,
+    "lo": -0.06677108484437376,
+    "hi": 0.07177772156824672,
+    "std": 0.03446988033740651,
+    "n_resamples_used": 1000,
+    "n_resamples_requested": 1000,
+    "n_rows_x": 250,
+    "n_rows_y": 250,
+    "n_clusters_x": 250,
+    "n_clusters_y": 250
+   }
+  }
+ },
+ "arm_b_overlap_with_trialbench_test": 0,
+ "model_calls": 0
+}

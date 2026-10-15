@@ -23,6 +23,21 @@ Extracted (a focused subset, not all 49 tables -- the full archive is
 ``keywords``, ``sponsors``, ``brief_summaries``, ``id_information``,
 ``countries``, ``facilities``, ``calculated_values``.
 
+Second pinned snapshot, AACT daily flat-file export, 2026-10-15::
+
+    URL:    https://aact.ctti-clinicaltrials.org/static/exported_files/daily/2026-10-15
+    File:   20261015_export_ctgov.zip
+    Size:   2,544,818,909 bytes
+    sha256: 5b6b0f725dbefa4d7bfc39a0bc2d851c295930e2f515bfabf5017dd30cbaecb9
+
+Pulled for T28b on Jev (``experiments/t28b_jev_preflight.py``), whose Arm B
+needs results posted after Jev's 2026-09-18 release -- none exist in the
+2026-08-26 snapshot. Same 18-table subset, extracted to
+``data/external/aact_20261015/``. Additive: ``SNAPSHOT_*`` and every
+loader's default still point at 2026-08-26, so nothing that ran against it
+changes; reach the new one by passing ``snapshot_dir=SNAPSHOT_2026_10_15_DIR``.
+CTTI publishes no checksum, so the sha256 is ours, taken at download.
+
 Not a live database: a fixed, dated, checksummed snapshot per P14.1 -- "the
 slice must be reproducible six months from now when Part 3 is being
 defended." A second machine reproduces the same row counts by downloading
@@ -46,6 +61,19 @@ SNAPSHOT_ZIP_SHA256 = "d2ef247566ec080a4788f7556ab7fe1dad630e87af5a783f3664be0dd
 SNAPSHOT_ZIP_SIZE = 2_513_044_058
 SNAPSHOT_DIR = os.path.join("data", "external", "aact_20260826")
 
+SNAPSHOT_2026_10_15_DIR = os.path.join("data", "external", "aact_20261015")
+
+# Every pinned snapshot, by date. The SNAPSHOT_* constants above stay the
+# default; this is how an artifact quotes a non-default one.
+SNAPSHOTS = {
+    SNAPSHOT_DATE: {"url": SNAPSHOT_URL, "zip": SNAPSHOT_ZIP, "zip_sha256": SNAPSHOT_ZIP_SHA256,
+                    "zip_size_bytes": SNAPSHOT_ZIP_SIZE, "dir": SNAPSHOT_DIR},
+    "2026-10-15": {"url": "https://aact.ctti-clinicaltrials.org/static/exported_files/daily/2026-10-15",
+                   "zip": os.path.join("data", "external", "20261015_export_ctgov.zip"),
+                   "zip_sha256": "5b6b0f725dbefa4d7bfc39a0bc2d851c295930e2f515bfabf5017dd30cbaecb9",
+                   "zip_size_bytes": 2_544_818_909, "dir": SNAPSHOT_2026_10_15_DIR},
+}
+
 # Columns this module actually reads from each table -- the schema check
 # below asserts these are present, not that the table has exactly these
 # columns (AACT tables carry more than we use).
@@ -61,12 +89,13 @@ _EXPECTED_COLUMNS = {
 }
 
 
-def snapshot_info() -> dict:
+def snapshot_info(date: str = SNAPSHOT_DATE) -> dict:
     """The pinning record every P14 artifact should quote verbatim."""
+    snap = SNAPSHOTS[date]
     return {
         "source": "AACT (aact.ctti-clinicaltrials.org)", "format": "pipe-delimited flat files",
-        "date": SNAPSHOT_DATE, "url": SNAPSHOT_URL,
-        "zip_sha256": SNAPSHOT_ZIP_SHA256, "zip_size_bytes": SNAPSHOT_ZIP_SIZE,
+        "date": date, "url": snap["url"],
+        "zip_sha256": snap["zip_sha256"], "zip_size_bytes": snap["zip_size_bytes"],
     }
 
 

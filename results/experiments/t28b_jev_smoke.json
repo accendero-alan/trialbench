@@ -1,0 +1,787 @@
+{
+ "test_id": "t28b_jev",
+ "model": "typesafe/jev-1.13-20260917",
+ "endpoint": "https://openrouter.ai/api/alpha/decisions",
+ "git_sha": "a5002122eb98743359dd0866e62b0c096d3e1220-dirty",
+ "smoke_check_limit": 20,
+ "claim_at_stake": "Whether Jev's mortality/SAE discrimination survives on trials whose results were posted after Jev existed, against a frozen no-memory reference.",
+ "decision_rule": "(also recorded on newsletter-pipeline\nTASK-006 before any call). It is Opus's T28b R1->R2 procedure\n(docs/t28b_reanalysis_plan.md), unchanged apart from the arms:\n- Metric: AUROC, mortality and SAE pooled, A vs B, independent-arm\n  cluster bootstrap on nct_id (1,000 resamples, seed 42).\n- R1: does Jev's AUROC drop from A to B (CI lower bound > 0)? No ->\n  NO_RECALL_DETECTED: Jev discriminates outcomes it could not have read\n  as well as outcomes it could have, so its TrialBench signal is read as\n  reading. Yes -> R2.\n- R2: diff-in-diff, Jev's A->B drop minus the reference's on the same\n  rows. CI lower bound > 0 -> OUTCOME_RECALL_DEMONSTRATED: no Jev\n  TrialBench figure is quoted as skill. Otherwise -> INCONCLUSIVE: report\n  both drops and the difference, read as neither recall nor cleared.\n- The upside is pre-registered too. If Jev holds on Arm B, the finding is\n  Jev's AUROC on mortality and SAE for trials whose results postdate it.\n  That is the stronger result, and it is reported as such, not as a\n  passed safety check.\n- Reported, not decisive: PR-AUC and balanced accuracy at 0.5 (context\n  only; T28b's R1 showed a 0.5 threshold misleads when base rates\n  shift); per-endpoint AUROC per arm; parse-failure rate per arm.\n- Known limits: Arm B's phase strings are AACT's (PHASE2, PHASE1/PHASE2),\n  the same gap Opus's T28b carried. Jev's answers are not bit-for-bit\n  repeatable (+/-0.01 seen on repeats). Arm B's results are at most four\n  weeks old, so its trials are recent where Arm A's are pre-2023, which\n  the reference arm is there to absorb.",
+ "inputs": {
+  "a_cutoff": "2023-01-01",
+  "b_cutoff": "2026-09-18",
+  "seed": 42,
+  "n_resamples": 1000,
+  "decision_metric": "auroc",
+  "r1_text_cols": [
+   "condition",
+   "brief_summary/textblock",
+   "eligibility/criteria/textblock"
+  ],
+  "snapshot_b": {
+   "source": "AACT (aact.ctti-clinicaltrials.org)",
+   "format": "pipe-delimited flat files",
+   "date": "2026-10-15",
+   "url": "https://aact.ctti-clinicaltrials.org/static/exported_files/daily/2026-10-15",
+   "zip_sha256": "5b6b0f725dbefa4d7bfc39a0bc2d851c295930e2f515bfabf5017dd30cbaecb9",
+   "zip_size_bytes": 2544818909
+  },
+  "snapshot_a_labels": {
+   "source": "AACT (aact.ctti-clinicaltrials.org)",
+   "format": "pipe-delimited flat files",
+   "date": "2026-08-26",
+   "url": "https://aact.ctti-clinicaltrials.org/static/exported_files/daily/2026-08-26",
+   "zip_sha256": "d2ef247566ec080a4788f7556ab7fe1dad630e87af5a783f3664be0ddee75e57",
+   "zip_size_bytes": 2513044058
+  },
+  "slice_b_trials": 356
+ },
+ "n_rows": {
+  "arm_a": 20,
+  "arm_b": 20
+ },
+ "parse_fail_rate": {
+  "arm_a": 0.0,
+  "arm_b": 0.0
+ },
+ "primary_a_vs_b": {
+  "jev": {
+   "auroc": {
+    "mean_x": 0.8510552345081389,
+    "mean_y": 0.8765423038379104,
+    "mean_delta": -0.02548706932977153,
+    "lo": -0.25879166666666664,
+    "hi": 0.20714172979797973,
+    "std": 0.11938230394600677,
+    "n_resamples_used": 1000,
+    "n_resamples_requested": 1000,
+    "n_rows_x": 20,
+    "n_rows_y": 20,
+    "n_clusters_x": 20,
+    "n_clusters_y": 20
+   },
+   "prauc": {
+    "mean_x": 0.8985786155673133,
+    "mean_y": 0.9128148181551737,
+    "mean_delta": -0.014236202587860356,
+    "lo": -0.2002278739778738,
+    "hi": 0.17036541005290978,
+    "std": 0.09586358504326531,
+    "n_resamples_used": 1000,
+    "n_resamples_requested": 1000,
+    "n_rows_x": 20,
+    "n_rows_y": 20,
+    "n_clusters_x": 20,
+    "n_clusters_y": 20
+   },
+   "balanced_accuracy": {
+    "mean_x": 0.6272925656322521,
+    "mean_y": 0.551024985553662,
+    "mean_delta": 0.07626758007859012,
+    "lo": -0.07694444444444437,
+    "hi": 0.22920673076923082,
+    "std": 0.07812204629162854,
+    "n_resamples_used": 1000,
+    "n_resamples_requested": 1000,
+    "n_rows_x": 20,
+    "n_rows_y": 20,
+    "n_clusters_x": 20,
+    "n_clusters_y": 20
+   }
+  },
+  "reference": {
+   "auroc": {
+    "mean_x": 0.8876777410661234,
+    "mean_y": 0.8519130223289781,
+    "mean_delta": 0.035764718737145214,
+    "lo": -0.18940097402597386,
+    "hi": 0.28309740259740246,
+    "std": 0.11843291216842083,
+    "n_resamples_used": 1000,
+    "n_resamples_requested": 1000,
+    "n_rows_x": 20,
+    "n_rows_y": 20,
+    "n_clusters_x": 20,
+    "n_clusters_y": 20
+   },
+   "prauc": {
+    "mean_x": 0.9320223152353132,
+    "mean_y": 0.877250067733092,
+    "mean_delta": 0.0547722475022213,
+    "lo": -0.11643703518703516,
+    "hi": 0.2924395974395972,
+    "std": 0.1017623780870891,
+    "n_resamples_used": 1000,
+    "n_resamples_requested": 1000,
+    "n_rows_x": 20,
+    "n_rows_y": 20,
+    "n_clusters_x": 20,
+    "n_clusters_y": 20
+   },
+   "balanced_accuracy": {
+    "mean_x": 0.7311171984791954,
+    "mean_y": 0.8530262876420965,
+    "mean_delta": -0.1219090891629011,
+    "lo": -0.3828805916305916,
+    "hi": 0.1534753787878788,
+    "std": 0.1326640763985348,
+    "n_resamples_used": 1000,
+    "n_resamples_requested": 1000,
+    "n_rows_x": 20,
+    "n_rows_y": 20,
+    "n_clusters_x": 20,
+    "n_clusters_y": 20
+   }
+  }
+ },
+ "diff_in_diff": {
+  "mean_delta_method": -0.02548706932977153,
+  "mean_delta_ref": 0.035764718737145214,
+  "mean_diff": -0.061251788066916744,
+  "lo": -0.293061755952381,
+  "hi": 0.13081060606060596,
+  "std": 0.10848626858062525,
+  "rho": 0.5838269800698227,
+  "n_resamples_used": 1000,
+  "n_resamples_requested": 1000
+ },
+ "per_endpoint_auroc": {
+  "jev_a": {
+   "mortality_rate_yn": 0.75,
+   "serious_adverse_rate_yn": 0.6499999999999999
+  },
+  "jev_b": {
+   "mortality_rate_yn": 1.0,
+   "serious_adverse_rate_yn": 0.7777777777777778
+  },
+  "ref_a": {
+   "mortality_rate_yn": 0.7142857142857143,
+   "serious_adverse_rate_yn": 0.7
+  },
+  "ref_b": {
+   "mortality_rate_yn": 0.875,
+   "serious_adverse_rate_yn": 0.8888888888888888
+  }
+ },
+ "branch": "NO_RECALL_DETECTED",
+ "branch_reason": "R1: Jev's auroc does not significantly drop from A to B (A 0.851, B 0.877, delta=-0.025, CI=[-0.259, 0.207]) -- it discriminates outcomes it could not have read as well as ones it could have.",
+ "meter": {
+  "calls": 40,
+  "cache_hits": 0,
+  "http_status_counts": {
+   "200": 40
+  },
+  "input_tokens": 53519,
+  "output_tokens": 800,
+  "dollars_realized": 0.002248
+ },
+ "per_trial": {
+  "jev_arm_a": [
+   {
+    "nct_id": "NCT01102231",
+    "endpoint": "serious_adverse_rate_yn",
+    "p14_label": 1,
+    "proba": 0.48,
+    "parse_ok": true,
+    "status": 200,
+    "error": null
+   },
+   {
+    "nct_id": "NCT02750618",
+    "endpoint": "mortality_rate_yn",
+    "p14_label": 0,
+    "proba": 0.06,
+    "parse_ok": true,
+    "status": 200,
+    "error": null
+   },
+   {
+    "nct_id": "NCT01276379",
+    "endpoint": "serious_adverse_rate_yn",
+    "p14_label": 1,
+    "proba": 0.41,
+    "parse_ok": true,
+    "status": 200,
+    "error": null
+   },
+   {
+    "nct_id": "NCT03140631",
+    "endpoint": "mortality_rate_yn",
+    "p14_label": 1,
+    "proba": 0.11,
+    "parse_ok": true,
+    "status": 200,
+    "error": null
+   },
+   {
+    "nct_id": "NCT03297944",
+    "endpoint": "mortality_rate_yn",
+    "p14_label": 0,
+    "proba": 0.04,
+    "parse_ok": true,
+    "status": 200,
+    "error": null
+   },
+   {
+    "nct_id": "NCT01874665",
+    "endpoint": "serious_adverse_rate_yn",
+    "p14_label": 1,
+    "proba": 0.51,
+    "parse_ok": true,
+    "status": 200,
+    "error": null
+   },
+   {
+    "nct_id": "NCT03622580",
+    "endpoint": "serious_adverse_rate_yn",
+    "p14_label": 1,
+    "proba": 0.29,
+    "parse_ok": true,
+    "status": 200,
+    "error": null
+   },
+   {
+    "nct_id": "NCT00568334",
+    "endpoint": "mortality_rate_yn",
+    "p14_label": 0,
+    "proba": 0.05,
+    "parse_ok": true,
+    "status": 200,
+    "error": null
+   },
+   {
+    "nct_id": "NCT02662764",
+    "endpoint": "mortality_rate_yn",
+    "p14_label": 0,
+    "proba": 0.1,
+    "parse_ok": true,
+    "status": 200,
+    "error": null
+   },
+   {
+    "nct_id": "NCT02765490",
+    "endpoint": "serious_adverse_rate_yn",
+    "p14_label": 1,
+    "proba": 0.19,
+    "parse_ok": true,
+    "status": 200,
+    "error": null
+   },
+   {
+    "nct_id": "NCT02822794",
+    "endpoint": "mortality_rate_yn",
+    "p14_label": 0,
+    "proba": 0.11,
+    "parse_ok": true,
+    "status": 200,
+    "error": null
+   },
+   {
+    "nct_id": "NCT01920594",
+    "endpoint": "mortality_rate_yn",
+    "p14_label": 1,
+    "proba": 0.3,
+    "parse_ok": true,
+    "status": 200,
+    "error": null
+   },
+   {
+    "nct_id": "NCT03738423",
+    "endpoint": "serious_adverse_rate_yn",
+    "p14_label": 1,
+    "proba": 0.21,
+    "parse_ok": true,
+    "status": 200,
+    "error": null
+   },
+   {
+    "nct_id": "NCT02523274",
+    "endpoint": "mortality_rate_yn",
+    "p14_label": 0,
+    "proba": 0.29,
+    "parse_ok": true,
+    "status": 200,
+    "error": null
+   },
+   {
+    "nct_id": "NCT01102426",
+    "endpoint": "serious_adverse_rate_yn",
+    "p14_label": 1,
+    "proba": 0.53,
+    "parse_ok": true,
+    "status": 200,
+    "error": null
+   },
+   {
+    "nct_id": "NCT01593670",
+    "endpoint": "serious_adverse_rate_yn",
+    "p14_label": 1,
+    "proba": 0.63,
+    "parse_ok": true,
+    "status": 200,
+    "error": null
+   },
+   {
+    "nct_id": "NCT00255801",
+    "endpoint": "serious_adverse_rate_yn",
+    "p14_label": 1,
+    "proba": 0.46,
+    "parse_ok": true,
+    "status": 200,
+    "error": null
+   },
+   {
+    "nct_id": "NCT01248455",
+    "endpoint": "mortality_rate_yn",
+    "p14_label": 0,
+    "proba": 0.31,
+    "parse_ok": true,
+    "status": 200,
+    "error": null
+   },
+   {
+    "nct_id": "NCT03300843",
+    "endpoint": "serious_adverse_rate_yn",
+    "p14_label": 0,
+    "proba": 0.4,
+    "parse_ok": true,
+    "status": 200,
+    "error": null
+   },
+   {
+    "nct_id": "NCT01617967",
+    "endpoint": "serious_adverse_rate_yn",
+    "p14_label": 1,
+    "proba": 0.4,
+    "parse_ok": true,
+    "status": 200,
+    "error": null
+   }
+  ],
+  "jev_arm_b": [
+   {
+    "nct_id": "NCT06575348",
+    "endpoint": "serious_adverse_rate_yn",
+    "p14_label": 0,
+    "proba": 0.18,
+    "parse_ok": true,
+    "status": 200,
+    "error": null
+   },
+   {
+    "nct_id": "NCT06197243",
+    "endpoint": "mortality_rate_yn",
+    "p14_label": 0,
+    "proba": 0.15,
+    "parse_ok": true,
+    "status": 200,
+    "error": null
+   },
+   {
+    "nct_id": "NCT06404073",
+    "endpoint": "serious_adverse_rate_yn",
+    "p14_label": 1,
+    "proba": 0.2,
+    "parse_ok": true,
+    "status": 200,
+    "error": null
+   },
+   {
+    "nct_id": "NCT06393452",
+    "endpoint": "mortality_rate_yn",
+    "p14_label": 0,
+    "proba": 0.04,
+    "parse_ok": true,
+    "status": 200,
+    "error": null
+   },
+   {
+    "nct_id": "NCT03951298",
+    "endpoint": "mortality_rate_yn",
+    "p14_label": 0,
+    "proba": 0.22,
+    "parse_ok": true,
+    "status": 200,
+    "error": null
+   },
+   {
+    "nct_id": "NCT05471843",
+    "endpoint": "serious_adverse_rate_yn",
+    "p14_label": 1,
+    "proba": 0.48,
+    "parse_ok": true,
+    "status": 200,
+    "error": null
+   },
+   {
+    "nct_id": "NCT04332172",
+    "endpoint": "serious_adverse_rate_yn",
+    "p14_label": 1,
+    "proba": 0.13,
+    "parse_ok": true,
+    "status": 200,
+    "error": null
+   },
+   {
+    "nct_id": "NCT04309864",
+    "endpoint": "mortality_rate_yn",
+    "p14_label": 0,
+    "proba": 0.13,
+    "parse_ok": true,
+    "status": 200,
+    "error": null
+   },
+   {
+    "nct_id": "NCT03267732",
+    "endpoint": "mortality_rate_yn",
+    "p14_label": 0,
+    "proba": 0.06,
+    "parse_ok": true,
+    "status": 200,
+    "error": null
+   },
+   {
+    "nct_id": "NCT04722887",
+    "endpoint": "serious_adverse_rate_yn",
+    "p14_label": 1,
+    "proba": 0.35,
+    "parse_ok": true,
+    "status": 200,
+    "error": null
+   },
+   {
+    "nct_id": "NCT05498155",
+    "endpoint": "mortality_rate_yn",
+    "p14_label": 0,
+    "proba": 0.16,
+    "parse_ok": true,
+    "status": 200,
+    "error": null
+   },
+   {
+    "nct_id": "NCT04893317",
+    "endpoint": "mortality_rate_yn",
+    "p14_label": 1,
+    "proba": 0.3,
+    "parse_ok": true,
+    "status": 200,
+    "error": null
+   },
+   {
+    "nct_id": "NCT06229236",
+    "endpoint": "serious_adverse_rate_yn",
+    "p14_label": 1,
+    "proba": 0.12,
+    "parse_ok": true,
+    "status": 200,
+    "error": null
+   },
+   {
+    "nct_id": "NCT05886218",
+    "endpoint": "mortality_rate_yn",
+    "p14_label": 0,
+    "proba": 0.1,
+    "parse_ok": true,
+    "status": 200,
+    "error": null
+   },
+   {
+    "nct_id": "NCT04032418",
+    "endpoint": "serious_adverse_rate_yn",
+    "p14_label": 1,
+    "proba": 0.27,
+    "parse_ok": true,
+    "status": 200,
+    "error": null
+   },
+   {
+    "nct_id": "NCT05103358",
+    "endpoint": "serious_adverse_rate_yn",
+    "p14_label": 1,
+    "proba": 0.49,
+    "parse_ok": true,
+    "status": 200,
+    "error": null
+   },
+   {
+    "nct_id": "NCT05721573",
+    "endpoint": "serious_adverse_rate_yn",
+    "p14_label": 1,
+    "proba": 0.33,
+    "parse_ok": true,
+    "status": 200,
+    "error": null
+   },
+   {
+    "nct_id": "NCT05365477",
+    "endpoint": "mortality_rate_yn",
+    "p14_label": 0,
+    "proba": 0.09,
+    "parse_ok": true,
+    "status": 200,
+    "error": null
+   },
+   {
+    "nct_id": "NCT06366217",
+    "endpoint": "serious_adverse_rate_yn",
+    "p14_label": 0,
+    "proba": 0.14,
+    "parse_ok": true,
+    "status": 200,
+    "error": null
+   },
+   {
+    "nct_id": "NCT05617313",
+    "endpoint": "serious_adverse_rate_yn",
+    "p14_label": 1,
+    "proba": 0.51,
+    "parse_ok": true,
+    "status": 200,
+    "error": null
+   }
+  ],
+  "reference_arm_a": [
+   {
+    "nct_id": "NCT02750618",
+    "endpoint": "mortality_rate_yn",
+    "p14_label": 0,
+    "proba": 0.28356023944167297
+   },
+   {
+    "nct_id": "NCT03140631",
+    "endpoint": "mortality_rate_yn",
+    "p14_label": 1,
+    "proba": 0.3751828591194391
+   },
+   {
+    "nct_id": "NCT03297944",
+    "endpoint": "mortality_rate_yn",
+    "p14_label": 0,
+    "proba": 0.058901775605409316
+   },
+   {
+    "nct_id": "NCT00568334",
+    "endpoint": "mortality_rate_yn",
+    "p14_label": 0,
+    "proba": 0.2855067010000439
+   },
+   {
+    "nct_id": "NCT02662764",
+    "endpoint": "mortality_rate_yn",
+    "p14_label": 0,
+    "proba": 0.22513291241102165
+   },
+   {
+    "nct_id": "NCT02822794",
+    "endpoint": "mortality_rate_yn",
+    "p14_label": 0,
+    "proba": 0.596819158406237
+   },
+   {
+    "nct_id": "NCT01920594",
+    "endpoint": "mortality_rate_yn",
+    "p14_label": 1,
+    "proba": 0.3844150724885121
+   },
+   {
+    "nct_id": "NCT02523274",
+    "endpoint": "mortality_rate_yn",
+    "p14_label": 0,
+    "proba": 0.35868830929513634
+   },
+   {
+    "nct_id": "NCT01248455",
+    "endpoint": "mortality_rate_yn",
+    "p14_label": 0,
+    "proba": 0.612842649574441
+   },
+   {
+    "nct_id": "NCT01102231",
+    "endpoint": "serious_adverse_rate_yn",
+    "p14_label": 1,
+    "proba": 0.7749352133411205
+   },
+   {
+    "nct_id": "NCT01276379",
+    "endpoint": "serious_adverse_rate_yn",
+    "p14_label": 1,
+    "proba": 0.7313949091564272
+   },
+   {
+    "nct_id": "NCT01874665",
+    "endpoint": "serious_adverse_rate_yn",
+    "p14_label": 1,
+    "proba": 0.8634776328416908
+   },
+   {
+    "nct_id": "NCT03622580",
+    "endpoint": "serious_adverse_rate_yn",
+    "p14_label": 1,
+    "proba": 0.8669467423402913
+   },
+   {
+    "nct_id": "NCT02765490",
+    "endpoint": "serious_adverse_rate_yn",
+    "p14_label": 1,
+    "proba": 0.8273880195901211
+   },
+   {
+    "nct_id": "NCT03738423",
+    "endpoint": "serious_adverse_rate_yn",
+    "p14_label": 1,
+    "proba": 0.8828709799711099
+   },
+   {
+    "nct_id": "NCT01102426",
+    "endpoint": "serious_adverse_rate_yn",
+    "p14_label": 1,
+    "proba": 0.7985514416194432
+   },
+   {
+    "nct_id": "NCT01593670",
+    "endpoint": "serious_adverse_rate_yn",
+    "p14_label": 1,
+    "proba": 0.8724615414569852
+   },
+   {
+    "nct_id": "NCT00255801",
+    "endpoint": "serious_adverse_rate_yn",
+    "p14_label": 1,
+    "proba": 0.7093386153357399
+   },
+   {
+    "nct_id": "NCT03300843",
+    "endpoint": "serious_adverse_rate_yn",
+    "p14_label": 0,
+    "proba": 0.7557411038726016
+   },
+   {
+    "nct_id": "NCT01617967",
+    "endpoint": "serious_adverse_rate_yn",
+    "p14_label": 1,
+    "proba": 0.5467704689093904
+   }
+  ],
+  "reference_arm_b": [
+   {
+    "nct_id": "NCT06197243",
+    "endpoint": "mortality_rate_yn",
+    "p14_label": 0,
+    "proba": 0.14414365517065456
+   },
+   {
+    "nct_id": "NCT06393452",
+    "endpoint": "mortality_rate_yn",
+    "p14_label": 0,
+    "proba": 0.23077977291013013
+   },
+   {
+    "nct_id": "NCT03951298",
+    "endpoint": "mortality_rate_yn",
+    "p14_label": 0,
+    "proba": 0.3975085378650853
+   },
+   {
+    "nct_id": "NCT04309864",
+    "endpoint": "mortality_rate_yn",
+    "p14_label": 0,
+    "proba": 0.2559044748696652
+   },
+   {
+    "nct_id": "NCT03267732",
+    "endpoint": "mortality_rate_yn",
+    "p14_label": 0,
+    "proba": 0.07538422248428504
+   },
+   {
+    "nct_id": "NCT05498155",
+    "endpoint": "mortality_rate_yn",
+    "p14_label": 0,
+    "proba": 0.791907483285813
+   },
+   {
+    "nct_id": "NCT04893317",
+    "endpoint": "mortality_rate_yn",
+    "p14_label": 1,
+    "proba": 0.6357051755169574
+   },
+   {
+    "nct_id": "NCT05886218",
+    "endpoint": "mortality_rate_yn",
+    "p14_label": 0,
+    "proba": 0.3437686631838319
+   },
+   {
+    "nct_id": "NCT05365477",
+    "endpoint": "mortality_rate_yn",
+    "p14_label": 0,
+    "proba": 0.2339126649070577
+   },
+   {
+    "nct_id": "NCT06575348",
+    "endpoint": "serious_adverse_rate_yn",
+    "p14_label": 0,
+    "proba": 0.1666960751049345
+   },
+   {
+    "nct_id": "NCT06404073",
+    "endpoint": "serious_adverse_rate_yn",
+    "p14_label": 1,
+    "proba": 0.504116840192562
+   },
+   {
+    "nct_id": "NCT05471843",
+    "endpoint": "serious_adverse_rate_yn",
+    "p14_label": 1,
+    "proba": 0.9613138951833347
+   },
+   {
+    "nct_id": "NCT04332172",
+    "endpoint": "serious_adverse_rate_yn",
+    "p14_label": 1,
+    "proba": 0.19145084507266114
+   },
+   {
+    "nct_id": "NCT04722887",
+    "endpoint": "serious_adverse_rate_yn",
+    "p14_label": 1,
+    "proba": 0.7768870706387317
+   },
+   {
+    "nct_id": "NCT06229236",
+    "endpoint": "serious_adverse_rate_yn",
+    "p14_label": 1,
+    "proba": 0.3132052732304475
+   },
+   {
+    "nct_id": "NCT04032418",
+    "endpoint": "serious_adverse_rate_yn",
+    "p14_label": 1,
+    "proba": 0.9471441252408357
+   },
+   {
+    "nct_id": "NCT05103358",
+    "endpoint": "serious_adverse_rate_yn",
+    "p14_label": 1,
+    "proba": 0.9399349970451268
+   },
+   {
+    "nct_id": "NCT05721573",
+    "endpoint": "serious_adverse_rate_yn",
+    "p14_label": 1,
+    "proba": 0.6789703720372299
+   },
+   {
+    "nct_id": "NCT06366217",
+    "endpoint": "serious_adverse_rate_yn",
+    "p14_label": 0,
+    "proba": 0.3977491779728186
+   },
+   {
+    "nct_id": "NCT05617313",
+    "endpoint": "serious_adverse_rate_yn",
+    "p14_label": 1,
+    "proba": 0.9461723793780379
+   }
+  ]
+ }
+}
