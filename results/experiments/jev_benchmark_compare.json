@@ -1,0 +1,1005 @@
+{
+ "test_id": "jev_benchmark_compare",
+ "results_dir": "results_jev",
+ "seed": 42,
+ "n_boot": 1000,
+ "margin": 0.03,
+ "decision_rule": "(also on newsletter-pipeline TASK-006):\n- Metric: PR-AUC (the benchmark's headline), AUROC secondary. Test split,\n  rows inner-joined on nct_id so every method is scored on the same rows.\n- Primary statistic: the macro-average over the 16 cells of the per-cell\n  difference (Jev - arm), with a 95% CI from a stratified bootstrap\n  (each cell's trials resampled independently, 1,000 draws, seed 42).\n  Computed against each of the three trained arms.\n- Readings, per arm:\n    CI entirely below 0          -> JEV_BELOW\n    CI inside [-0.03, +0.03]     -> EQUIVALENT (margin fixed in advance)\n    CI entirely above 0          -> JEV_ABOVE\n    otherwise                    -> UNRESOLVED\n- Alan's question, \"is Jev just BERT with more data?\", is read off the\n  fine-tuned arm: EQUIVALENT there means behaviourally indistinguishable\n  from a fine-tuned clinical BERT on this benchmark. That says nothing\n  about Jev's architecture, which is undisclosed.\n- Part 3's prediction, \"the ceiling is the data\", is read off TF-IDF,\n  chosen in advance as the reference because it won every Part 3 cell.\n  JEV_ABOVE against TF-IDF refutes it for Jev. Otherwise it stands.\n- Reported, not decisive: per-cell deltas with CIs and win/loss counts;\n  AUROC versions of everything; Jev parse-failure rate and spend.\n- Reproduction check before reading anything: frozen BERT and TF-IDF on\n  the 9 cells bert_vs_tfidf.md published (PR-AUC). A gap above 0.02 in\n  any cell is flagged, and the run is explained before it is interpreted.\n- Known asymmetries, stated rather than corrected: Jev is zero-shot while\n  the other three train on each cell's training split; Jev reads the L7\n  render (structured fields + text) while the text arms read concat_text\n  over TEXT_COLS.",
+ "answers": {
+  "bert_with_more_data": "JEV_BELOW",
+  "data_is_the_ceiling_refuted": false
+ },
+ "summary": {
+  "prauc": {
+   "tfidf_logreg": {
+    "macro_mean_delta": -0.03367859487977018,
+    "ci_95": [
+     -0.04455358659287575,
+     -0.023388761976517614
+    ],
+    "reading": "JEV_BELOW",
+    "cells_jev_above": 1,
+    "cells_jev_below": 8,
+    "per_cell": [
+     {
+      "cell": "outcome/Phase1",
+      "delta": -0.2050271773296805,
+      "lo": -0.2560817597038262,
+      "hi": -0.14624031916508926
+     },
+     {
+      "cell": "outcome/Phase2",
+      "delta": -0.038173769603219165,
+      "lo": -0.07146965123380081,
+      "hi": -0.0047566686563427244
+     },
+     {
+      "cell": "outcome/Phase3",
+      "delta": -0.018377745299923642,
+      "lo": -0.04512472091601791,
+      "hi": 0.0064628190132466805
+     },
+     {
+      "cell": "outcome/Phase4",
+      "delta": -0.033325074244036745,
+      "lo": -0.08489147042310352,
+      "hi": 0.016836076800836555
+     },
+     {
+      "cell": "mortality_rate_yn/Phase1",
+      "delta": -0.0765177723470345,
+      "lo": -0.14451411865061084,
+      "hi": -0.012871533233796223
+     },
+     {
+      "cell": "mortality_rate_yn/Phase2",
+      "delta": 0.0015559377559494214,
+      "lo": -0.014973944749546955,
+      "hi": 0.019619971760025265
+     },
+     {
+      "cell": "mortality_rate_yn/Phase3",
+      "delta": 0.024362999907140193,
+      "lo": 0.00463539661072579,
+      "hi": 0.043277841239519846
+     },
+     {
+      "cell": "mortality_rate_yn/Phase4",
+      "delta": 0.06957974993651334,
+      "lo": -0.04048534299553774,
+      "hi": 0.16227074962382676
+     },
+     {
+      "cell": "serious_adverse_rate_yn/Phase1",
+      "delta": -0.046632595059956206,
+      "lo": -0.081448974066937,
+      "hi": -0.013670975821271927
+     },
+     {
+      "cell": "serious_adverse_rate_yn/Phase2",
+      "delta": -0.03583503701185364,
+      "lo": -0.04995615433777075,
+      "hi": -0.022901180764478283
+     },
+     {
+      "cell": "serious_adverse_rate_yn/Phase3",
+      "delta": -0.01754174579724943,
+      "lo": -0.033807417371049295,
+      "hi": -0.0038265087795346184
+     },
+     {
+      "cell": "serious_adverse_rate_yn/Phase4",
+      "delta": -0.11792809705818452,
+      "lo": -0.18198663615666197,
+      "hi": -0.04442253203147547
+     },
+     {
+      "cell": "patient_dropout_rate_yn/Phase1",
+      "delta": -0.021798871333355785,
+      "lo": -0.04853490793781923,
+      "hi": 0.0023606414846653566
+     },
+     {
+      "cell": "patient_dropout_rate_yn/Phase2",
+      "delta": -0.02190377921302955,
+      "lo": -0.03444036620839835,
+      "hi": -0.008801177273949882
+     },
+     {
+      "cell": "patient_dropout_rate_yn/Phase3",
+      "delta": -0.0064643256179584,
+      "lo": -0.015411373023111935,
+      "hi": 0.0031738100359003907
+     },
+     {
+      "cell": "patient_dropout_rate_yn/Phase4",
+      "delta": 0.005169784239556274,
+      "lo": -0.013281417944602839,
+      "hi": 0.025008232763260394
+     }
+    ]
+   },
+   "clinical_embeddings": {
+    "macro_mean_delta": 0.04548452893866882,
+    "ci_95": [
+     0.03378354576690631,
+     0.05682940203330061
+    ],
+    "reading": "JEV_ABOVE",
+    "cells_jev_above": 11,
+    "cells_jev_below": 1,
+    "per_cell": [
+     {
+      "cell": "outcome/Phase1",
+      "delta": -0.12141561181299071,
+      "lo": -0.17681803221512518,
+      "hi": -0.06268372681596383
+     },
+     {
+      "cell": "outcome/Phase2",
+      "delta": 0.06053073886820948,
+      "lo": 0.025667685364790242,
+      "hi": 0.09482963165463387
+     },
+     {
+      "cell": "outcome/Phase3",
+      "delta": 0.07059924413458962,
+      "lo": 0.03899745823046946,
+      "hi": 0.10189137238410416
+     },
+     {
+      "cell": "outcome/Phase4",
+      "delta": 0.0593992485459689,
+      "lo": 0.0026931333438886184,
+      "hi": 0.11100731163571027
+     },
+     {
+      "cell": "mortality_rate_yn/Phase1",
+      "delta": 0.023038110856327232,
+      "lo": -0.05313843782797615,
+      "hi": 0.10218623632205832
+     },
+     {
+      "cell": "mortality_rate_yn/Phase2",
+      "delta": 0.06993277387449759,
+      "lo": 0.043180488502976254,
+      "hi": 0.09689205756497454
+     },
+     {
+      "cell": "mortality_rate_yn/Phase3",
+      "delta": 0.1033666811606232,
+      "lo": 0.07451651909013768,
+      "hi": 0.13326947958383564
+     },
+     {
+      "cell": "mortality_rate_yn/Phase4",
+      "delta": 0.2228180760744531,
+      "lo": 0.12750135633803233,
+      "hi": 0.31973583123729576
+     },
+     {
+      "cell": "serious_adverse_rate_yn/Phase1",
+      "delta": 0.03079526600905469,
+      "lo": -0.011970861887843362,
+      "hi": 0.07777197453753498
+     },
+     {
+      "cell": "serious_adverse_rate_yn/Phase2",
+      "delta": -0.007070465546662907,
+      "lo": -0.024179396500784472,
+      "hi": 0.010242307904473396
+     },
+     {
+      "cell": "serious_adverse_rate_yn/Phase3",
+      "delta": 0.02189197247252761,
+      "lo": 0.004915936568838667,
+      "hi": 0.0389501051166636
+     },
+     {
+      "cell": "serious_adverse_rate_yn/Phase4",
+      "delta": -0.01235939047203416,
+      "lo": -0.07560867642763848,
+      "hi": 0.05710724872965026
+     },
+     {
+      "cell": "patient_dropout_rate_yn/Phase1",
+      "delta": 0.1053910208790576,
+      "lo": 0.06258743920556659,
+      "hi": 0.14685127051526595
+     },
+     {
+      "cell": "patient_dropout_rate_yn/Phase2",
+      "delta": 0.018212900792222264,
+      "lo": 0.003250012099520741,
+      "hi": 0.0339311301407825
+     },
+     {
+      "cell": "patient_dropout_rate_yn/Phase3",
+      "delta": 0.014738869456502934,
+      "lo": 0.003272082366151394,
+      "hi": 0.02498614355573329
+     },
+     {
+      "cell": "patient_dropout_rate_yn/Phase4",
+      "delta": 0.06788302772635457,
+      "lo": 0.03917037170493707,
+      "hi": 0.09495925046622604
+     }
+    ]
+   },
+   "clinical_bert_finetuned": {
+    "macro_mean_delta": -0.009260709531204503,
+    "ci_95": [
+     -0.019796647346763178,
+     -0.00011264083659179548
+    ],
+    "reading": "JEV_BELOW",
+    "cells_jev_above": 3,
+    "cells_jev_below": 3,
+    "per_cell": [
+     {
+      "cell": "outcome/Phase1",
+      "delta": -0.1399541943872758,
+      "lo": -0.19458849854368415,
+      "hi": -0.08082482332224207
+     },
+     {
+      "cell": "outcome/Phase2",
+      "delta": -0.016600318587175256,
+      "lo": -0.04806690752753485,
+      "hi": 0.01512984440759183
+     },
+     {
+      "cell": "outcome/Phase3",
+      "delta": -0.005732475690003791,
+      "lo": -0.03092795928184324,
+      "hi": 0.01906359908992884
+     },
+     {
+      "cell": "outcome/Phase4",
+      "delta": -0.002955460005551469,
+      "lo": -0.05919972595341699,
+      "hi": 0.04773997134804561
+     },
+     {
+      "cell": "mortality_rate_yn/Phase1",
+      "delta": -0.0198096480832064,
+      "lo": -0.09471122474648024,
+      "hi": 0.05143767345228591
+     },
+     {
+      "cell": "mortality_rate_yn/Phase2",
+      "delta": 0.012124990800742919,
+      "lo": -0.007409828694580634,
+      "hi": 0.031306820751433644
+     },
+     {
+      "cell": "mortality_rate_yn/Phase3",
+      "delta": 0.034451693569701014,
+      "lo": 0.0133889766671445,
+      "hi": 0.054155944643316946
+     },
+     {
+      "cell": "mortality_rate_yn/Phase4",
+      "delta": 0.1295849085387885,
+      "lo": 0.03967842182653484,
+      "hi": 0.20849528997216538
+     },
+     {
+      "cell": "serious_adverse_rate_yn/Phase1",
+      "delta": -0.013615374293469373,
+      "lo": -0.04216966802317155,
+      "hi": 0.017233314697997305
+     },
+     {
+      "cell": "serious_adverse_rate_yn/Phase2",
+      "delta": -0.03120368462227785,
+      "lo": -0.04521422030781436,
+      "hi": -0.017421217979601077
+     },
+     {
+      "cell": "serious_adverse_rate_yn/Phase3",
+      "delta": -0.004245103740337375,
+      "lo": -0.019667627591352148,
+      "hi": 0.009291382367139384
+     },
+     {
+      "cell": "serious_adverse_rate_yn/Phase4",
+      "delta": -0.10094227543416445,
+      "lo": -0.15981782817061868,
+      "hi": -0.03113582075877293
+     },
+     {
+      "cell": "patient_dropout_rate_yn/Phase1",
+      "delta": 0.0035822177032533986,
+      "lo": -0.024400650639634446,
+      "hi": 0.028572646296356016
+     },
+     {
+      "cell": "patient_dropout_rate_yn/Phase2",
+      "delta": -0.01228925165085104,
+      "lo": -0.025318998532673574,
+      "hi": 0.0014533284545899209
+     },
+     {
+      "cell": "patient_dropout_rate_yn/Phase3",
+      "delta": -0.0039034003899147685,
+      "lo": -0.012596292246663237,
+      "hi": 0.0045495702610510716
+     },
+     {
+      "cell": "patient_dropout_rate_yn/Phase4",
+      "delta": 0.023336023772469683,
+      "lo": 0.0016801040511698812,
+      "hi": 0.04649672948974436
+     }
+    ]
+   }
+  },
+  "auroc": {
+   "tfidf_logreg": {
+    "macro_mean_delta": -0.03199436038174327,
+    "ci_95": [
+     -0.039901750672346144,
+     -0.024043356333704465
+    ],
+    "reading": "JEV_BELOW",
+    "cells_jev_above": 2,
+    "cells_jev_below": 9,
+    "per_cell": [
+     {
+      "cell": "outcome/Phase1",
+      "delta": -0.19544092248298284,
+      "lo": -0.24666967406804347,
+      "hi": -0.14175568172816141
+     },
+     {
+      "cell": "outcome/Phase2",
+      "delta": -0.04903780241661271,
+      "lo": -0.07495630218236754,
+      "hi": -0.022730767193253263
+     },
+     {
+      "cell": "outcome/Phase3",
+      "delta": -0.003931897999694733,
+      "lo": -0.028522987887057927,
+      "hi": 0.019378490083902564
+     },
+     {
+      "cell": "outcome/Phase4",
+      "delta": -0.048058849708107476,
+      "lo": -0.09105203028081542,
+      "hi": -0.007013246362441381
+     },
+     {
+      "cell": "mortality_rate_yn/Phase1",
+      "delta": -0.01924634160448835,
+      "lo": -0.03943195307518009,
+      "hi": -0.0029071375144029783
+     },
+     {
+      "cell": "mortality_rate_yn/Phase2",
+      "delta": 0.01261869851677988,
+      "lo": 0.0022104350383087,
+      "hi": 0.023298332158385067
+     },
+     {
+      "cell": "mortality_rate_yn/Phase3",
+      "delta": 0.032336379042888,
+      "lo": 0.011009086534510604,
+      "hi": 0.053570501864389546
+     },
+     {
+      "cell": "mortality_rate_yn/Phase4",
+      "delta": 0.03577821169961759,
+      "lo": -0.0035562213697141877,
+      "hi": 0.07386220310522768
+     },
+     {
+      "cell": "serious_adverse_rate_yn/Phase1",
+      "delta": -0.037267584735939274,
+      "lo": -0.0663237083952778,
+      "hi": -0.008982796246813552
+     },
+     {
+      "cell": "serious_adverse_rate_yn/Phase2",
+      "delta": -0.0680412562223125,
+      "lo": -0.09099127523149711,
+      "hi": -0.045522081373601565
+     },
+     {
+      "cell": "serious_adverse_rate_yn/Phase3",
+      "delta": -0.05634051724137923,
+      "lo": -0.09826749639420235,
+      "hi": -0.01666598870509495
+     },
+     {
+      "cell": "serious_adverse_rate_yn/Phase4",
+      "delta": -0.06852367688022276,
+      "lo": -0.11301478274024927,
+      "hi": -0.023214649879080878
+     },
+     {
+      "cell": "patient_dropout_rate_yn/Phase1",
+      "delta": -0.022086192087040546,
+      "lo": -0.05046427380335554,
+      "hi": 0.004411721963393519
+     },
+     {
+      "cell": "patient_dropout_rate_yn/Phase2",
+      "delta": -0.027687032307008752,
+      "lo": -0.051485107866085386,
+      "hi": -0.003378774785236742
+     },
+     {
+      "cell": "patient_dropout_rate_yn/Phase3",
+      "delta": -0.016814023668772493,
+      "lo": -0.05889634704289468,
+      "hi": 0.025172419440738145
+     },
+     {
+      "cell": "patient_dropout_rate_yn/Phase4",
+      "delta": 0.019833041987383893,
+      "lo": -0.008709884524793854,
+      "hi": 0.04892293095190985
+     }
+    ]
+   },
+   "clinical_embeddings": {
+    "macro_mean_delta": 0.057962343734343044,
+    "ci_95": [
+     0.048562799025911374,
+     0.06821727113350959
+    ],
+    "reading": "JEV_ABOVE",
+    "cells_jev_above": 10,
+    "cells_jev_below": 1,
+    "per_cell": [
+     {
+      "cell": "outcome/Phase1",
+      "delta": -0.1274941582850756,
+      "lo": -0.18408198267439133,
+      "hi": -0.0751870752483743
+     },
+     {
+      "cell": "outcome/Phase2",
+      "delta": 0.02509949078129181,
+      "lo": -0.0022901875693999495,
+      "hi": 0.05152432860450642
+     },
+     {
+      "cell": "outcome/Phase3",
+      "delta": 0.07691848075046304,
+      "lo": 0.048478853286261156,
+      "hi": 0.10360893305770214
+     },
+     {
+      "cell": "outcome/Phase4",
+      "delta": 0.032152674153773875,
+      "lo": -0.012861496432015779,
+      "hi": 0.07729723175598802
+     },
+     {
+      "cell": "mortality_rate_yn/Phase1",
+      "delta": 0.0598501937648217,
+      "lo": 0.02636396236233905,
+      "hi": 0.0995445404110453
+     },
+     {
+      "cell": "mortality_rate_yn/Phase2",
+      "delta": 0.06613450296077683,
+      "lo": 0.04888584456373259,
+      "hi": 0.08381082630303455
+     },
+     {
+      "cell": "mortality_rate_yn/Phase3",
+      "delta": 0.10791720093612966,
+      "lo": 0.081165380939375,
+      "hi": 0.13544394015018424
+     },
+     {
+      "cell": "mortality_rate_yn/Phase4",
+      "delta": 0.17262631193556266,
+      "lo": 0.11188839676837489,
+      "hi": 0.23783603970464232
+     },
+     {
+      "cell": "serious_adverse_rate_yn/Phase1",
+      "delta": 0.024122501970603172,
+      "lo": -0.01587970586740052,
+      "hi": 0.06396414881712531
+     },
+     {
+      "cell": "serious_adverse_rate_yn/Phase2",
+      "delta": 0.0006580153269171163,
+      "lo": -0.02840930408724185,
+      "hi": 0.02831459654222543
+     },
+     {
+      "cell": "serious_adverse_rate_yn/Phase3",
+      "delta": 0.09347844827586216,
+      "lo": 0.04683848303801508,
+      "hi": 0.13884863671422387
+     },
+     {
+      "cell": "serious_adverse_rate_yn/Phase4",
+      "delta": 0.007824203033116595,
+      "lo": -0.03898753191500669,
+      "hi": 0.05711519414679779
+     },
+     {
+      "cell": "patient_dropout_rate_yn/Phase1",
+      "delta": 0.10464629219202337,
+      "lo": 0.06277831335879434,
+      "hi": 0.14577676995731384
+     },
+     {
+      "cell": "patient_dropout_rate_yn/Phase2",
+      "delta": 0.05314922632861829,
+      "lo": 0.02742986898609089,
+      "hi": 0.08062924042670207
+     },
+     {
+      "cell": "patient_dropout_rate_yn/Phase3",
+      "delta": 0.11289093929101857,
+      "lo": 0.05810074753666794,
+      "hi": 0.16194422506856407
+     },
+     {
+      "cell": "patient_dropout_rate_yn/Phase4",
+      "delta": 0.11742317633358546,
+      "lo": 0.07895812235286988,
+      "hi": 0.15314066674256066
+     }
+    ]
+   },
+   "clinical_bert_finetuned": {
+    "macro_mean_delta": -0.005301214252488487,
+    "ci_95": [
+     -0.013318165466813112,
+     0.002646408787811616
+    ],
+    "reading": "EQUIVALENT",
+    "cells_jev_above": 4,
+    "cells_jev_below": 3,
+    "per_cell": [
+     {
+      "cell": "outcome/Phase1",
+      "delta": -0.15431778929188256,
+      "lo": -0.21118860652305982,
+      "hi": -0.09936087182260299
+     },
+     {
+      "cell": "outcome/Phase2",
+      "delta": -0.021393918209465235,
+      "lo": -0.04692155706196764,
+      "hi": 0.0027933206530275606
+     },
+     {
+      "cell": "outcome/Phase3",
+      "delta": 0.0081647601912892,
+      "lo": -0.016075770368321547,
+      "hi": 0.03143618555330875
+     },
+     {
+      "cell": "outcome/Phase4",
+      "delta": -0.016325034686771822,
+      "lo": -0.0583995892477774,
+      "hi": 0.02565815951629043
+     },
+     {
+      "cell": "mortality_rate_yn/Phase1",
+      "delta": 0.00937011972930768,
+      "lo": -0.011770646342074906,
+      "hi": 0.03282178599041819
+     },
+     {
+      "cell": "mortality_rate_yn/Phase2",
+      "delta": 0.0157131979535714,
+      "lo": 0.0036865186494901615,
+      "hi": 0.027022016505055313
+     },
+     {
+      "cell": "mortality_rate_yn/Phase3",
+      "delta": 0.041347973063852295,
+      "lo": 0.01908320444949642,
+      "hi": 0.06188653904918002
+     },
+     {
+      "cell": "mortality_rate_yn/Phase4",
+      "delta": 0.07873647384264915,
+      "lo": 0.039055411609609285,
+      "hi": 0.11849656357388315
+     },
+     {
+      "cell": "serious_adverse_rate_yn/Phase1",
+      "delta": -0.005517689061993014,
+      "lo": -0.03421872401552194,
+      "hi": 0.023198518566647522
+     },
+     {
+      "cell": "serious_adverse_rate_yn/Phase2",
+      "delta": -0.05540509647802205,
+      "lo": -0.0781559949006162,
+      "hi": -0.03151232317858921
+     },
+     {
+      "cell": "serious_adverse_rate_yn/Phase3",
+      "delta": -0.0006810344827585801,
+      "lo": -0.043555574612728,
+      "hi": 0.0434667261160942
+     },
+     {
+      "cell": "serious_adverse_rate_yn/Phase4",
+      "delta": -0.0521138966264314,
+      "lo": -0.09513187187895752,
+      "hi": -0.006634207269516018
+     },
+     {
+      "cell": "patient_dropout_rate_yn/Phase1",
+      "delta": 0.006561436252001451,
+      "lo": -0.023032667017772693,
+      "hi": 0.0324859135197096
+     },
+     {
+      "cell": "patient_dropout_rate_yn/Phase2",
+      "delta": -0.0009429610942277566,
+      "lo": -0.022219677792311356,
+      "hi": 0.0222851371095283
+     },
+     {
+      "cell": "patient_dropout_rate_yn/Phase3",
+      "delta": 0.012506000581464782,
+      "lo": -0.02767257789961061,
+      "hi": 0.05383077100338842
+     },
+     {
+      "cell": "patient_dropout_rate_yn/Phase4",
+      "delta": 0.04947803027760067,
+      "lo": 0.02217962098231315,
+      "hi": 0.07779829044610671
+     }
+    ]
+   }
+  }
+ },
+ "per_cell": {
+  "outcome/Phase1": {
+   "n": 896,
+   "positive_rate": 0.43080357142857145,
+   "prauc": {
+    "jev_zeroshot": 0.4649136728066981,
+    "tfidf_logreg": 0.6699408501363786,
+    "clinical_embeddings": 0.5863292846196888,
+    "clinical_bert_finetuned": 0.6048678671939739
+   },
+   "auroc": {
+    "jev_zeroshot": 0.5345346947068983,
+    "tfidf_logreg": 0.7299756171898811,
+    "clinical_embeddings": 0.6620288529919739,
+    "clinical_bert_finetuned": 0.6888524839987809
+   }
+  },
+  "outcome/Phase2": {
+   "n": 2514,
+   "positive_rate": 0.36833731105807477,
+   "prauc": {
+    "jev_zeroshot": 0.5793328154193866,
+    "tfidf_logreg": 0.6175065850226058,
+    "clinical_embeddings": 0.5188020765511772,
+    "clinical_bert_finetuned": 0.5959331340065619
+   },
+   "auroc": {
+    "jev_zeroshot": 0.6838977944736714,
+    "tfidf_logreg": 0.7329355968902841,
+    "clinical_embeddings": 0.6587983036923796,
+    "clinical_bert_finetuned": 0.7052917126831366
+   }
+  },
+  "outcome/Phase3": {
+   "n": 1913,
+   "positive_rate": 0.5551489806586514,
+   "prauc": {
+    "jev_zeroshot": 0.8164803634436198,
+    "tfidf_logreg": 0.8348581087435435,
+    "clinical_embeddings": 0.7458811193090302,
+    "clinical_bert_finetuned": 0.8222128391336236
+   },
+   "auroc": {
+    "jev_zeroshot": 0.7990953370467002,
+    "tfidf_logreg": 0.803027235046395,
+    "clinical_embeddings": 0.7221768562962372,
+    "clinical_bert_finetuned": 0.790930576855411
+   }
+  },
+  "outcome/Phase4": {
+   "n": 892,
+   "positive_rate": 0.40022421524663676,
+   "prauc": {
+    "jev_zeroshot": 0.6203701899743017,
+    "tfidf_logreg": 0.6536952642183385,
+    "clinical_embeddings": 0.5609709414283328,
+    "clinical_bert_finetuned": 0.6233256499798532
+   },
+   "auroc": {
+    "jev_zeroshot": 0.7069923296421373,
+    "tfidf_logreg": 0.7550511793502448,
+    "clinical_embeddings": 0.6748396554883634,
+    "clinical_bert_finetuned": 0.7233173643289091
+   }
+  },
+  "mortality_rate_yn/Phase1": {
+   "n": 419,
+   "positive_rate": 0.26968973747016706,
+   "prauc": {
+    "jev_zeroshot": 0.7821208503764396,
+    "tfidf_logreg": 0.8586386227234741,
+    "clinical_embeddings": 0.7590827395201124,
+    "clinical_bert_finetuned": 0.801930498459646
+   },
+   "auroc": {
+    "jev_zeroshot": 0.9256029845566546,
+    "tfidf_logreg": 0.9448493261611429,
+    "clinical_embeddings": 0.8657527907918329,
+    "clinical_bert_finetuned": 0.9162328648273469
+   }
+  },
+  "mortality_rate_yn/Phase2": {
+   "n": 1600,
+   "positive_rate": 0.45875,
+   "prauc": {
+    "jev_zeroshot": 0.855135950530135,
+    "tfidf_logreg": 0.8535800127741856,
+    "clinical_embeddings": 0.7852031766556374,
+    "clinical_bert_finetuned": 0.8430109597293921
+   },
+   "auroc": {
+    "jev_zeroshot": 0.8919426597277721,
+    "tfidf_logreg": 0.8793239612109922,
+    "clinical_embeddings": 0.8258081567669953,
+    "clinical_bert_finetuned": 0.8762294617742007
+   }
+  },
+  "mortality_rate_yn/Phase3": {
+   "n": 945,
+   "positive_rate": 0.4846560846560847,
+   "prauc": {
+    "jev_zeroshot": 0.8822009986849135,
+    "tfidf_logreg": 0.8578379987777733,
+    "clinical_embeddings": 0.7788343175242903,
+    "clinical_bert_finetuned": 0.8477493051152125
+   },
+   "auroc": {
+    "jev_zeroshot": 0.878883728020229,
+    "tfidf_logreg": 0.846547348977341,
+    "clinical_embeddings": 0.7709665270840993,
+    "clinical_bert_finetuned": 0.8375357549563767
+   }
+  },
+  "mortality_rate_yn/Phase4": {
+   "n": 584,
+   "positive_rate": 0.17465753424657535,
+   "prauc": {
+    "jev_zeroshot": 0.5614972359158628,
+    "tfidf_logreg": 0.4919174859793494,
+    "clinical_embeddings": 0.33867915984140967,
+    "clinical_bert_finetuned": 0.43191232737707425
+   },
+   "auroc": {
+    "jev_zeroshot": 0.8585347001871289,
+    "tfidf_logreg": 0.8227564884875113,
+    "clinical_embeddings": 0.6859083882515662,
+    "clinical_bert_finetuned": 0.7797982263444797
+   }
+  },
+  "serious_adverse_rate_yn/Phase1": {
+   "n": 419,
+   "positive_rate": 0.4343675417661098,
+   "prauc": {
+    "jev_zeroshot": 0.8634845737039079,
+    "tfidf_logreg": 0.9101171687638641,
+    "clinical_embeddings": 0.8326893076948532,
+    "clinical_bert_finetuned": 0.8770999479973772
+   },
+   "auroc": {
+    "jev_zeroshot": 0.8701140631520378,
+    "tfidf_logreg": 0.907381647887977,
+    "clinical_embeddings": 0.8459915611814346,
+    "clinical_bert_finetuned": 0.8756317522140308
+   }
+  },
+  "serious_adverse_rate_yn/Phase2": {
+   "n": 1600,
+   "positive_rate": 0.745625,
+   "prauc": {
+    "jev_zeroshot": 0.8905645904296443,
+    "tfidf_logreg": 0.926399627441498,
+    "clinical_embeddings": 0.8976350559763072,
+    "clinical_bert_finetuned": 0.9217682750519222
+   },
+   "auroc": {
+    "jev_zeroshot": 0.7581335431293519,
+    "tfidf_logreg": 0.8261747993516644,
+    "clinical_embeddings": 0.7574755278024348,
+    "clinical_bert_finetuned": 0.8135386396073739
+   }
+  },
+  "serious_adverse_rate_yn/Phase3": {
+   "n": 945,
+   "positive_rate": 0.8465608465608465,
+   "prauc": {
+    "jev_zeroshot": 0.9532209622545346,
+    "tfidf_logreg": 0.970762708051784,
+    "clinical_embeddings": 0.931328989782007,
+    "clinical_bert_finetuned": 0.9574660659948719
+   },
+   "auroc": {
+    "jev_zeroshot": 0.8166163793103449,
+    "tfidf_logreg": 0.8729568965517241,
+    "clinical_embeddings": 0.7231379310344828,
+    "clinical_bert_finetuned": 0.8172974137931035
+   }
+  },
+  "serious_adverse_rate_yn/Phase4": {
+   "n": 584,
+   "positive_rate": 0.3852739726027397,
+   "prauc": {
+    "jev_zeroshot": 0.5995138578444609,
+    "tfidf_logreg": 0.7174419549026454,
+    "clinical_embeddings": 0.611873248316495,
+    "clinical_bert_finetuned": 0.7004561332786253
+   },
+   "auroc": {
+    "jev_zeroshot": 0.7267595171773444,
+    "tfidf_logreg": 0.7952831940575672,
+    "clinical_embeddings": 0.7189353141442278,
+    "clinical_bert_finetuned": 0.7788734138037758
+   }
+  },
+  "patient_dropout_rate_yn/Phase1": {
+   "n": 883,
+   "positive_rate": 0.5900339750849377,
+   "prauc": {
+    "jev_zeroshot": 0.7790018540706645,
+    "tfidf_logreg": 0.8008007254040203,
+    "clinical_embeddings": 0.6736108331916069,
+    "clinical_bert_finetuned": 0.7754196363674111
+   },
+   "auroc": {
+    "jev_zeroshot": 0.7163206116584129,
+    "tfidf_logreg": 0.7384068037454534,
+    "clinical_embeddings": 0.6116743194663895,
+    "clinical_bert_finetuned": 0.7097591754064114
+   }
+  },
+  "patient_dropout_rate_yn/Phase2": {
+   "n": 3162,
+   "positive_rate": 0.7678684376976597,
+   "prauc": {
+    "jev_zeroshot": 0.8600036645733333,
+    "tfidf_logreg": 0.8819074437863629,
+    "clinical_embeddings": 0.8417907637811111,
+    "clinical_bert_finetuned": 0.8722929162241844
+   },
+   "auroc": {
+    "jev_zeroshot": 0.6754645507229461,
+    "tfidf_logreg": 0.7031515830299548,
+    "clinical_embeddings": 0.6223153243943278,
+    "clinical_bert_finetuned": 0.6764075118171738
+   }
+  },
+  "patient_dropout_rate_yn/Phase3": {
+   "n": 2332,
+   "positive_rate": 0.910377358490566,
+   "prauc": {
+    "jev_zeroshot": 0.9615800932384391,
+    "tfidf_logreg": 0.9680444188563975,
+    "clinical_embeddings": 0.9468412237819361,
+    "clinical_bert_finetuned": 0.9654834936283538
+   },
+   "auroc": {
+    "jev_zeroshot": 0.7652471112693737,
+    "tfidf_logreg": 0.7820611349381462,
+    "clinical_embeddings": 0.6523561719783552,
+    "clinical_bert_finetuned": 0.7527411106879089
+   }
+  },
+  "patient_dropout_rate_yn/Phase4": {
+   "n": 1364,
+   "positive_rate": 0.7045454545454546,
+   "prauc": {
+    "jev_zeroshot": 0.8668528537737087,
+    "tfidf_logreg": 0.8616830695341524,
+    "clinical_embeddings": 0.7989698260473541,
+    "clinical_bert_finetuned": 0.843516830001239
+   },
+   "auroc": {
+    "jev_zeroshot": 0.7588171956941049,
+    "tfidf_logreg": 0.738984153706721,
+    "clinical_embeddings": 0.6413940193605194,
+    "clinical_bert_finetuned": 0.7093391654165042
+   }
+  }
+ },
+ "reproduction_check": {
+  "serious_adverse_rate_yn/Phase1": {
+   "part3_tfidf": 0.909,
+   "now_tfidf": 0.9101171687638641,
+   "part3_frozen": 0.824,
+   "now_frozen": 0.8326893076948532,
+   "flag": false
+  },
+  "mortality_rate_yn/Phase1": {
+   "part3_tfidf": 0.857,
+   "now_tfidf": 0.8586386227234741,
+   "part3_frozen": 0.752,
+   "now_frozen": 0.7590827395201124,
+   "flag": false
+  },
+  "mortality_rate_yn/Phase2": {
+   "part3_tfidf": 0.853,
+   "now_tfidf": 0.8535800127741856,
+   "part3_frozen": 0.773,
+   "now_frozen": 0.7852031766556374,
+   "flag": false
+  },
+  "mortality_rate_yn/Phase3": {
+   "part3_tfidf": 0.852,
+   "now_tfidf": 0.8578379987777733,
+   "part3_frozen": 0.751,
+   "now_frozen": 0.7788343175242903,
+   "flag": true
+  },
+  "outcome/Phase1": {
+   "part3_tfidf": 0.662,
+   "now_tfidf": 0.6699408501363786,
+   "part3_frozen": 0.52,
+   "now_frozen": 0.5863292846196888,
+   "flag": true
+  },
+  "outcome/Phase2": {
+   "part3_tfidf": 0.598,
+   "now_tfidf": 0.6175065850226058,
+   "part3_frozen": 0.497,
+   "now_frozen": 0.5188020765511772,
+   "flag": true
+  },
+  "outcome/Phase3": {
+   "part3_tfidf": 0.824,
+   "now_tfidf": 0.8348581087435435,
+   "part3_frozen": 0.712,
+   "now_frozen": 0.7458811193090302,
+   "flag": true
+  },
+  "outcome/Phase4": {
+   "part3_tfidf": 0.621,
+   "now_tfidf": 0.6536952642183385,
+   "part3_frozen": 0.504,
+   "now_frozen": 0.5609709414283328,
+   "flag": true
+  },
+  "mortality_rate_yn/Phase4": {
+   "part3_tfidf": 0.504,
+   "now_tfidf": 0.4919174859793494,
+   "part3_frozen": 0.294,
+   "now_frozen": 0.33867915984140967,
+   "flag": true
+  }
+ },
+ "reproduction_flags": [
+  "mortality_rate_yn/Phase3",
+  "outcome/Phase1",
+  "outcome/Phase2",
+  "outcome/Phase3",
+  "outcome/Phase4",
+  "mortality_rate_yn/Phase4"
+ ],
+ "jev_meter": {
+  "predict_calls": 32,
+  "rows": 37811,
+  "parse_failures": 0,
+  "retries": 29,
+  "input_tokens": 55204643,
+  "dollars_realized": 2.3179
+ }
+}
